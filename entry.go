@@ -7,10 +7,10 @@ import (
 
 // Entry represents fs entry, it means [File|Directory|Dirent]
 type Entry struct {
-	Class    string
-	Location string
-	Path     string
-	Basename string
+	Class    string  `json:"class,omitempty"`
+	Location string  `json:"location,omitempty"`
+	Path     string  `json:"path,omitempty"`
+	Basename string  `json:"basename,omitempty"`
 	File
 	Directory
 	Dirent
@@ -19,23 +19,31 @@ type Entry struct {
 // File represents file entry.
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#File
 type File struct {
-	Dirname string
-	Size    int64
-	Format  string
+	Dirname string `json:"dirname,omitempty"`
+	Size    int64 `json:"size"`
+	Format  string `json:"format,omitempty"`
+	//
+	// extends
+	//
+	Nameroot       string    `json:"nameroot,omitempty"`
+	Nameext        string    `json:"nameext,omitempty"`
+	Checksum       string    `json:"checksum,omitempty"`
+	Contents       string    `json:"contents,omitempty"`
+	SecondaryFiles []Entry `json:"secondaryFiles,omitempty"`
 }
 
 // Directory represents direcotry entry.
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#Directory
 type Directory struct {
-	Listing []Entry
+	Listing []Entry `json:"listing,omitempty"`
 }
 
 // Dirent represents ?
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#Dirent
 type Dirent struct {
-	Entry     string
-	EntryName string
-	Writable  bool
+	Entry     string `json:"entry,omitempty"`
+	EntryName string `json:"entryname,omitempty"`
+	Writable  bool `json:"writable,omitempty"`
 }
 
 // NewList constructs a list of Entry from interface

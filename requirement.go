@@ -37,6 +37,8 @@ func (_ Requirement) New(i interface{}) Requirement {
 				dest.Listing = Entry{}.NewList(v)
 			case "$import":
 				dest.Import = v.(string)
+			case "coresMin":
+				dest.CoresMin = int(v.(float64))
 			}
 		}
 	}
@@ -62,6 +64,63 @@ func (_ Requirements) New(i interface{}) Requirements {
 		}
 	}
 	return dest
+}
+
+
+// RequiresShellCommand
+func (r Requirements) RequiresShellCommand() bool {
+	for _, x := range r {
+		if x.Class == "ShellCommandRequirement" {
+			return true
+		}
+	}
+	return false
+}
+
+// RequiresShellCommand
+func (r Requirements) RequiresResource() *Requirement {
+	for i, x := range r {
+		if x.Class == "ResourceRequirement" {
+			return &r[i]
+		}
+	}
+	return nil
+}
+
+func (r Requirements) RequiresInlineJavascript() *Requirement {
+	for _, x := range r {
+		if x.Class == "InlineJavascriptRequirement" {
+			return &x
+		}
+	}
+	return nil
+}
+
+func (r Requirements) RequiresSchemaDef() *Requirement {
+	for _, x := range r {
+		if x.Class == "SchemaDefRequirement" {
+			return &x
+		}
+	}
+	return nil
+}
+
+func (r Requirements) RequiresInitialWorkDir() *Requirement {
+	for _, x := range r {
+		if x.Class == "InitialWorkDirRequirement" {
+			return &x
+		}
+	}
+	return nil
+}
+
+func (r Requirements) RequiresEnvVar() *Requirement {
+	for _, x := range r {
+		if x.Class == "EnvVarRequirement" {
+			return &x
+		}
+	}
+	return nil
 }
 
 // InlineJavascriptRequirement is supposed to be embeded to Requirement.

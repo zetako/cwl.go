@@ -11,3 +11,8 @@ type Alias struct {
 func (a *Alias) Key() string {
 	return strings.Trim(a.string, "$()")
 }
+
+// Key extract the exact (and flattened) name of an expression.
+func (a *Alias) String() string {
+	return a.string
+}

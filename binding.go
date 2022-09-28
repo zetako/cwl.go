@@ -12,6 +12,7 @@ type Binding struct {
 	Prefix     string `json:"prefix"`
 	Separate   bool   `json:"separate"`
 	Separator  string `json:"separator"`
+	ItemSeparator string     `json:"itemSeparator,omitempty" yaml:"itemSeparator,omitempty"`
 	ShellQuote bool   `json:"shellQuote"`
 	ValueFrom  *Alias `json:"valueFrom"`
 	// CommandOutputBinding
@@ -23,6 +24,7 @@ type Binding struct {
 // New constructs new "Binding".
 func (binding Binding) New(i interface{}) *Binding {
 	dest := new(Binding)
+	dest.Separate = true
 	switch x := i.(type) {
 	case map[string]interface{}:
 		for key, v := range x {
@@ -32,9 +34,13 @@ func (binding Binding) New(i interface{}) *Binding {
 			case "prefix":
 				dest.Prefix = v.(string)
 			case "itemSeparator":
-				dest.Separator = v.(string)
+				dest.ItemSeparator = v.(string)
 			case "loadContents":
 				dest.LoadContents = v.(bool)
+			case "separate":
+				dest.Separate = v.(bool)
+			case "separator":
+				dest.Separator = v.(string)
 			case "glob":
 				dest.Glob = StringArrayable(v)
 			case "shellQuote":

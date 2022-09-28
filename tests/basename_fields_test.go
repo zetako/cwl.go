@@ -18,4 +18,7 @@ func TestCWL_basename_fields_test_test(t *testing.T) {
 
 	Expect(t, root.Requirements[0].Class).ToBe("StepInputExpressionRequirement")
 	Expect(t, root.Requirements[0])
+	t.Logf("%#v",root)
+	t.Logf("%#v",root.Steps[0])
+	
 }

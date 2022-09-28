@@ -1,13 +1,12 @@
 package cwl
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
-
-	"github.com/otiai10/yaml2json"
+	
 	"github.com/robertkrimen/otto"
 )
 
@@ -23,12 +22,12 @@ func NewCWL() *Root {
 
 // Root ...
 type Root struct {
-	Version      string
-	Class        string
-	Hints        Hints
-	Doc          string
-	Graphs       Graphs
-	BaseCommands BaseCommands
+	Version      string `json:"cwlVersion"`
+	Class        string  `json:"class"`
+	Hints        Hints  `json:"hits"`
+	Doc          string `json:"doc"`
+	Graphs       Graphs `json:"graphs"`
+	BaseCommands BaseCommands `json:"baseCommands"`
 	Arguments    Arguments
 	Namespaces   Namespaces
 	Schemas      Schemas
@@ -38,9 +37,9 @@ type Root struct {
 	Inputs       Inputs `json:"inputs"`
 	// ProvidedInputs ProvidedInputs `json:"-"`
 	Outputs      Outputs
-	Requirements Requirements
+	Requirements
 	Steps        Steps
-	ID           string // ID only appears if this Root is a step in "steps"
+	ID           string // The unique identifier for this process object.
 	Expression   string // appears only if Class is "ExpressionTool"
 
 	// Path
@@ -114,11 +113,11 @@ func (root *Root) Decode(r io.Reader) (err error) {
 	if err != nil {
 		return err
 	}
-	buf, err = yaml2json.Y2J(bytes.NewReader(buf))
+	buf2, err := Y2J(buf)
 	if err != nil {
 		return err
 	}
-	if err = json.Unmarshal(buf, root); err != nil {
+	if err = json.Unmarshal(buf2, root); err != nil {
 		return err
 	}
 	return nil
@@ -137,4 +136,46 @@ func (root *Root) AsStep(i interface{}) *Root {
 		}
 	}
 	return dest
+}
+
+// Y2J converts yaml to json.
+func Y2J(in []byte) ([]byte, error) {
+	result := []byte{}
+	var root interface{}
+	if err := yaml.Unmarshal(in, &root); err != nil {
+		return result, err
+	}
+	return json.Marshal(convert(root))
+}
+
+// J2Y converts json to yaml.
+func J2Y(r io.Reader) ([]byte, error) {
+	result := []byte{}
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return result, err
+	}
+	var root interface{}
+	if err := json.Unmarshal(b, &root); err != nil {
+		return result, err
+	}
+	return yaml.Marshal(convert(root))
+}
+
+// convert ...
+func convert(parent interface{}) interface{} {
+	switch entity := parent.(type) {
+	case map[interface{}]interface{}:
+		node := map[string]interface{}{}
+		for key, val := range entity {
+			node[key.(string)] = convert(val)
+		}
+		return node
+	case []interface{}:
+		for idx, val := range entity {
+			entity[idx] = convert(val)
+		}
+		return entity
+	}
+	return parent
 }

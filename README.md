@@ -59,3 +59,6 @@ Or if you want to execute single test for just 1 time (NOT eagerly),
 ```sh
 go test ./tests -run _wf3
 ```
+
+> go clean -testcache  // Delete all cached test result
+

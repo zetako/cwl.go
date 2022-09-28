@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/robertkrimen/otto"
-
-	"github.com/otiai10/jsonindent"
+	"encoding/json"
+	//"github.com/otiai10/jsonindent"
 )
 
 // Output represents and conbines "CommandOutputParameter" and "WorkflowOutputParameter"
@@ -175,7 +175,8 @@ func (outs Outputs) Dump(vm *otto.Otto, dir string, stdout, stderr string, w io.
 			return err
 		}
 	}
-	return jsonindent.NewEncoder(w).Encode(dest)
+	return json.NewEncoder(w).Encode(dest)
+	//return jsonindent.NewEncoder(w).Encode(dest)
 }
 
 // DumpFileMeta ...
