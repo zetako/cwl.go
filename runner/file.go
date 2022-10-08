@@ -22,7 +22,7 @@ import (
 // see: see: https://www.commonwl.org/v1.0/Workflow.html#File
 //
 // would be nice for logging to strip some of the redundant information
-// e.g., only have Class, Path, Contents, and SecondaryFiles
+// e.g., only have ClassBase, Path, Contents, and SecondaryFiles
 // omitempty
 // but can't do that JSON encoding directly here because
 // these JSON encodings are used for context in parameters refs and JS expressions

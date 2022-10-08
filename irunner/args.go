@@ -100,7 +100,7 @@ func bindArgs(b *Binding) []string {
     // cwl conformance test:
     // Test [67/68] Test that empty array input does not add anything to command line
     // TODO unhandled panic here
-    arr := b.Value.([]cwl.Parameter)
+    arr := b.Value.([]cwl.Value)
     if len(arr) == 0 {
       return nil
     }
@@ -110,7 +110,7 @@ func bindArgs(b *Binding) []string {
     // into a single string with itemSeparator separating the items..."
     if b.clb != nil &&  b.clb.ItemSeparator != "" {
       
-      var nested []cwl.Parameter
+      var nested []cwl.Value
       for _, nb := range b.nested {
         nested = append(nested, nb.Value)
       }
@@ -149,7 +149,7 @@ func bindArgs(b *Binding) []string {
 // formatArgs applies some command line binding rules to a CLI argument,
 // such as prefix, separate, etc.
 // http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineBinding
-func formatArgs(clb *cwl.Binding, args ...cwl.Parameter) []string {
+func formatArgs(clb *cwl.Binding, args ...cwl.Value) []string {
   var (
     prefix , join string
     sep = true
@@ -181,7 +181,7 @@ func formatArgs(clb *cwl.Binding, args ...cwl.Parameter) []string {
   return strargs
 }
 
-func valueToStrings(v cwl.Parameter) []string {
+func valueToStrings(v cwl.Value) []string {
   switch z := v.(type) {
   case []interface{}:
     var out []string
@@ -191,7 +191,7 @@ func valueToStrings(v cwl.Parameter) []string {
     return out
   case int, int32, int64, float32, float64, bool, string:
     return []string{fmt.Sprintf("%v", z)}
-  case cwl.Entry:
+  case cwl.FileDir:
     return []string{z.Path}
   }
   return nil

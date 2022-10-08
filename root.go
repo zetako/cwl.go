@@ -40,7 +40,7 @@ type Root struct {
 	Requirements
 	Steps        Steps
 	ID           string // The unique identifier for this process object.
-	Expression   string // appears only if Class is "ExpressionTool"
+	Expression   string // appears only if ClassBase is "ExpressionTool"
 
 	// Path
 	Path string `json:"-"`
@@ -62,8 +62,8 @@ func (root *Root) UnmarshalMap(docs map[string]interface{}) error {
 			root.Doc = val.(string)
 		case "baseCommand":
 			root.BaseCommands = root.BaseCommands.New(val)
-		case "arguments":
-			root.Arguments = root.Arguments.New(val)
+		//case "arguments":
+		//	root.Arguments = root.Arguments.New(val)
 		case "$namespaces":
 			root.Namespaces = root.Namespaces.New(val)
 		case "$schemas":
@@ -77,11 +77,11 @@ func (root *Root) UnmarshalMap(docs map[string]interface{}) error {
 		case "stderr":
 			root.Stderr = val.(string)
 		case "inputs":
-			root.Inputs = root.Inputs.New(val)
+			//root.Inputs = root.Inputs.New(val)
 		case "outputs":
 			root.Outputs = root.Outputs.New(val)
 		case "requirements":
-			root.Requirements = root.Requirements.New(val)
+			//root.Requirements = root.Requirements.New(val)
 		case "steps":
 			root.Steps = root.Steps.New(val)
 		case "id":

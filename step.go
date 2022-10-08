@@ -35,10 +35,10 @@ type Step struct {
 }
 
 // Run `run` accept string | CommandLineTool | ExpressionTool | Workflow
-type Run struct {
-	Value    string
-	Workflow *Root
-}
+//type Run struct {
+//	Value    string
+//	Workflow *Root
+//}
 
 // New constructs "Step" from interface.
 func (_ Step) New(i interface{}) Step {
@@ -50,18 +50,18 @@ func (_ Step) New(i interface{}) Step {
 			case "id":
 				dest.ID = v.(string)
 			case "run":
-				switch x2 := v.(type) {
-				case string:
-					dest.Run.Value = x2
-				case map[string]interface{}:
-					dest.Run.Workflow = dest.Run.Workflow.AsStep(v)
-				}
+				//switch x2 := v.(type) {
+				//case string:
+				//	dest.Run.Value = x2
+				//case map[string]interface{}:
+				//	dest.Run.Workflow = dest.Run.Workflow.AsStep(v)
+				//}
 			case "in":
 				dest.In = StepInput{}.NewList(v)
 			case "out":
 				dest.Out = StepOutput{}.NewList(v)
 			case "requirements":
-				dest.Requirements = Requirements{}.New(v)
+				//dest.Requirements = Requirements{}.New(v)
 			case "scatter":
 				dest.Scatter = StringArrayable(v)
 			case "scatterMethod":

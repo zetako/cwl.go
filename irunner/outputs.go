@@ -8,20 +8,20 @@ import (
   "reflect"
 )
 
-func (e *Engine) Outputs() (cwl.Parameters, error) {
+func (e *Engine) Outputs() (cwl.Values, error) {
   return e.process.Outputs(e.outputFS)
 }
 
 // Outputs binds cwl.Tool output descriptors to concrete values.
-func (process *Process) Outputs(fs Filesystem) (cwl.Parameters, error) {
+func (process *Process) Outputs(fs Filesystem) (cwl.Values, error) {
   outdoc, err := fs.Contents("cwl.output.json")
   if err == nil {
-    outputs := cwl.Parameters{}
+    outputs := cwl.Values{}
     err = json.Unmarshal([]byte(outdoc), &outputs)
     return outputs, err
   }
   
-  outputs := cwl.Parameters{}
+  outputs := cwl.Values{}
   for _, out := range process.tool.Outputs {
     v, err := process.bindOutput(fs, out.Types, out.Binding, out.SecondaryFiles, nil)
     if err != nil {
@@ -143,7 +143,7 @@ Loop:
       }
     case "File":
       switch y := val.(type) {
-      case []cwl.Entry:
+      case []cwl.FileDir:
         if len(y) != 1 {
           continue Loop
         }
@@ -196,10 +196,10 @@ Loop:
 
 // matchFiles executes the list of glob patterns, returning a list of matched files.
 // matchFiles must return a non-nil list on success, even if no files are matched.
-func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents bool) ([]cwl.Entry, error) {
+func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents bool) ([]cwl.FileDir, error) {
   // it's important this slice isn't nil, because the outputEval field
   // expects it to be non-null during expression evaluation.
-  files := []cwl.Entry{}
+  files := []cwl.FileDir{}
   
   // resolve all the globs into file objects.
   for _, pattern := range globs {
@@ -210,7 +210,7 @@ func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents b
     
     for _, m := range matches {
       // TODO handle directories
-      v := cwl.Entry{
+      v := cwl.FileDir{
         Class: "File",
         Location: m.Location,
         Path:     m.Path,
@@ -251,7 +251,7 @@ func (process *Process) evalGlobPatterns(patterns []string) ([]string, error) {
     switch z := val.(type) {
     case string:
       out = append(out, z)
-    case []cwl.Parameter:
+    case []cwl.Value:
       for _, val := range z {
         z, ok := val.(string)
         if !ok {

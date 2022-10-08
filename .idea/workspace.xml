@@ -2,45 +2,53 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8fab268f-15b2-4751-9450-bb3badfb2223" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/irunner/args.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/configs.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/engine.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/exec.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/expr.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/filesystem.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/importer.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/inputs.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/local.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/log.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/outputs.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/process.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/irunner/requirements.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/cleanup.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/engine.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/importer.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/input.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/log.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/runtime.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/server.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runner/workflow.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/runner_test/TODOList" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/alias.go" beforeDir="false" afterPath="$PROJECT_DIR$/alias.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/binding.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_commandLineTool.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_commandLineTool_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_operation.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_process.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_process_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_workflow.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cwl_workflow_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/init.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salad.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arguments.go" beforeDir="false" afterPath="$PROJECT_DIR$/arguments.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cwl" beforeDir="false" afterPath="$PROJECT_DIR$/cwl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cwl/run_test.sh" beforeDir="false" afterPath="$PROJECT_DIR$/cwl/run_test.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cwl/v1.0/v1.0/basename-fields-test.cwl" beforeDir="false" afterPath="$PROJECT_DIR$/cwl/v1.0/v1.0/basename-fields-test.cwl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cwl/v1.0/v1.0/bwa-mem-tool.cwl" beforeDir="false" afterPath="$PROJECT_DIR$/cwl/v1.0/v1.0/bwa-mem-tool.cwl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cwl/v1.0/v1.0/cat-tool.cwl" beforeDir="false" afterPath="$PROJECT_DIR$/cwl/v1.0/v1.0/cat-tool.cwl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cwl/v1.0/v1.0/env-tool2.cwl" beforeDir="false" afterPath="$PROJECT_DIR$/cwl/v1.0/v1.0/env-tool2.cwl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/entry.go" beforeDir="false" afterPath="$PROJECT_DIR$/entry.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/input.go" beforeDir="false" afterPath="$PROJECT_DIR$/input.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output.go" beforeDir="false" afterPath="$PROJECT_DIR$/output.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/input_default.go" beforeDir="false" afterPath="$PROJECT_DIR$/input_default.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/input_provided.go" beforeDir="false" afterPath="$PROJECT_DIR$/input_provided.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/args.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/args.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/engine.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/engine.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/filesystem.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/filesystem.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/inputs.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/inputs.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/local.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/local.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/log.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/log.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/outputs.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/outputs.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/irunner/process.go" beforeDir="false" afterPath="$PROJECT_DIR$/irunner/process.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/parameter.go" beforeDir="false" afterPath="$PROJECT_DIR$/parameter.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/parser.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirement.go" beforeDir="false" afterPath="$PROJECT_DIR$/requirement.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root.go" beforeDir="false" afterPath="$PROJECT_DIR$/root.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/basename_fields_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/basename_fields_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runner/engine.go" beforeDir="false" afterPath="$PROJECT_DIR$/runner/engine.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runner/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/runner/file.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runner/k8s.go" beforeDir="false" afterPath="$PROJECT_DIR$/runner/k8s.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runner/scatter.go" beforeDir="false" afterPath="$PROJECT_DIR$/runner/scatter.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runner/workflow.go" beforeDir="false" afterPath="$PROJECT_DIR$/runner/workflow.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/step.go" beforeDir="false" afterPath="$PROJECT_DIR$/step.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/step_input.go" beforeDir="false" afterPath="$PROJECT_DIR$/step_input.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/env_tool2_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/env_tool2_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/null_expression1_tool_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/null_expression1_tool_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/recursive_input_directory_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/recursive_input_directory_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/runner_test/base_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/runner_test/base_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/runner_test/utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/runner_test/utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/starlight-1_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/tests/starlight-1_test.go" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/../../gopher/pkg/mod/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -49,31 +57,31 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FavoritesManager">
+    <favorites_list name="cwl.go-lijiang2014" />
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/cwl_workflow_test.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="475">
+              <caret line="25" column="3" lean-forward="true" selection-start-line="18" selection-end-line="25" selection-end-column="3" />
+              <folding>
+                <element signature="e#18#109#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/tests/runner_test/base_test.go">
+        <entry file="file://$PROJECT_DIR$/cwl_commandLineTool_test.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="341">
-              <caret line="83" column="1" lean-forward="true" selection-start-line="83" selection-start-column="1" selection-end-line="83" selection-end-column="1" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/cwl/v1.0/conformance_test_v1.0.yaml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="247">
-              <caret line="13" column="25" lean-forward="true" selection-start-line="13" selection-start-column="25" selection-end-line="13" selection-end-column="25" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/runner_test/utils.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="113">
-              <caret line="119" column="27" lean-forward="true" selection-start-line="119" selection-start-column="27" selection-end-line="119" selection-end-column="27" />
+            <state relative-caret-position="307">
+              <caret line="23" column="10" lean-forward="true" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="10" />
+              <folding>
+                <element signature="e#18#109#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -89,29 +97,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Exp</find>
-      <find>Expression</find>
-      <find>extends:</find>
-      <find>ProcessRequirement</find>
-      <find>output</find>
-      <find>InputParameter</find>
-      <find>process</find>
-      <find>Parameter</find>
-      <find>OutputParameter</find>
-      <find>BaseTypesDoc</find>
-      <find>InputArraySchema</find>
-      <find>inputBinding</find>
-      <find>extends: Process</find>
-      <find>Workflow</find>
-      <find>WorkflowOutputParameter</find>
-      <find>WorkflowStep</find>
-      <find>WorkflowStepInput</find>
-      <find>Sink</find>
-      <find>Requirement</find>
-      <find>extends: ProcessRequirement</find>
-      <find>- type: record</find>
-      <find>CommandLineToolDoc</find>
-      <find>CommandLineToo</find>
       <find>CommandInputParameter</find>
       <find>CommandInputRecordSchema</find>
       <find>InputBinding</find>
@@ -119,6 +104,29 @@
       <find>runtime.cores</find>
       <find>inputs</find>
       <find>UnmarshalJSON</find>
+      <find>typeDSLResolution</find>
+      <find>Entry</find>
+      <find>Unmar</find>
+      <find>OutputParameter</find>
+      <find>OutParameter</find>
+      <find>Cannot Generate Type</find>
+      <find>ArraySchema</find>
+      <find>no class for</find>
+      <find>unknown class for struct</find>
+      <find>StepInputExpressionRequirement</find>
+      <find>InlineJava</find>
+      <find>ClassBase\s*`json:&quot;class&quot;`</find>
+      <find>Requirement</find>
+      <find>ClassBase</find>
+      <find>CommandInputSchema</find>
+      <find>switch</find>
+      <find>Process</find>
+      <find>Arguments</find>
+      <find>not set values</find>
+      <find>Separate</find>
+      <find>[]?</find>
+      <find>ExpressionTool</find>
+      <find>Operation</find>
     </findStrings>
     <replaceStrings>
       <replace>package runner</replace>
@@ -128,6 +136,7 @@
       <dir>irunner</dir>
       <dir>$PROJECT_DIR$/irunner</dir>
       <dir>$PROJECT_DIR$/</dir>
+      <dir>$PROJECT_DIR$/cwl/v1.0/v1.0</dir>
     </dirStrings>
   </component>
   <component name="GOROOT" path="/usr/local/go" />
@@ -140,46 +149,21 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/runner/process.go" />
-        <option value="$PROJECT_DIR$/runner/utils.go" />
-        <option value="$PROJECT_DIR$/runner/file.go" />
-        <option value="$PROJECT_DIR$/mariner/engine.go" />
-        <option value="$PROJECT_DIR$/runner/output.go" />
-        <option value="$PROJECT_DIR$/runner/tool.go" />
-        <option value="$PROJECT_DIR$/runner/test/utils.go" />
-        <option value="$PROJECT_DIR$/runner/test/engine_test.go" />
-        <option value="$PROJECT_DIR$/runner/cleanup.go" />
-        <option value="$PROJECT_DIR$/runner/server.go" />
-        <option value="$PROJECT_DIR$/runner/jobs.go" />
-        <option value="$PROJECT_DIR$/runner/k8s.go" />
-        <option value="$PROJECT_DIR$/runner/config.go" />
-        <option value="$PROJECT_DIR$/runner/token.go" />
-        <option value="$PROJECT_DIR$/runner/tests/utils.go" />
-        <option value="$PROJECT_DIR$/runner/tests/basename_fields_test.go" />
-        <option value="$PROJECT_DIR$/runner/tests/base_test.go" />
-        <option value="$PROJECT_DIR$/alias.go" />
-        <option value="$PROJECT_DIR$/runner/input.go" />
-        <option value="$PROJECT_DIR$/runner/s3.go" />
-        <option value="$PROJECT_DIR$/runner/importer.go" />
         <option value="$PROJECT_DIR$/cwl/v1.0/v1.0/basename-fields-test.cwl" />
         <option value="$PROJECT_DIR$/runner/workflow.go" />
         <option value="$PROJECT_DIR$/runner/runtime.go" />
         <option value="$PROJECT_DIR$/runner/engine.go" />
         <option value="$PROJECT_DIR$/runner/js.go" />
         <option value="$PROJECT_DIR$/runner/command.go" />
-        <option value="$PROJECT_DIR$/entry.go" />
         <option value="$PROJECT_DIR$/runner/log.go" />
         <option value="$PROJECT_DIR$/irunner/requirements.go" />
-        <option value="$PROJECT_DIR$/input.go" />
         <option value="$PROJECT_DIR$/irunner/configs.go" />
         <option value="$PROJECT_DIR$/irunner/args.go" />
         <option value="$PROJECT_DIR$/irunner/expr.go" />
         <option value="$PROJECT_DIR$/irunner/log.go" />
         <option value="$PROJECT_DIR$/irunner/importer.go" />
         <option value="$PROJECT_DIR$/tests/runner_test/TODOList" />
-        <option value="$PROJECT_DIR$/root.go" />
         <option value="$PROJECT_DIR$/cwl/v1.0/v1.0/bwa-mem-tool.cwl" />
-        <option value="$PROJECT_DIR$/requirement.go" />
         <option value="$PROJECT_DIR$/irunner/process.go" />
         <option value="$PROJECT_DIR$/irunner/filesystem.go" />
         <option value="$PROJECT_DIR$/irunner/local.go" />
@@ -188,26 +172,42 @@
         <option value="$PROJECT_DIR$/binding.go" />
         <option value="$PROJECT_DIR$/irunner/engine.go" />
         <option value="$PROJECT_DIR$/irunner/outputs.go" />
-        <option value="$PROJECT_DIR$/parameter.go" />
         <option value="$PROJECT_DIR$/tests/runner_test/utils.go" />
         <option value="$PROJECT_DIR$/tests/runner_test/base_test.go" />
+        <option value="$PROJECT_DIR$/parameter.go" />
+        <option value="$PROJECT_DIR$/input_default.go" />
+        <option value="$PROJECT_DIR$/requirement.go" />
+        <option value="$PROJECT_DIR$/input.go" />
+        <option value="$PROJECT_DIR$/input_provided.go" />
+        <option value="$PROJECT_DIR$/step_input.go" />
+        <option value="$PROJECT_DIR$/process_test.go" />
+        <option value="$PROJECT_DIR$/process.go" />
+        <option value="$PROJECT_DIR$/cwl/v1.0/v1.0/cat-tool.cwl" />
+        <option value="$PROJECT_DIR$/process_abstract_test.go" />
+        <option value="$PROJECT_DIR$/process_abstract.go" />
+        <option value="$PROJECT_DIR$/commandLineTool.go" />
+        <option value="$PROJECT_DIR$/entry.go" />
+        <option value="$PROJECT_DIR$/root.go" />
+        <option value="$PROJECT_DIR$/arguments.go" />
+        <option value="$PROJECT_DIR$/common.go" />
+        <option value="$PROJECT_DIR$/salad.go" />
+        <option value="$PROJECT_DIR$/step.go" />
+        <option value="$PROJECT_DIR$/cwl_process.go" />
+        <option value="$PROJECT_DIR$/init.go" />
+        <option value="$PROJECT_DIR$/cwl_commandLineTool.go" />
+        <option value="$PROJECT_DIR$/cwl_workflow.go" />
+        <option value="$PROJECT_DIR$/cwl_operation.go" />
+        <option value="$PROJECT_DIR$/parser.go" />
+        <option value="$PROJECT_DIR$/cwl_workflow_test.go" />
+        <option value="$PROJECT_DIR$/cwl_commandLineTool_test.go" />
       </list>
     </option>
   </component>
-  <component name="ProjectConfigurationFiles">
-    <option name="files">
-      <list>
-        <option value="$PROJECT_DIR$/.idea/cwl.go-lijiang2014.iml" />
-        <option value="$PROJECT_DIR$/.idea/misc.xml" />
-        <option value="$PROJECT_DIR$/.idea/modules.xml" />
-        <option value="$PROJECT_DIR$/.idea/vcs.xml" />
-      </list>
-    </option>
-  </component>
-  <component name="ProjectFrameBounds">
-    <option name="y" value="25" />
-    <option name="width" value="1680" />
-    <option name="height" value="972" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="1680" />
+    <option name="y" value="111" />
+    <option name="width" value="1920" />
+    <option name="height" value="1055" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -231,6 +231,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="go.gopath.indexing.explicitly.defined" value="true" />
     <property name="go.import.settings.migrated" value="true" />
@@ -257,124 +258,121 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Test.TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test">
-    <configuration name="TestCWLR2_CommandLineTool in github.com/otiai10/cwl.go/tests/runner_test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.go test cwl.go-lijiang2014">
+    <configuration name="TestCWL_expressionTool_1 in github.com/otiai10/cwl.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="cwl.go-lijiang2014" />
-      <working_directory value="$PROJECT_DIR$/tests/runner_test" />
+      <working_directory value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/otiai10/cwl.go/tests/runner_test" />
+      <package value="github.com/otiai10/cwl.go" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestCWLR2_CommandLineTool$" />
+      <pattern value="^TestCWL_expressionTool_1$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestCWLR2_detail in github.com/otiai10/cwl.go/tests/runner_test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="cwl.go-lijiang2014" />
-      <working_directory value="$PROJECT_DIR$/tests/runner_test" />
+      <working_directory value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/otiai10/cwl.go/tests/runner_test" />
+      <package value="github.com/otiai10/cwl.go" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestCWLR2_detail$" />
+      <pattern value="^TestCWL_workflow_1$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="cwl_process_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="cwl.go-lijiang2014" />
-      <working_directory value="$PROJECT_DIR$/tests/runner_test" />
+      <working_directory value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/otiai10/cwl.go/tests/runner_test" />
+      <kind value="FILE" />
+      <package value="github.com/otiai10/cwl.go" />
       <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestCWLR2_run1$" />
+      <filePath value="$PROJECT_DIR$/cwl_process_test.go" />
       <method v="2" />
     </configuration>
-    <configuration name="TestCWLR2_test1 in github.com/otiai10/cwl.go/tests/runner_test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="cwl_workflow_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="cwl.go-lijiang2014" />
-      <working_directory value="$PROJECT_DIR$/tests/runner_test" />
+      <working_directory value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/otiai10/cwl.go/tests/runner_test" />
+      <kind value="FILE" />
+      <package value="github.com/otiai10/cwl.go" />
       <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestCWLR2_test1$" />
+      <filePath value="$PROJECT_DIR$/cwl_workflow_test.go" />
       <method v="2" />
     </configuration>
-    <configuration name="TestCWL_2 in github.com/otiai10/cwl.go/tests/runner_test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="go test cwl.go-lijiang2014" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="cwl.go-lijiang2014" />
-      <working_directory value="$PROJECT_DIR$/tests/runner_test" />
+      <working_directory value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/otiai10/cwl.go/tests/runner_test" />
-      <directory value="$PROJECT_DIR$/" />
+      <kind value="DIRECTORY" />
+      <package value="github.com/otiai10/cwl.go" />
+      <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestCWL_2$" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" />
-        <item itemvalue="Go Test.TestCWLR2_detail in github.com/otiai10/cwl.go/tests/runner_test" />
-        <item itemvalue="Go Test.TestCWLR2_test1 in github.com/otiai10/cwl.go/tests/runner_test" />
-        <item itemvalue="Go Test.TestCWLR2_CommandLineTool in github.com/otiai10/cwl.go/tests/runner_test" />
-        <item itemvalue="Go Test.TestCWL_2 in github.com/otiai10/cwl.go/tests/runner_test" />
+        <item itemvalue="Go Test.go test cwl.go-lijiang2014" />
+        <item itemvalue="Go Test.TestCWL_expressionTool_1 in github.com/otiai10/cwl.go" />
+        <item itemvalue="Go Test.TestCWL_workflow_1 in github.com/otiai10/cwl.go" />
+        <item itemvalue="Go Test.cwl_workflow_test.go" />
+        <item itemvalue="Go Test.cwl_process_test.go" />
       </list>
     </recent_temporary>
   </component>
   <component name="TestHistory">
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 45m 08s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 25m 02s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 51m 06s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 25m 54s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 51m 40s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 27m 55s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 51m 54s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 28m 42s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 52m 04s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 29m 29s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 52m 11s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 31m 22s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 52m 22s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 32m 32s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 52m 32s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_workflow_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 32m 51s.xml">
+      <configuration name="TestCWL_workflow_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 52m 54s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_expressionTool_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 34m 19s.xml">
+      <configuration name="TestCWL_expressionTool_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
-    <history-entry file="TestCWLR2_run1_in_github_com_otiai10_cwl_go_tests_runner_test - 2022.09.28 at 09h 53m 02s.xml">
-      <configuration name="TestCWLR2_run1 in github.com/otiai10/cwl.go/tests/runner_test" configurationId="GoTestRunConfiguration" />
+    <history-entry file="TestCWL_expressionTool_1_in_github_com_otiai10_cwl_go - 2022.10.08 at 17h 35m 59s.xml">
+      <configuration name="TestCWL_expressionTool_1 in github.com/otiai10/cwl.go" configurationId="GoTestRunConfiguration" />
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="25" width="1680" height="972" extended-state="0" />
+    <frame x="1680" y="111" width="1920" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.76623374" visible="true" weight="0.23809524" />
-      <window_info id="Structure" order="1" sideWeight="0.23376623" side_tool="true" weight="0.25579977" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.5377907" visible="true" weight="0.20766774" />
+      <window_info id="Structure" order="1" sideWeight="0.4622093" side_tool="true" visible="true" weight="0.20766774" />
+      <window_info id="Favorites" order="2" sideWeight="0.46180964" side_tool="true" weight="0.23809524" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32902467" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.36192715" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.31139836" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32869378" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.2633833" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.31049252" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Database Changes" order="8" />
       <window_info anchor="bottom" id="Version Control" order="9" />
-      <window_info anchor="bottom" id="Terminal" order="10" weight="0.22444183" />
+      <window_info anchor="bottom" id="Terminal" order="10" weight="0.26556993" />
       <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
-      <window_info anchor="right" id="Coverage" side_tool="true" visible="true" weight="0.32967034" />
+      <window_info anchor="right" id="Coverage" side_tool="true" weight="0.25091577" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -414,352 +412,348 @@
           <properties />
           <option name="timeStamp" value="53" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <condition expression="recvName == &quot;CommandInputParameter&quot;" language="go" />
+          <url>file://$PROJECT_DIR$/parser.go</url>
+          <line>91</line>
+          <properties />
+          <option name="timeStamp" value="80" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/parser.go</url>
+          <line>98</line>
+          <properties />
+          <option name="timeStamp" value="92" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <condition expression="key == &quot;steps&quot;" language="go" />
+          <url>file://$PROJECT_DIR$/parser.go</url>
+          <line>157</line>
+          <properties />
+          <option name="timeStamp" value="95" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/cwl_go_lijiang2014$TestCWLR2_CommandLineTool_in_github_com_otiai10_cwl_go_tests_runner_test.out" NAME="TestCWLR2_CommandLineTool in github.com/otiai10/cwl.go/tests/runner_test Coverage Results" MODIFIED="1664185192985" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
+  <component name="debuggerHistoryManager">
+    <expressions id="breakpointCondition">
+      <expression>
+        <expression-string>key == &quot;steps&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>key == &quot;separate&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>key == &quot;inputBinding&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>key == &quot;baseCommand&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>key == &quot;baseCommands&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>key == &quot;inputs&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>keyGo == &quot;BaseCommands&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>recvName == &quot;BaseCommands&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>recvName == &quot;CommandInputParameter&quot; &amp;&amp; key == &quot;inputBinding&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>key == &quot;inputBinding&quot; &amp;&amp; recvName == &quot;Command&quot;</expression-string>
+        <language-id>go</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+    </expressions>
+  </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/tests/bwa_mem_tool_test.go">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat3-nodocker.cwl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="95">
+          <caret line="5" column="7" selection-start-line="5" selection-start-column="2" selection-end-line="5" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat3-tool.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/arguments.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="114">
-          <caret line="6" column="15" selection-start-line="6" selection-start-column="11" selection-end-line="6" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/bwa-mem-job.json">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat3-tool-mediumcut.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/configs.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="343">
-          <caret line="52" column="13" lean-forward="true" selection-start-line="52" selection-start-column="13" selection-end-line="52" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/args.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="133">
-          <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/test14.cwl">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat3-tool-shortcut.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/test13.cwl">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat4-tool.cwl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="304">
+          <caret line="16" column="23" selection-start-line="16" selection-start-column="23" selection-end-line="16" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat5-tool.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/test12.cwl">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/cat-tool.cwl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/conflict-wf.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/test11.cwl">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines1-wf.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/CommonWorkflowLanguage.yml">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines2-wf.cwl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/CommandLineTool.yml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9519">
-          <caret line="501" column="18" lean-forward="true" selection-start-line="501" selection-start-column="18" selection-end-line="501" selection-end-column="18" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines3-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/Process.yml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7315">
-          <caret line="406" column="11" lean-forward="true" selection-start-line="406" selection-start-column="11" selection-end-line="406" selection-end-column="11" />
-          <folding>
-            <element signature="e#260#375#0" />
-            <element signature="e#377#736#0" />
-          </folding>
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines4-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/salad/schema_salad/tests/test_schema/Workflow.yml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-423">
-          <caret line="119" column="22" selection-start-line="119" selection-start-column="12" selection-end-line="119" selection-end-column="22" />
-          <folding>
-            <element signature="e#94#2363#0" />
-            <element signature="e#2365#3028#0" />
-            <element signature="e#5253#5847#0" />
-            <element signature="e#5848#9179#0" />
-          </folding>
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines5-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/CommandLineTool.yml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4218">
-          <caret line="222" column="19" lean-forward="true" selection-start-line="222" selection-start-column="19" selection-end-line="222" selection-end-column="19" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines6-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/log.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="22" column="14" selection-start-line="22" selection-start-column="14" selection-end-line="22" selection-end-column="14" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines7-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/importer.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="20" column="32" selection-start-line="20" selection-start-column="32" selection-end-line="20" selection-end-column="32" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines8-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/runner_test/TODOList">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/dir3.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/args.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-331">
-          <caret line="151" selection-start-line="151" selection-end-line="151" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/dir2.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/hints.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1083">
-          <caret line="57" column="21" lean-forward="true" selection-start-line="57" selection-start-column="21" selection-end-line="57" selection-end-column="21" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/dir.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines9-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/default_path.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/default_path_job.yml">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines13-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines12-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines11-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/count-lines10-wf.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file:///usr/local/go/src/fmt/print.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="246" selection-start-line="246" selection-end-line="246" />
+        <state relative-caret-position="220">
+          <caret line="246" column="5" selection-start-line="246" selection-start-column="5" selection-end-line="246" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/salad.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="212">
+          <caret line="17" column="23" lean-forward="true" selection-start-line="17" selection-start-column="23" selection-end-line="17" selection-end-column="23" />
+          <folding>
+            <element signature="e#13#61#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/bwa-mem-tool.cwl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="95">
-          <caret line="5" column="5" lean-forward="true" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
+        <state relative-caret-position="387">
+          <caret line="42" column="8" lean-forward="true" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="8" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../gopher/pkg/mod/github.com/robertkrimen/otto@v0.0.0-20211008084715-4eacda02dd21/error.go">
+    <entry file="file://$PROJECT_DIR$/common.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="205">
-          <caret line="224" selection-start-line="224" selection-end-line="224" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/go/src/runtime/panic.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="846" selection-start-line="846" selection-end-line="846" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/go/src/runtime/asm_amd64.s">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="538" selection-start-line="538" selection-end-line="538" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/requirement.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="51" selection-start-line="51" selection-end-line="51" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/runner/input.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="321">
-          <caret line="513" column="26" selection-start-line="513" selection-start-column="25" selection-end-line="513" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../gopher/pkg/mod/github.com/robertkrimen/otto@v0.0.0-20211008084715-4eacda02dd21/otto.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="121">
-          <caret line="320" column="2" lean-forward="true" selection-start-line="320" selection-start-column="2" selection-end-line="320" selection-end-column="2" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/input.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="25" column="20" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/expr.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-17">
-          <caret line="155" column="3" lean-forward="true" selection-start-line="155" selection-start-column="3" selection-end-line="155" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/go/src/testing/testing.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="873" selection-start-line="873" selection-end-line="873" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../gopher/pkg/mod/github.com/otiai10/mint@v1.3.2/mint.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="53" column="5" selection-start-line="53" selection-start-column="5" selection-end-line="53" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/go/src/os/path.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="17" column="5" selection-start-line="17" selection-start-column="5" selection-end-line="17" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/inputs.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="243" column="14" lean-forward="true" selection-start-line="243" selection-start-column="14" selection-end-line="243" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/go/src/os/exec/exec.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="133" column="2" selection-start-line="133" selection-start-column="2" selection-end-line="133" selection-end-column="2" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/secondary_file.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="3" column="5" selection-start-line="3" selection-start-column="5" selection-end-line="3" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/output.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3673">
-          <caret line="27" column="25" selection-start-line="27" selection-start-column="25" selection-end-line="27" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/binding.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="20" column="41" selection-start-line="20" selection-start-column="41" selection-end-line="20" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/exec.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="251">
-          <caret line="39" selection-start-line="39" selection-end-line="39" />
+        <state relative-caret-position="511">
+          <caret line="132" column="1" lean-forward="true" selection-start-line="111" selection-end-line="132" selection-end-column="1" />
           <folding>
-            <element signature="e#17#69#0" expanded="true" />
+            <element signature="e#13#49#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/process.go">
+    <entry file="file://$PROJECT_DIR$/step.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="87" selection-start-line="87" selection-end-line="87" />
+        <state relative-caret-position="882">
+          <caret line="72" column="1" lean-forward="true" selection-start-line="72" selection-start-column="1" selection-end-line="72" selection-end-column="1" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/filesystem.go">
+    <entry file="file://$PROJECT_DIR$/init.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="95">
-          <caret line="11" column="36" selection-start-line="11" selection-start-column="36" selection-end-line="11" selection-end-column="36" />
+        <state relative-caret-position="342">
+          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/local/go/src/path/filepath/path_unix.go">
+    <entry file="file://$PROJECT_DIR$/basecommands.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="11" selection-start-line="11" selection-end-line="11" />
+        <state relative-caret-position="190">
+          <caret line="10" lean-forward="true" selection-start-line="10" selection-end-line="10" />
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/local/go/src/path/filepath/path.go">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/any-type-job.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/any-type-compat.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/array-of-strings-job.yml">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/binding-test.cwl">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/null-expression2-tool.cwl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="208" selection-start-line="208" selection-end-line="208" />
+        <state relative-caret-position="228">
+          <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/local.go">
+    <entry file="file://$PROJECT_DIR$/cwl_process_test.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="406">
-          <caret line="139" column="18" lean-forward="true" selection-start-line="139" selection-start-column="18" selection-end-line="139" selection-end-column="18" />
+        <state relative-caret-position="-1319">
+          <caret line="34" column="3" lean-forward="true" selection-start-line="34" selection-start-column="3" selection-end-line="34" selection-end-column="3" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/outputs.go">
+    <entry file="file:///usr/local/go/src/reflect/value.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="10" column="17" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
+        <state relative-caret-position="220">
+          <caret line="1713" column="15" selection-start-line="1713" selection-start-column="15" selection-end-line="1713" selection-end-column="15" />
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/local/go/src/encoding/json/decode.go">
+    <entry file="file:///usr/local/go/src/reflect/type.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="171">
-          <caret line="666" selection-start-line="666" selection-end-line="666" />
+        <state relative-caret-position="205">
+          <caret line="784" selection-start-line="784" selection-end-line="784" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/irunner/engine.go">
+    <entry file="file://$PROJECT_DIR$/arguments.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="164">
-          <caret line="82" column="20" selection-start-line="82" selection-start-column="20" selection-end-line="82" selection-end-column="20" />
+        <state relative-caret-position="198">
+          <caret line="25" column="20" selection-start-line="25" selection-start-column="20" selection-end-line="25" selection-end-column="20" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/root.go">
+    <entry file="file:///usr/local/go/src/strings/strings.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="57">
-          <caret line="90" column="5" lean-forward="true" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
+        <state relative-caret-position="-998">
+          <caret line="866" column="1" lean-forward="true" selection-start-line="866" selection-start-column="1" selection-end-line="866" selection-end-column="1" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/parameter.go">
+    <entry file="file://$PROJECT_DIR$/cwl/v1.0/v1.0/basename-fields-test.cwl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="121">
-          <caret line="75" column="34" selection-start-line="75" selection-end-line="76" />
+        <state relative-caret-position="524">
+          <caret line="33" lean-forward="true" selection-start-line="33" selection-end-line="33" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/runner_test/utils.go">
+    <entry file="file://$PROJECT_DIR$/cwl_commandLineTool.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="113">
-          <caret line="119" column="27" lean-forward="true" selection-start-line="119" selection-start-column="27" selection-end-line="119" selection-end-column="27" />
+        <state relative-caret-position="524">
+          <caret line="274" column="1" lean-forward="true" selection-start-line="264" selection-end-line="274" selection-end-column="1" />
+          <folding>
+            <element signature="e#13#53#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cwl/v1.0/conformance_test_v1.0.yaml">
+    <entry file="file://$PROJECT_DIR$/cwl_process.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="13" column="25" lean-forward="true" selection-start-line="13" selection-start-column="25" selection-end-line="13" selection-end-column="25" />
+        <state relative-caret-position="212">
+          <caret line="148" column="24" lean-forward="true" selection-start-line="148" selection-start-column="24" selection-end-line="148" selection-end-column="24" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/runner_test/base_test.go">
+    <entry file="file://$PROJECT_DIR$/cwl_operation.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="341">
-          <caret line="83" column="1" lean-forward="true" selection-start-line="83" selection-start-column="1" selection-end-line="83" selection-end-column="1" />
+        <state relative-caret-position="505">
+          <caret line="28" column="12" lean-forward="true" selection-start-line="28" selection-start-column="12" selection-end-line="28" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl_workflow.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="212">
+          <caret line="55" column="2" selection-start-line="55" selection-start-column="2" selection-end-line="55" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parser.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="212">
+          <caret line="376" column="16" selection-start-line="376" selection-start-column="16" selection-end-line="376" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl_workflow_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="475">
+          <caret line="25" column="3" lean-forward="true" selection-start-line="18" selection-end-line="25" selection-end-column="3" />
+          <folding>
+            <element signature="e#18#109#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cwl_commandLineTool_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="307">
+          <caret line="23" column="10" lean-forward="true" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="10" />
+          <folding>
+            <element signature="e#18#109#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

@@ -201,7 +201,7 @@ func (task *Task) dotproduct(scatterParams map[string][]interface{}) (err error)
 		task.infof("begin build subtask %v", i)
 		subtask := &Task{
 			Root:         task.Root,
-			Parameters:   make(cwl.Parameters),
+			Parameters:   make(cwl.Values),
 			OriginalStep: task.OriginalStep,
 			Done:         &falseVal,
 			Log:          logger(),
@@ -243,7 +243,7 @@ func (task *Task) flatCrossproduct(scatterParams map[string][]interface{}) (err 
 		task.infof("begin build subtask %v", scatterIndex)
 		subtask := &Task{
 			Root:         task.Root,
-			Parameters:   make(cwl.Parameters),
+			Parameters:   make(cwl.Values),
 			OriginalStep: task.OriginalStep,
 			Done:         &falseVal,
 			Log:          logger(),

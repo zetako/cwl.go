@@ -46,7 +46,7 @@ func (_ StepInput) New(i interface{}) StepInput {
 						case "linkMerge":
 							dest.LinkMerge = v.(string)
 						case "default":
-							dest.Default = InputDefault{}.New(v)
+							//dest.Default = InputDefault{}.New(v)
 						case "valueFrom":
 							dest.ValueFrom = v.(string)
 						}

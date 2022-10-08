@@ -9,17 +9,17 @@ import (
 )
 
 type Filesystem interface {
-  Create(path, contents string) (cwl.Entry, error)
-  Info(loc string) (cwl.Entry, error)
+  Create(path, contents string) (cwl.FileDir, error)
+  Info(loc string) (cwl.FileDir, error)
   Contents(loc string) (string, error)
-  Glob(pattern string) ([]cwl.Entry, error)
+  Glob(pattern string) ([]cwl.FileDir, error)
   EnsureDir(dir string, mode os.FileMode) error
   Migrate(source, dest string) error
 }
 
-func (process *Process) resolveFile(f cwl.Entry, loadContents bool) (cwl.Entry, error) {
+func (process *Process) resolveFile(f cwl.FileDir, loadContents bool) (cwl.FileDir, error) {
   // TODO revisit pointer to File
-  var x cwl.Entry
+  var x cwl.FileDir
   x.Class = f.Class
   // http://www.commonwl.org/v1.0/CommandLineTool.html#File
   // "As a special case, if the path field is provided but the location field is not,
@@ -84,7 +84,7 @@ func (process *Process) resolveFile(f cwl.Entry, loadContents bool) (cwl.Entry, 
   // TODO figure out how to stage files.
   //      namespace inputs so they don't conflict.
   //      remember, the args building depends on this path, so it must happen
-  //      in the Process code.
+  //      in the ProcessBase code.
   //f.Path = filepath.Join("/inputs", filepath.Base(x.Path))
   f.Path = filepath.Base(x.Path)
   f.Checksum = x.Checksum
@@ -102,7 +102,7 @@ func (process *Process) resolveFile(f cwl.Entry, loadContents bool) (cwl.Entry, 
 }
 
 
-func (process *Process) resolveSecondaryFiles(file cwl.Entry, x cwl.SecondaryFile) error {
+func (process *Process) resolveSecondaryFiles(file cwl.FileDir, x cwl.SecondaryFile) error {
   
   // cwl spec:
   // "If the value is an expression, the value of self in the expression
@@ -115,7 +115,7 @@ func (process *Process) resolveSecondaryFiles(file cwl.Entry, x cwl.SecondaryFil
   // or File or Directory objects. It is legal to reference an unchanged File
   // or Directory object taken from input as a secondaryFile.
   //// TODO
-  //if expr.IsExpression(x.Entry) {
+  //if expr.IsExpression(x.FileDir) {
   //  process.eval(x, file)
   //}
   
@@ -139,7 +139,7 @@ func (process *Process) resolveSecondaryFiles(file cwl.Entry, x cwl.SecondaryFil
   }
   
   // "Append the remainder of the string to the end of the file location."
-  sec := cwl.Entry{
+  sec := cwl.FileDir{
     Class: "File",
     Location: location + pattern,
   }

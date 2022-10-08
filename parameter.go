@@ -10,19 +10,19 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Parameter ...
-type Parameter interface{}
+// Value ...
+type Value interface{}
 
-// Parameters represents specific parameters to run workflow which is described by CWL.
-type Parameters map[string]Parameter
+// Values represents specific parameters to run workflow which is described by CWL.
+type Values map[string]Value
 
-// NewParameters ...
-func NewParameters() *Parameters {
-	return &Parameters{}
+// NewValues ...
+func NewValues() *Values {
+	return &Values{}
 }
 
 // Decode ...
-func (p *Parameters) Decode(f *os.File) error {
+func (p *Values) Decode(f *os.File) error {
 	switch filepath.Ext(f.Name()) {
 	case "json":
 		return json.NewDecoder(f).Decode(p)
@@ -42,7 +42,7 @@ const (
 	NoClass ParameterClass = "unknown"
 )
 
-//func (recv Parameter) Class() ParameterClass {
+//func (recv Value) ClassBase() ParameterClass {
 //	obj, ok := recv.(map[string]interface{})
 //	if ok {
 //		tClass, got := obj["class"]
@@ -51,7 +51,7 @@ const (
 //		}
 //		switch tClass {
 //		case "File":
-//			var entry Entry
+//			var entry FileDir
 //			json.Unmarshal(b,&entry)
 //			recv = &entry
 //		}
@@ -64,7 +64,7 @@ const (
 //		}
 //		switch tClass {
 //		case "File":
-//			var entry Entry
+//			var entry FileDir
 //			json.Unmarshal(b,&entry)
 //			recv = &entry
 //
@@ -73,9 +73,9 @@ const (
 //	return root.UnmarshalMap(docs)
 //}
 
-func (recv *Parameters) UnmarshalJSON(b []byte) error {
+func (recv *Values) UnmarshalJSON(b []byte) error {
 	if recv == nil {
-		recv = NewParameters()
+		recv = NewValues()
 	}
 	var any interface{}
 	if err := json.Unmarshal(b, &any); err != nil {
@@ -88,11 +88,11 @@ func (recv *Parameters) UnmarshalJSON(b []byte) error {
 	for key, value := range params {
 		//switch t := value.(type) {
 		//case []interface{}:
-		//	arr := make([]Parameter,len(t))
+		//	arr := make([]Value,len(t))
 		//	for i, item := range t {
 		//		arr[i] = convertParameter(item)
 		//	}
-		//	(*recv)[key] = Parameter(arr)
+		//	(*recv)[key] = Value(arr)
 		//case map[string]interface{}:
 		//	tClass, got := t["class"]
 		//	if !got {
@@ -100,7 +100,7 @@ func (recv *Parameters) UnmarshalJSON(b []byte) error {
 		//	}
 		//	switch tClass {
 		//	case "File":
-		//		var entry Entry
+		//		var entry FileDir
 		//		raw, err := json.Marshal(value)
 		//		if err != nil {
 		//			return err
@@ -108,7 +108,7 @@ func (recv *Parameters) UnmarshalJSON(b []byte) error {
 		//		if err = json.Unmarshal(raw,&entry); err != nil {
 		//			return err
 		//		}
-		//		(*recv)[key] = Parameter(entry)
+		//		(*recv)[key] = Value(entry)
 		//		continue
 		//	}
 		//}
@@ -117,10 +117,10 @@ func (recv *Parameters) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func convertParameter(bean interface{}) (out Parameter) {
+func convertParameter(bean interface{}) (out Value) {
 	switch t := bean.(type) {
 	case []interface{}:
-		arr := make([]Parameter,len(t))
+		arr := make([]Value,len(t))
 		for i, item := range t {
 			arr[i] = convertParameter(item)
 		}
@@ -132,7 +132,7 @@ func convertParameter(bean interface{}) (out Parameter) {
 		}
 		switch tClass {
 		case "File", "Directory":
-			var entry Entry
+			var entry FileDir
 			raw, err := json.Marshal(bean)
 			if err != nil {
 				return err

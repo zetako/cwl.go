@@ -81,14 +81,14 @@ type TestDoc struct {
 	Label string
 	Tool string
 	Job string
-	Output cwl.Parameters
+	Output cwl.Values
 	Doc string
 }
 
 func (recv *TestDoc) UnmarshalJSON(b []byte) error {
 	type alias TestDoc
 	doc := (*alias)(recv)
-	recv.Output = cwl.Parameters{}
+	recv.Output = cwl.Values{}
 	return json.Unmarshal(b, doc)
 }
 

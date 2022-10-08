@@ -28,7 +28,7 @@ import (
  	a Task is a process is a node on the graph is one of [Workflow, CommandLineTool, ExpressionTool, ...]
 
 	Task is a nested object
-	A Task represents a process, which is a node on the graph (NOTE: maybe rename Task to Process, or something)
+	A Task represents a process, which is a node on the graph (NOTE: maybe rename Task to ProcessBase, or something)
 	So a Task is either a leaf in the graph (a Tool)
 	or not a leaf in the graph (a workflow)
 	If a Task is a workflow, then it has steps
@@ -40,7 +40,7 @@ import (
 */
 type Task struct {
 	sync.RWMutex  `json:"-"`
-	Parameters    cwl.Parameters         // input parameters of this task
+	Parameters    cwl.Values             // input parameters of this task
 	Root          *cwl.Root              // "root" of the "namespace" of the cwl file for this task
 	Outputs       map[string]interface{} // output parameters of this task
 	Scatter       []string               // if task is a step in a workflow and requires scatter; input parameters to scatter are stored here
@@ -132,7 +132,7 @@ func (engine *K8sEngine) resolveGraph(rootMap map[string]*cwl.Root, curTask *Tas
 
 			newTask := &Task{
 				Root:         stepRoot,
-				Parameters:   make(cwl.Parameters),
+				Parameters:   make(cwl.Values),
 				OriginalStep: &curTask.Root.Steps[i],
 				Log:          logger(),
 				Done:         &falseVal,
@@ -156,7 +156,7 @@ func (engine *K8sEngine) runDocument() error {
 
 	var root cwl.Root
 	var err error
-	var originalParams cwl.Parameters
+	var originalParams cwl.Values
 
 	// Task object for top level workflow, later to be recursively populated
 	// with task objects for all the other nodes in the workflow graph
@@ -185,7 +185,7 @@ func (engine *K8sEngine) runDocument() error {
 		return nil
 	}
 	// small preprocessing step to get the right input param IDs for the top level workflow
-	params := make(cwl.Parameters)
+	params := make(cwl.Values)
 	for id, value := range originalParams {
 		params[fmt.Sprintf("%v/%v", mainProcessID, id)] = value
 	}

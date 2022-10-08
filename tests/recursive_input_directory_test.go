@@ -16,7 +16,7 @@ func TestDecode_recursive_input_directory(t *testing.T) {
 	Expect(t, root.Class).ToBe("CommandLineTool")
 	Expect(t, len(root.Requirements)).ToBe(2)
 	Expect(t, root.Requirements[0].Class).ToBe("InitialWorkDirRequirement")
-	// Expect(t, root.Requirements[1].Listing[0].Entry).ToBe("$(inputs.input_dir)")
+	// Expect(t, root.Requirements[1].Listing[0].FileDir).ToBe("$(inputs.input_dir)")
 	// Expect(t, root.Requirements[1].Listing[0].EntryName).ToBe("work_dir")
 	// Expect(t, root.Requirements[1].Listing[0].Writable).ToBe(true)
 	Expect(t, root.Requirements[1].Class).ToBe("ShellCommandRequirement")

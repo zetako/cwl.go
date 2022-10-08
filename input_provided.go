@@ -10,7 +10,7 @@ import (
 type Provided struct {
 	ID    string
 	Raw   interface{}
-	Entry *Entry // In most cases, it's "File" if "Entry" exists
+	Entry *FileDir // In most cases, it's "File" if "FileDir" exists
 	Error error
 
 	// TODO: Refactor
@@ -18,21 +18,21 @@ type Provided struct {
 }
 
 // New constructs new "Provided" struct.
-func (provided Provided) New(id string, i interface{}) *Provided {
-	dest := &Provided{ID: id, Raw: i}
-	switch v := i.(type) {
-	case nil:
-		return nil
-	case int:
-		dest.Int = v
-	case map[interface{}]interface{}: // It's "File" in most cases
-		dest.Entry, dest.Error = dest.EntryFromDictionary(v)
-	}
-	return dest
-}
+//func (provided Provided) New(id string, i interface{}) *Provided {
+//	dest := &Provided{ID: id, Raw: i}
+//	switch v := i.(type) {
+//	case nil:
+//		return nil
+//	case int:
+//		dest.Int = v
+//	case map[interface{}]interface{}: // It's "File" in most cases
+//		dest.Entry, dest.Error = dest.EntryFromDictionary(v)
+//	}
+//	return dest
+//}
 
 // EntryFromDictionary ...
-func (provided Provided) EntryFromDictionary(dict map[interface{}]interface{}) (*Entry, error) {
+func (provided Provided) EntryFromDictionary(dict map[interface{}]interface{}) (FileDir, error) {
 	if dict == nil {
 		return nil, nil
 	}
@@ -46,10 +46,9 @@ func (provided Provided) EntryFromDictionary(dict map[interface{}]interface{}) (
 	case "File":
 		// Use location if specified
 		if location != nil {
-			return &Entry{
-				Class:    class,
-				Location: fmt.Sprintf("%v", location),
-				File:     File{},
+			return &File{
+				ClassBase: ClassBase{class},
+				Location:  fmt.Sprintf("%v", location),
 			}, nil
 		}
 		// Use contents if specified
@@ -62,10 +61,9 @@ func (provided Provided) EntryFromDictionary(dict map[interface{}]interface{}) (
 			if _, err := tmpfile.WriteString(contentsstring); err != nil {
 				return nil, err
 			}
-			return &Entry{
-				Class:    class,
-				Location: tmpfile.Name(),
-				File:     File{},
+			return &Directory{
+				ClassBase: ClassBase{class},
+				Location:  tmpfile.Name(),
 			}, nil
 		}
 	}

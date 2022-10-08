@@ -1,15 +1,472 @@
 package cwl
 
-// StringArrayable converts "xxx" to ["xxx"] if it's not slice.
-func StringArrayable(i interface{}) []string {
-	dest := []string{}
-	switch x := i.(type) {
-	case []interface{}:
-		for _, s := range x {
-			dest = append(dest, s.(string))
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"strconv"
+	
+	"reflect"
+	"strings"
+)
+
+type RecordFieldGraph struct {
+	Example interface{}
+	//Fields map[string]*RecordFieldGraph
+}
+
+type testClass struct {
+	Class string `json:"class"`
+}
+
+var classMap = map[string]interface{}{}
+
+var noClassError =  fmt.Errorf("no class for struct")
+var unknownClassError =  fmt.Errorf("unknown class for struct")
+
+// 根据接口映射产生
+func GenerateTypesFormClass(raw []byte, db map[string]interface{}) (reflect.Type, error) {
+	class := &testClass{}
+	json.Unmarshal(raw, class)
+	if name:= class.Class; name != "" {
+		if db != nil {
+			v, got := db[name]
+			if got {
+				return reflect.TypeOf(v), nil
+			}
 		}
-	case string:
-		dest = append(dest, x)
+		return reflect.TypeOf(nil), fmt.Errorf("unknown class for struct %s", name)
 	}
-	return dest
+	return reflect.TypeOf(nil), noClassError
+}
+
+
+// 根据接口映射产生
+func GenerateTypesFormInterface(iType reflect.Type,db map[string]*RecordFieldGraph) (reflect.Type, error) {
+	record ,got := db[iType.Name()]
+	if got {
+		return reflect.TypeOf(record.Example), nil
+	}
+	return reflect.TypeOf(nil),fmt.Errorf("Cannot Generate Type %s", iType.Name())
+}
+
+
+// Just For test
+func (p *ProcessBase)  UnmarshalJSON(data []byte) error{
+	typeOfRecv := reflect.TypeOf(*p)
+	valueOfRecv := reflect.ValueOf(p).Elem()
+	db := make(map[string]*RecordFieldGraph)
+	db["InputParameter"] = &RecordFieldGraph{ Example: InputParameterBase{} }
+	db["OutputParameter"] = &RecordFieldGraph{ Example: OutputParameterBase{} }
+	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
+		return err
+	}
+	return nil
+}
+
+// parseObject
+// 根据 salad 扩展 json 结构体的解析
+// ✅ 支持 salad.mapSubject 特性
+// - [ ] TODO 支持 salad.default 特性
+// ✅ 支持 通过 ClassBase 来推断 Interface 的 具体 Struct
+// ✅ 支持 json:inline 特性
+//	- [ ] 优化：避免 map[key]Raw 的重复解析
+func parseObject(typeOfRecv reflect.Type,valueOfRecv  reflect.Value,
+	data []byte, db map[string]*RecordFieldGraph) (err error) {
+	//log.Println("old value", typeOfRecv.Name(), valueOfRecv.Interface(), valueOfRecv.Type().Name())
+	if (valueOfRecv.Kind() == reflect.Interface || valueOfRecv.Kind() == reflect.Ptr) && valueOfRecv.IsNil() {
+		return nil
+	}
+	if typeOfRecv.Kind() == reflect.Interface {
+		typeOfRecv = typeOfRecv.Elem()
+	}
+	if valueOfRecv.Kind() == reflect.Interface {
+		valueOfRecv = valueOfRecv.Elem()
+		//log.Println("new value", typeOfRecv.Name(), valueOfRecv.Interface(), valueOfRecv.Type().Name())
+		if valueOfRecv.IsNil() {
+			return nil
+		}
+	}
+	recvName := typeOfRecv.Name()
+	_ = recvName
+	if valueOfRecv.Kind() == reflect.Ptr {
+		valueOfRecv = valueOfRecv.Elem()
+		//log.Println("pt value", typeOfRecv.Name(), valueOfRecv.Interface(), valueOfRecv.Type().Name())
+	}
+	bean := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(data, &bean); err != nil {
+		return err
+	}
+	keyMap := make(map[string]string) // json-Name : go-Name
+	inlineFields := make(map[string]string)
+	saladFields := make(map[string]saladTags)
+	
+	for i := 0; i < typeOfRecv.NumField(); i++ {
+		field := typeOfRecv.Field(i)
+		keyGo := field.Name
+		key := keyGo
+		if tag := field.Tag.Get("json"); tag != "" {
+			parts := strings.Split(tag, ",")
+			if parts[0] != "" {
+				key = parts[0]
+			}
+			if len(parts) > 1 && parts[0] == "" && parts[1] == "inline" {
+				inlineFields[keyGo] = key
+			}
+		}
+		if tag := field.Tag.Get("salad"); tag != "" {
+			v := getSaladTags(tag)
+			saladFields[key] = v
+			if v.Default != "" {
+				setFieldDefaultValue( typeOfRecv.Field(i).Type, valueOfRecv.Field(i), v.Default )
+			}
+		}
+		keyMap[key] = keyGo
+	}
+	// handle inline fields
+	for keyGo, _ := range inlineFields {
+		field, got := typeOfRecv.FieldByName(keyGo)
+		if ! got {
+			continue
+		}
+		if valueOfRecv.Kind() == reflect.Interface {
+			continue
+		}
+		valueField := valueOfRecv.FieldByName(keyGo)
+		if err = parseObject(field.Type, valueField, data, db); err != nil {
+			return err
+		}
+	}
+	// handle other fields
+	for key, value := range bean {
+		var salad saladTags
+		var keyGo  = key
+		
+		//keyGo = strings.ToUpper(key[0:1]) + key[1:]
+		keyGo = keyMap[key]
+		field, got := typeOfRecv.FieldByName(keyGo)
+		if ! got {
+			continue
+		}
+		fieldValue := valueOfRecv.FieldByName(keyGo)
+		fieldType := field.Type
+		if v, got := saladFields[key]; got {
+			salad = v
+		}
+		log.Println("set fieldName", key, recvName)
+		if err = setField(fieldType, fieldValue, value, salad, db); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func debugType(fieldType reflect.Type)  {
+	for i:=0 ; i< fieldType.NumMethod(); i++ {
+		log.Printf("%s %d %s", fieldType.Name(), i, fieldType.Method(i).Name)
+	}
+}
+
+func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
+	salad saladTags, db map[string]*RecordFieldGraph) (err error) {
+	fkind := fieldType.Kind()
+	log.Println("setField", fieldType.Name(),  fkind.String(), fieldValue.Type().Name() ,fieldValue.Interface())
+	// 如果本身有解析函数则直接调用 ✅
+	debugType(fieldValue.Type())
+	// 可能需要分配空间的情况
+	switch fkind {
+	// 列表的解析
+	case reflect.Ptr:
+		fieldType = fieldType.Elem()
+		if fieldValue.IsNil() {
+			if len(bean) == 0 || (len(bean) == 4 && string(bean) == "null") {
+				if salad.Default == "" {
+					return nil
+				}
+				return setFieldDefaultValue(fieldType, fieldValue, salad.Default)
+			}
+			// 需要初始化Value
+			fieldValue.Set(reflect.New(fieldType))
+		}
+		return setField(fieldType, fieldValue, bean, salad, db)
+	case reflect.Struct:
+		if ok, err := checkUnmarshal(fieldValue, bean); ok || err != nil {
+			return err
+		}
+		return parseObject(fieldType, fieldValue, bean, db)
+	case reflect.Slice:
+		fieldType = fieldType.Elem()
+		isInterface := fieldType.Kind() == reflect.Interface
+		var values []json.RawMessage
+		// 处理 mapSubject
+		// 初始化处理
+		isNull := false
+		if fieldValue.IsNil() {
+			fieldValue.Set( reflect.MakeSlice(reflect.SliceOf(fieldType), len(values), len(values)))
+			isNull = true
+		}
+		if got ,err := checkUnmarshal(fieldValue, bean); got || err != nil {
+			return err
+		}
+		
+		if salad.MapSubject != "" {
+			// 需要进行 mapSubject 处理
+			values, err = JsonldPredicateMapSubject(bean, salad.MapSubject, salad.MapPredicate)
+			//return nil
+		} else {
+			values = make([]json.RawMessage,0)
+			err = json.Unmarshal(bean, &values)
+		}
+		if err != nil {
+			return err
+		}
+		// 空值处理
+		if len(values) == 0 {
+			if isNull {
+				fieldValue.Set(reflect.ValueOf(nil))
+			}
+			return nil
+		}
+		fieldValue.Set( reflect.MakeSlice(reflect.SliceOf(fieldType), len(values), len(values)))
+		if isInterface {
+			for i, valuei := range values {
+				var nextType reflect.Type
+				if _, classable :=  fieldType.MethodByName("ClassName"); classable {
+					nextType , err = GenerateTypesFormClass(valuei, classMap)
+					log.Println("set field by class name", nextType.Name())
+				} else {
+					nextType ,err = GenerateTypesFormInterface( fieldType ,db)
+				}
+				if err != nil {
+					return err
+				}
+				fieldValue.Index(i).Set(reflect.New(nextType))
+				err = parseObject(nextType, fieldValue.Index(i), valuei, db)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+		// TODO values to array
+		//_ = values
+		//bean,_  = json.Marshal(values)
+		// 如果已经实现 unmarshal 则直接使用
+		
+		for i, valuei := range values {
+			nextType :=  fieldType
+			fieldValue.Index(i).Set(reflect.New(nextType).Elem())
+			if got ,err := checkUnmarshal(fieldValue.Index(i), valuei); got || err != nil {
+				if err != nil {
+					return err
+				}
+				continue
+			}
+			
+			err = parseObject(nextType, fieldValue.Index(i), valuei, db)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+		
+	// 直接值的解析 ✅
+	case reflect.String, reflect.Int, reflect.Bool, reflect.Int64, reflect.Float64, reflect.Float32 :
+		err := json.Unmarshal(bean, fieldValue.Addr().Interface())
+		if err != nil {
+			return err
+		}
+	default:
+		return json.Unmarshal(bean, fieldValue.Addr().Interface())
+		//return fmt.Errorf("not set values")
+	}
+	
+	return nil
+}
+
+func setFieldDefaultValue(fieldType reflect.Type, fieldValue reflect.Value,defStr string ) (err error) {
+	var any interface{}
+	switch fieldType.Kind() {
+	case reflect.String:
+		any = defStr
+	case reflect.Bool:
+		if defStr == "true" {
+			any = true
+		} else  if defStr == "false" {
+			any = false
+		} else {
+			return fmt.Errorf("bool default must be true/false")
+		}
+	case reflect.Int:
+		any, err = strconv.Atoi(defStr)
+	case reflect.Int64:
+		any, err = strconv.ParseInt(defStr, 0, 64)
+	case reflect.Float32:
+		var float float64
+		float, err = strconv.ParseFloat(defStr, 32)
+		any = float32(float)
+	case reflect.Float64:
+		any, err = strconv.ParseFloat(defStr, 32)
+	default:
+		return fmt.Errorf("type does not support simple default")
+	}
+	if err != nil {
+		return err
+	}
+	if reflect.ValueOf(any).Kind() == reflect.String {
+		fieldValue.SetString( any.(string) )
+	} else {
+		fieldValue.Set( reflect.ValueOf(any) )
+	}
+	return nil
+}
+
+func checkUnmarshal(fieldValue reflect.Value,bean []byte) (bool, error) {
+	if _, got := fieldValue.Addr().Type().MethodByName("UnmarshalJSON"); got {
+		outvals := fieldValue.Addr().MethodByName("UnmarshalJSON").Call([]reflect.Value{ reflect.ValueOf(bean) })
+		if len(outvals) != 1  {
+			return true, fmt.Errorf("Bad UnmarshalJSON %v", outvals)
+		}
+		if !outvals[0].IsNil() {
+			return true, fmt.Errorf("UnmarshalJSON err %v", outvals)
+		}
+		return true, nil
+	}
+	if _, got := fieldValue.Type().MethodByName("UnmarshalJSON"); got {
+		outvals := fieldValue.MethodByName("UnmarshalJSON").Call([]reflect.Value{ reflect.ValueOf(bean) })
+		if len(outvals) != 1  {
+			return true, fmt.Errorf("Bad UnmarshalJSON %v", outvals)
+		}
+		if !outvals[0].IsNil() {
+			return true, fmt.Errorf("UnmarshalJSON err %v", outvals)
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+type saladTags struct {
+	MapSubject string
+	MapPredicate string
+	Default string
+}
+
+func getSaladTags(txt string) saladTags {
+	s := saladTags{}
+	parts := strings.Split(txt,",")
+	for _, p := range parts {
+		pp := strings.SplitN(p, ":", 2)
+		h := pp[0]
+		v := ""
+		if len(pp) == 2 {
+			v = pp[1]
+		}
+		switch h {
+		case "mapSubject":
+			s.MapSubject = v
+		case "mapPredicate":
+			s.MapPredicate = v
+		case "default":
+			s.Default = v
+		}
+	}
+	return s
+}
+
+func ParseCWLProcess(data []byte) (Process , error ){
+	var err error
+	trimed := strings.TrimSpace(string(data))
+	if len(trimed) == 0 {
+		return nil, io.EOF
+	}
+	if trimed[0] == '#' {
+		// 去除脚本解释行
+		parts := strings.SplitN(trimed, "\n", 2)
+		if len(parts) == 1 {
+			return nil, io.EOF
+		}
+		trimed = parts[1]
+	}
+	raw := []byte(trimed)
+	if trimed[0] != '{' {
+		raw ,err = Y2J(raw)
+		if err != nil {
+			return nil, err
+		}
+	}
+	class := &testClass{}
+	json.Unmarshal(raw, class)
+	if name:= class.Class; name != "" {
+		var p Process
+		switch name {
+		case "CommandLineTool":
+			p = &CommandLineTool{}
+		case "ExpressionTool":
+			p = &ExpressionTool{}
+		case "Workflow":
+			p = &Workflow{}
+		case "Operation":
+			p = &Operation{}
+		default:
+			return nil, fmt.Errorf("unknown class for Process %s", name)
+		}
+		err = json.Unmarshal(raw, p)
+		return p, err
+ 	}
+	return nil, fmt.Errorf("no Process name")
+}
+
+// Only For test
+func (p *ProcessBase)  UnmarshalJSON_man(data []byte) error{
+	type typealias ProcessBase
+	var (
+		inputs []InputParameter
+		outputs []OutputParameter
+	)
+	palias := (*typealias)(p)
+	
+	bean := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(data, &bean); err != nil {
+		return err
+	}
+	if raw , got := bean["inputs"] ; got {
+		values, err := JsonldPredicateMapSubject(raw, "id", "type")
+		if err != nil {
+			return err
+		}
+		inputs = make([]InputParameter, len(values))
+		for i, vali := range values {
+			val := InputParameterBase{}
+			err = json.Unmarshal(vali, &val)
+			if err != nil {
+				return err
+			}
+			inputs[i] = val
+		}
+		delete(bean , "inputs")
+	}
+	if raw , got := bean["outputs"] ; got {
+		values, err := JsonldPredicateMapSubject(raw, "id", "type")
+		if err != nil {
+			return err
+		}
+		outputs = make([]OutputParameter, len(values))
+		for i, vali := range values {
+			val := OutputParameterBase{}
+			err = json.Unmarshal(vali, &val)
+			if err != nil {
+				return err
+			}
+			outputs[i] = val
+		}
+		delete(bean , "outputs")
+	}
+	delete(bean , "outputs")
+	delete(bean , "requirements")
+	//p.Inputs = make([]InputParameterBase,0)
+	data2 ,_ := json.Marshal(bean)
+	palias.Inputs = inputs
+	palias.Outputs = outputs
+	return json.Unmarshal(data2, palias)
 }

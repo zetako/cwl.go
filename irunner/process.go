@@ -10,13 +10,13 @@ import (
 
 type Process struct {
   tool           *cwl.Root
-  inputs         *cwl.Parameters
+  inputs         *cwl.Values
   runtime       Runtime
   fs             Filesystem
   bindings       []*Binding
   expressionLibs []string
   env            map[string]string
-  filesToCreate []cwl.Entry
+  filesToCreate []cwl.FileDir
   shell          bool
   resources      Resources
   stdout         string
@@ -62,7 +62,7 @@ type Binding struct {
   // can be nil, which means no matching type could be determined.
   Type cwl.Type
   // the value from the input object
-  Value cwl.Parameter
+  Value cwl.Value
   // used to determine the ordering of command line flags.
   // http://www.commonwl.org/v1.0/CommandLineTool.html#Input_binding
   sortKey sortKey
@@ -74,7 +74,7 @@ type sortKey []interface{}
 
 
 
-func setDefault(values *cwl.Parameters, inputs cwl.Inputs) {
+func setDefault(values *cwl.Values, inputs cwl.Inputs) {
   for _, in := range inputs {
     _, ok := (*values)[in.ID]
     if !ok && in.Default != nil {

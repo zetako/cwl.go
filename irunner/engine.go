@@ -15,12 +15,12 @@ type Engine struct {
   inputFS Filesystem
   outputFS Filesystem
   root *cwl.Root // root Documents.
-  params *cwl.Parameters
+  params *cwl.Values
   //runtime Runtime
   process *Process // root process
   //TaskSequence    []string            // for testing purposes
-  //UnfinishedProcs map[string]bool     // engine's stack of CLT's that are running; (task.Root.ID, Process) pairs
-  //FinishedProcs   map[string]bool     // engine's stack of completed processes; (task.Root.ID, Process) pairs
+  //UnfinishedProcs map[string]bool     // engine's stack of CLT's that are running; (task.Root.ID, ProcessBase) pairs
+  //FinishedProcs   map[string]bool     // engine's stack of completed processes; (task.Root.ID, ProcessBase) pairs
   //CleanupProcs    map[CleanupKey]bool // engine's stack of running cleanup processes
   UserID          string              // the userID for the user who requested the workflow run
   RunID           string              // the workflow ID
@@ -80,7 +80,7 @@ func initConfig(c *EngineConfig)  {
 func NewEngine(c EngineConfig) (*Engine, error) {
   initConfig(&c)
   e := &Engine{
-    params: cwl.NewParameters(),
+    params: cwl.NewValues(),
     RunID:           c.RunID,
     UserID:          c.UserName,
     RootHost:        c.RootHost,
@@ -127,8 +127,8 @@ func (e *Engine) MainProcess() (*Process, error) {
   // Bind inputs to values.
   //
   // Since every part of a tool depends on "inputs" being available to expressions,
-  // nothing can be done on a Process without a valid inputs binding,
-  // which is why we bind in the Process constructor.
+  // nothing can be done on a ProcessBase without a valid inputs binding,
+  // which is why we bind in the ProcessBase constructor.
   for _, in := range e.root.Inputs {
     val := (*e.params)[in.ID]
     k := sortKey{getPos(in.Binding)}

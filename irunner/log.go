@@ -6,7 +6,7 @@ import (
   "time"
 )
 
-//type Process struct {
+//type ProcessBase struct {
 //  ID string `json:"id"`
 //  //Inputs []InputParameter `json:"inputs"`
 //}

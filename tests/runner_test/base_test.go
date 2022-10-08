@@ -71,7 +71,7 @@ func TestCWLR2_detail(t *testing.T) {
   t.Log(outputs)
   outputRaw := `{"args":["bwa", "mem", "-t", "2", "-I", "1,2,3,4", "-m", "3",
       "chr20.fa","example_human_Illumina.pe_1.fastq","example_human_Illumina.pe_2.fastq"]}`
-  outputCheck := cwl.Parameters{}
+  outputCheck := cwl.Values{}
   json.Unmarshal([]byte(outputRaw), &outputCheck)
   Expect(t, outputs).ToBe(outputCheck)
 }

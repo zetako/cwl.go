@@ -17,7 +17,7 @@ func TestDecode_env_tool2(t *testing.T) {
 	Expect(t, root.Class).ToBe("CommandLineTool")
 	Expect(t, len(root.Requirements)).ToBe(1)
 	// Expect(t, root.Requirements).TypeOf("cwl.Hints")
-	// Expect(t, root.Requirements[0].Class).ToBe("EnvVarRequirement")
+	// Expect(t, root.Requirements[0].ClassBase).ToBe("EnvVarRequirement")
 	// Expect(t, root.Requirements[0].Envs[0].Name).ToBe("TEST_ENV")
 	// Expect(t, root.Requirements[0].Envs[0].Value).ToBe("$(inputs.in)")
 	Expect(t, len(root.Inputs)).ToBe(1)

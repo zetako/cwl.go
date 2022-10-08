@@ -24,7 +24,7 @@ func TestDecode_starlight1(t *testing.T) {
 	Expect(t, root.BaseCommands[0]).ToBe("echo")
 	Expect(t, root.Stdout).ToBe("out.txt")
 
-	// Expect(t, root.Requirements[0].Class).ToBe("DockerRequirement")
+	// Expect(t, root.Requirements[0].ClassBase).ToBe("DockerRequirement")
 	Expect(t, root.Requirements[0].Class).ToBe("ScedulerRequirement")
 	//Expect(t, root.Requirements[0].Sceduler).ToBe("slurm")
 	//Expect(t, root.Requirements[0].Partition).ToBe("work")

@@ -21,8 +21,8 @@ func NewLocal(workdir string) *Local {
   return &Local{workdir, false}
 }
 
-func (l *Local) Glob(pattern string) ([]cwl.Entry, error) {
-  var out []cwl.Entry
+func (l *Local) Glob(pattern string) ([]cwl.FileDir, error) {
+  var out []cwl.FileDir
   
   pattern = filepath.Join(l.workdir, pattern)
   
@@ -44,8 +44,8 @@ func (l *Local) Glob(pattern string) ([]cwl.Entry, error) {
 
 const MaxContentsBytes = 2 * 1024 * 1024
 
-func (l *Local) Create(path, contents string) (cwl.Entry, error) {
-  var x cwl.Entry
+func (l *Local) Create(path, contents string) (cwl.FileDir, error) {
+  var x cwl.FileDir
   if path == "" {
     return x, fmt.Errorf("can't create file with empty path")
   }
@@ -70,7 +70,7 @@ func (l *Local) Create(path, contents string) (cwl.Entry, error) {
   if err != nil {
     return x, fmt.Errorf("write file contents for %s: %s", loc, err)
   }
-  return cwl.Entry{
+  return cwl.FileDir{
     Class: "File",
     Location: abs,
     Path:     path,
@@ -81,8 +81,8 @@ func (l *Local) Create(path, contents string) (cwl.Entry, error) {
   }, nil
 }
 
-func (l *Local) Info(loc string) (cwl.Entry, error) {
-  var x cwl.Entry
+func (l *Local) Info(loc string) (cwl.FileDir, error) {
+  var x cwl.FileDir
   if !filepath.IsAbs(loc) {
     loc = filepath.Join(l.workdir, loc)
   }
@@ -114,7 +114,7 @@ func (l *Local) Info(loc string) (cwl.Entry, error) {
     checksum = "sha1$" + fmt.Sprintf("%x", sha1.Sum(b))
   }
   
-  return cwl.Entry{
+  return cwl.FileDir{
     Class: "File",
     Location: abs,
     Path:     abs,

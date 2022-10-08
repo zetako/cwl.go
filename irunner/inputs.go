@@ -12,7 +12,7 @@ func (process *Process) bindInput(
   clb *cwl.Binding,
   secondaryFiles []cwl.SecondaryFile,
   //val interface{},
-  val cwl.Parameter,
+  val cwl.Value,
   key sortKey,
 ) ([]*Binding, error) {
   
@@ -37,7 +37,7 @@ Loop:
     switch t.Type {
     
     case "array":
-      vals, ok := val.([]cwl.Parameter)
+      vals, ok := val.([]cwl.Value)
       if !ok {
         // input value is not an array.
         continue Loop
@@ -67,7 +67,7 @@ Loop:
       return []*Binding{b}, nil
     
     case "record":
-      vals, ok := val.(map[string]cwl.Parameter)
+      vals, ok := val.(map[string]cwl.Value)
       if !ok {
         // input value is not a record.
         continue Loop
@@ -162,12 +162,12 @@ Loop:
       }, nil
     
     case "File":
-      var v cwl.Entry
+      var v cwl.FileDir
       def, ok := val.(*cwl.InputDefault)
       if ok {
         v = *def.Entry
       } else {
-        v, ok = val.(cwl.Entry)
+        v, ok = val.(cwl.FileDir)
       }
       if !ok {
         continue Loop
@@ -229,9 +229,9 @@ func getLoadContents(clb *cwl.Binding) bool {
 }
 
 func (process *Process) MigrateInputs() (err error){
-  files := []cwl.Entry{}
+  files := []cwl.FileDir{}
   for _, in := range process.bindings {
-    if f, ok := in.Value.(cwl.Entry); ok {
+    if f, ok := in.Value.(cwl.FileDir); ok {
       files = append(files, FlattenFiles(f)...)
     }
   }
@@ -257,6 +257,6 @@ func (process *Process) MigrateInputs() (err error){
 }
 
 
-func FlattenFiles(f cwl.Entry) []cwl.Entry{
-  return []cwl.Entry{ f }
+func FlattenFiles(f cwl.FileDir) []cwl.FileDir {
+  return []cwl.FileDir{f }
 }

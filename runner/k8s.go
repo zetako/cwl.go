@@ -246,7 +246,7 @@ func (tool *Tool) containerArgs() []string {
 //	tool.Task.infof("begin load environment variables")
 //	env = []k8sv1.EnvVar{}
 //	for _, requirement := range tool.Task.Root.Requirements {
-//		if requirement.Class == CWLEnvVarRequirement {
+//		if requirement.ClassBase == CWLEnvVarRequirement {
 //			for _, envDef := range requirement.EnvDef {
 //				tool.Task.infof("begin handle envVar: %v", envDef.Name)
 //				varValue, _, err := tool.resolveExpressions(envDef.Value) // resolves any expression(s) - if no expressions, returns original text
@@ -392,7 +392,7 @@ func (tool *Tool) cltBash() string {
 //	// discern user specified settings
 //	requests, limits := make(k8sv1.ResourceList), make(k8sv1.ResourceList)
 //	for _, requirement := range tool.Task.Root.Requirements {
-//		if requirement.Class == CWLResourceRequirement {
+//		if requirement.ClassBase == CWLResourceRequirement {
 //			// for info on quantities, see: https://godoc.org/k8s.io/apimachinery/pkg/api/resource#Quantity
 //			if requirement.CoresMin > 0 {
 //				cpuReq = int64(requirement.CoresMin)

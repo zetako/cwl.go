@@ -1,53 +1,60 @@
 package cwl
 
-// Argument represents an element of "arguments" of CWL
-// @see http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineTool
-type Argument struct {
-	Value   string
-	Binding *Binding
-}
+import (
+	"encoding/json"
+)
 
-// New constructs an "Argument" struct from any interface.
-func (_ Argument) New(i interface{}) Argument {
-	dest := Argument{}
-	switch x := i.(type) {
-	case string:
-		dest.Value = x
-	case map[string]interface{}:
-		dest.Binding = Binding{}.New(x)
+//// Argument represents an element of "arguments" of CWL
+//// @see http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineTool
+//type Argument struct {
+//	Value   string
+//	Binding *Binding
+//}
+
+//// New constructs an "Argument" struct from any interface.
+//func (_ Argument) New(i interface{}) Argument {
+//	dest := Argument{}
+//	switch x := i.(type) {
+//	case string:
+//		dest.Value = x
+//	case map[string]interface{}:
+//		dest.Binding = Binding{}.New(x)
+//	}
+//	return dest
+//}
+
+func (p *Argument)  UnmarshalJSON(data []byte) error{
+	if len(data) == 0 {
+		p = nil
+		return nil
+	} else if data[0] == '{' {
+		p.binding = &CommandLineBinding{}
+		return json.Unmarshal(data, p.binding)
 	}
-	return dest
+	return json.Unmarshal(data, &p.exp)
 }
 
 // Flatten ...
 func (arg Argument) Flatten() []string {
 	flattened := []string{}
-	if arg.Value != "" {
-		flattened = append(flattened, arg.Value)
-	}
-	if arg.Binding != nil {
-		if arg.Binding.Prefix != "" {
-			flattened = append([]string{arg.Binding.Prefix}, flattened...)
-		}
-	}
+	// TODO Do arg Flatten
+	//if arg.Value != "" {
+	//	flattened = append(flattened, arg.Value)
+	//}
+	//if arg.Binding != nil {
+	//	if arg.Binding.Prefix != "" {
+	//		flattened = append([]string{arg.Binding.Prefix}, flattened...)
+	//	}
+	//}
 	return flattened
 }
 
-// Arguments represents a list of "Argument"
-type Arguments []Argument
+func (arg Argument) MustString() string {
+	return string(arg.exp)
+}
 
-// New constructs "Arguments" struct.
-func (_ Arguments) New(i interface{}) Arguments {
-	dest := Arguments{}
-	switch x := i.(type) {
-	case []interface{}:
-		for _, v := range x {
-			dest = append(dest, Argument{}.New(v))
-		}
-	default:
-		dest = append(dest, Argument{}.New(x))
-	}
-	return dest
+func (arg Argument) MustBinding() *CommandLineBinding {
+	return arg.binding
 }
 
 // Len for sorting.
@@ -57,16 +64,16 @@ func (args Arguments) Len() int {
 
 // Less for sorting.
 func (args Arguments) Less(i, j int) bool {
-	prev, next := args[i].Binding, args[j].Binding
+	prev, next := args[i].binding, args[j].binding
 	switch [2]bool{prev == nil, next == nil} {
 	case [2]bool{true, true}:
 		return false
 	case [2]bool{false, true}:
-		return prev.Position < 0
+		return *prev.Position.Int < 0
 	case [2]bool{true, false}:
-		return next.Position > 0
+		return *next.Position.Int > 0
 	default:
-		return prev.Position <= next.Position
+		return *prev.Position.Int <= *next.Position.Int
 	}
 }
 

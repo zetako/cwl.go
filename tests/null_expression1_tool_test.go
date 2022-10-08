@@ -20,7 +20,7 @@ func TestDecode_null_expression1_tool(t *testing.T) {
 	Expect(t, root.Inputs[0].ID).ToBe("i1")
 	Expect(t, root.Inputs[0].Types[0].Type).ToBe("Any")
 	// TODO input default
-	//Expect(t, root.Inputs[0].Default.Class).ToBe("File")
+	//Expect(t, root.Inputs[0].Default.ClassBase).ToBe("File")
 	//fmt.Println(t, root.Inputs[0].Default)
 	Expect(t, root.Outputs[0].ID).ToBe("output")
 	Expect(t, root.Outputs[0].Types[0].Type).ToBe("int")

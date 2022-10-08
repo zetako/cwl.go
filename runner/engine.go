@@ -34,8 +34,8 @@ type K8sEngine struct {
 	sync.RWMutex    `json:"-"`
 	S3FileManager   *S3FileManager
 	TaskSequence    []string            // for testing purposes
-	UnfinishedProcs map[string]bool     // engine's stack of CLT's that are running; (task.Root.ID, Process) pairs
-	FinishedProcs   map[string]bool     // engine's stack of completed processes; (task.Root.ID, Process) pairs
+	UnfinishedProcs map[string]bool     // engine's stack of CLT's that are running; (task.Root.ID, ProcessBase) pairs
+	FinishedProcs   map[string]bool     // engine's stack of completed processes; (task.Root.ID, ProcessBase) pairs
 	CleanupProcs    map[CleanupKey]bool // engine's stack of running cleanup processes
 	UserID          string              // the userID for the user who requested the workflow run
 	RunID           string              // the workflow timestamp
@@ -255,7 +255,7 @@ func (engine *K8sEngine) startTask(task *Task) {
 // output parameter values get set, and the outputs parameter object gets stored in tool.Task.Outputs
 // if the outputs of this process are the inputs of another process,
 // then the output parameter object of this process (the Task.Outputs field)
-// gets assigned as the input parameter object of that other process (the Task.Parameters field)
+// gets assigned as the input parameter object of that other process (the Task.Values field)
 // ---
 // may be a good idea to make different types for CLT and ExpressionTool
 // and use Tool as an interface, so we wouldn't have to split cases like this
