@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"os"
 
-	cwl "github.com/otiai10/cwl.go"
+	cwl "github.com/lijiang2014/cwl.go"
 )
 
 func main() {

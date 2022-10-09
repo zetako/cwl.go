@@ -1,4 +1,4 @@
-module github.com/otiai10/cwl.go
+module github.com/lijiang2014/cwl.go
 
 go 1.12
 
@@ -17,4 +17,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/otiai10/cwl.go => ./
+replace github.com/lijiang2014/cwl.go => ./

@@ -23,7 +23,7 @@ import (
 //	return dest
 //}
 
-func (p *Argument)  UnmarshalJSON(data []byte) error{
+func (p *Argument) UnmarshalJSON(data []byte) error {
 	if len(data) == 0 {
 		p = nil
 		return nil

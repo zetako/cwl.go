@@ -39,7 +39,7 @@ type ParameterClass string
 
 const (
 	FileClass ParameterClass = "File"
-	NoClass ParameterClass = "unknown"
+	NoClass   ParameterClass = "unknown"
 )
 
 //func (recv Value) ClassBase() ParameterClass {
@@ -120,7 +120,7 @@ func (recv *Values) UnmarshalJSON(b []byte) error {
 func convertParameter(bean interface{}) (out Value) {
 	switch t := bean.(type) {
 	case []interface{}:
-		arr := make([]Value,len(t))
+		arr := make([]Value, len(t))
 		for i, item := range t {
 			arr[i] = convertParameter(item)
 		}
@@ -137,7 +137,7 @@ func convertParameter(bean interface{}) (out Value) {
 			if err != nil {
 				return err
 			}
-			if err = json.Unmarshal(raw,&entry); err != nil {
+			if err = json.Unmarshal(raw, &entry); err != nil {
 				return err
 			}
 			return entry

@@ -33,7 +33,6 @@ package cwl
 //	Listing []FileDir `json:"listing,omitempty"`
 //}
 
-
 //// NewList constructs a list of FileDir from interface
 //func (_ FileDir) NewList(i interface{}) []FileDir {
 //	dest := []FileDir{}
