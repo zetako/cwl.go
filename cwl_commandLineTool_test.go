@@ -60,9 +60,9 @@ func TestCWL_tool_1(t *testing.T) {
 	}
 	typein1 := p.Inputs[1].(*cwl.CommandInputParameter).Type
 	pass = typein1.TypeName() == "array" &&
-		typein1.IsArray() == true && typein1.MustArraySchema().Items.TypeName() == "File"
+		typein1.IsArray() == true && typein1.MustArraySchema().GetItems().TypeName() == "File"
 	if !pass {
-		t.Fatalf("input1 type err%#v %s", typein1, typein1.TypeName())
+		t.Fatalf("input1 type err%#v %#v %s %s", typein1, typein1.MustArraySchema(), typein1.TypeName(), typein1.MustArraySchema().GetItems().TypeName())
 	}
 	typein2 := p.Inputs[2].(*cwl.CommandInputParameter).Type
 	pass = typein2.TypeName() == "int" &&
@@ -72,7 +72,7 @@ func TestCWL_tool_1(t *testing.T) {
 	}
 	typein3 := p.Inputs[3].(*cwl.CommandInputParameter).Type
 	pass = typein3.TypeName() == "array" &&
-		typein3.IsArray() == true && typein3.MustArraySchema().Items.TypeName() == "int"
+		typein3.IsArray() == true && typein3.MustArraySchema().GetItems().TypeName() == "int"
 	if !pass {
 		t.Fatalf("input3 type err%#v %s", typein3, typein3.TypeName())
 	}
@@ -149,7 +149,7 @@ func TestCWL_tool_1(t *testing.T) {
 		t.Fatalf("out0 type err  %#v", ot0)
 	}
 	ot2 := p.Outputs[1].(*cwl.CommandOutputParameter).Type
-	pass = ot2.TypeName() == "array" && ot2.MustArraySchema().Items.TypeName() == "string"
+	pass = ot2.TypeName() == "array" && ot2.MustArraySchema().GetItems().TypeName() == "string"
 	if !pass {
 		t.Fatalf("out1 type err  %#v", ot2)
 	}

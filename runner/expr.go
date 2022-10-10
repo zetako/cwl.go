@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"github.com/lijiang2014/cwl.go"
 	"github.com/robertkrimen/otto"
 	"regexp"
 	"strings"
@@ -44,7 +45,7 @@ func (process *Process) initJVM() error {
 	return nil
 }
 
-func (vm *jsvm) Eval(e string, data interface{}) (interface{}, error) {
+func (vm *jsvm) Eval(e cwl.Expression, data interface{}) (interface{}, error) {
 	vm.vm.Set("self", data)
 	return vm.EvalParts(parseExp(e))
 }
@@ -59,7 +60,7 @@ type ExpPart struct {
 
 var rx = regexp.MustCompile(`\$\((.*)\)`)
 
-func parseExp(expr string) []*ExpPart {
+func parseExp(expr cwl.Expression) []*ExpPart {
 	e := string(expr)
 	ev := strings.TrimSpace(e)
 	if len(ev) == 0 {

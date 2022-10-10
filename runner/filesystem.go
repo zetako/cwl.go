@@ -101,7 +101,7 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 	return f, nil
 }
 
-func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFile) error {
+func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFileSchema) error {
 
 	// cwl spec:
 	// "If the value is an expression, the value of self in the expression
@@ -128,7 +128,7 @@ func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFile
 	// "If string begins with one or more caret ^ characters, for each caret,
 	// remove the last file extension from the location (the last period . and all
 	// following characters).
-	pattern := string(x.Entry)
+	pattern := string(x.Pattern)
 	// TODO location or path? cwl spec says "path" but I'm suspicious.
 	location := file.Location
 

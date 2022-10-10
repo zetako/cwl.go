@@ -33,7 +33,7 @@ func TestDecode_basename_fields_test(t *testing.T) {
 		switch st.ID {
 		case "root":
 			Expect(t, st.Run.ID).ToBe("echo-file-tool.cwl")
-			//t.Logf("%#v",st.In[0])
+			t.Logf("%#v",st.In[0])
 			Expect(t, string(st.In[0].ValueFrom)).ToBe("$(inputs.tool.nameroot)")
 			Expect(t, st.Out[0].ID).ToBe("out")
 			// TODO tool: tool

@@ -8,13 +8,13 @@ import (
 
 type ExpressionToolOutputParameter struct {
 	OutputParameterBase `json:",inline"`
-	Type                SaladType `json:"type"`
+	Type                SaladType `json:"type" salad:"type"`
 }
 
 type WorkflowInputParameter struct {
 	InputParameterBase `json:",inline"`
 	InputBinding       *InputBinding `json:"inputBinding,omitempty"`
-	Type               SaladType     `json:"type"`
+	Type               SaladType     `json:"type" salad:"type"`
 }
 
 type ExpressionTool struct {
@@ -47,7 +47,7 @@ type WorkflowOutputParameter struct {
 	OutputSource        ArrayString      `json:"outputSource,omitempty"`
 	LinkMerge           LinkMergeMethod  `json:"linkMerge,omitempty" salad:"default:merge_nested"`
 	PickValue           *PickValueMethod `json:"pickValue,omitempty"`
-	Type                SaladType        `json:"type"`
+	Type                SaladType         `json:"type" salad:"type"`
 }
 
 // Sink
@@ -157,6 +157,22 @@ func (p *ExpressionTool) UnmarshalJSON(data []byte) error {
 	db := make(map[string]*RecordFieldGraph)
 	db["InputParameter"] = &RecordFieldGraph{Example: WorkflowInputParameter{}}
 	db["OutputParameter"] = &RecordFieldGraph{Example: ExpressionToolOutputParameter{}}
+	
+	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
+		Fields: map[string]*RecordFieldGraph{
+			"ArrayType": &RecordFieldGraph{ Example:  ArraySchema{} },
+			"EnumType": &RecordFieldGraph{ Example:  EnumSchema{} },
+			"RecordType": &RecordFieldGraph{ Example:  RecordSchema{} },
+		},
+	}
+	//db["CommandOutputType"] = &RecordFieldGraph{Example: CommandOutputType{},
+	//	Fields: map[string]*RecordFieldGraph{
+	//		"ArrayType": &RecordFieldGraph{ Example:  ArraySchema{} },
+	//		"EnumType": &RecordFieldGraph{ Example:  EnumSchema{} },
+	//		"RecordType": &RecordFieldGraph{ Example:  RecordSchema{} },
+	//	},
+	//}
+	
 	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
 		return err
 	}
@@ -169,6 +185,13 @@ func (p *Workflow) UnmarshalJSON(data []byte) error {
 	db := make(map[string]*RecordFieldGraph)
 	db["InputParameter"] = &RecordFieldGraph{Example: WorkflowInputParameter{}}
 	db["OutputParameter"] = &RecordFieldGraph{Example: WorkflowOutputParameter{}}
+	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
+		Fields: map[string]*RecordFieldGraph{
+			"ArrayType": &RecordFieldGraph{ Example:  ArraySchema{} },
+			"EnumType": &RecordFieldGraph{ Example:  EnumSchema{} },
+			"RecordType": &RecordFieldGraph{ Example:  RecordSchema{} },
+		},
+	}
 	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
 		return err
 	}

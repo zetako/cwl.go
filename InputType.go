@@ -1,113 +1,52 @@
 package cwl
 
-// 4.1
-// primitive or record or enum
-// or array of them
-type InputType struct {
-  name      string // null / boolean / int / long / float / double / string / `definedType`
-  primitive string
-  record    *InputRecordSchema
-  enum      *InputEnumSchema
-  array      *InputArraySchema
-  multi     []InputType
-}
-
-// 4.1.3
-type InputRecordSchema struct {
-  // sld:
-  Type   string
-  Fields []InputRecordField
-  // From InputRecordSchema
-  InputSchema `json:",inline"`
-}
-
-// 4.1.4
 type InputRecordField struct {
-  // sld:RecordField
-  Name string
-  Documented `json:",inline"`
-  Type InputType
-  // From InputRecordField
+  RecordField `json:",inline"`
   FieldBase `json:",inline"`
   InputFormat `json:",inline"`
   LoadContents `json:",inline"`
 }
 
-// 4.1.4.1
+type InputRecordSchema struct {
+  RecordSchema   `json:",inline"`
+  InputSchema `json:",inline"`
+}
+
 type InputEnumSchema struct {
-  // sld:EnumSchema
-  Type string // must be enum
-  Symbols []string
-  // From InputEnumSchema
+  EnumSchema `json:",inline"`
   InputSchema `json:",inline"`
 }
 
-// 4.1.4.2
 type InputArraySchema struct {
-  // sld:ArraySchema
-  Type  string    `json:"type"` // must be array
-  Items InputType `json:"items"`
-  // From InputArraySchema
+  ArraySchema `json:",inline"`
   InputSchema `json:",inline"`
 }
 
-type OutputType struct {
-  name      string // null / boolean / int / long / float / double / string / `definedType`
-  primitive string
-  record    *OutputRecordSchema
-  enum      *OutputEnumSchema
-  array      *OutputArraySchema
-  multi     []OutputType
-}
-
-
-// 4.1.3
-type OutputRecordSchema struct {
-  // sld:
-  Type   string
-  Fields []OutputRecordField
-  // From InputRecordSchema
-  OutputSchema `json:",inline"`
-}
-
-// 4.1.4
 type OutputRecordField struct {
-  // sld:RecordField
-  Name string
-  Documented `json:",inline"`
-  Type OutputType
-  // From InputRecordField
+  RecordField `json:",inline"`
   FieldBase `json:",inline"`
   OutputFormat `json:",inline"`
 }
 
-// 4.1.4.1
-type OutputEnumSchema struct {
-  // sld:EnumSchema
-  Type string // must be enum
-  Symbols []string
-  // From InputEnumSchema
+type OutputRecordSchema struct {
+  RecordSchema   `json:",inline"`
   OutputSchema `json:",inline"`
 }
 
-// 4.1.4.2
-type OutputArraySchema struct {
-  // sld:ArraySchema
-  Type  string    `json:"type"` // must be array
-  Items OutputType `json:"items"`
-  // From InputArraySchema
+type OutputEnumSchema struct {
+  EnumSchema `json:",inline"`
   OutputSchema `json:",inline"`
 }
+
+type OutputArraySchema struct {
+  ArraySchema `json:",inline"`
+  OutputSchema `json:",inline"`
+}
+
+
 
 type CommandInputRecordField struct {
-  // sld:RecordField
-  Name string
-  Documented `json:",inline"`
-  Type CommandInputType
-  // From InputRecordField
-  FieldBase `json:",inline"`
-  InputFormat `json:",inline"`
-  LoadContents `json:",inline"`
+  InputRecordField `json:",inline"`
   CommandLineBindable `json:",inline"`
 }
 
@@ -115,11 +54,10 @@ type CommandInputRecordField struct {
 type CommandInputRecordSchema struct {
  CommandInputSchemaBase // abstract
  CommandLineBindable `json:",inline"`
-  
-  Type   string
-  Fields []CommandInputRecordField
-  // From InputRecordSchema
-  InputSchema `json:",inline"`
+ 
+ //RecordSchema `json:",inline"`
+ //InputSchema `json:",inline"`
+  InputRecordSchema `json:",inline"`
 }
 
 type CommandInputEnumSchema struct {
@@ -128,6 +66,9 @@ type CommandInputEnumSchema struct {
   
   // sld:EnumSchema
   InputEnumSchema `json:",inline"`
+  
+  //EnumSchema
+  //InputSchema
 }
 
 
@@ -135,30 +76,36 @@ type CommandInputArraySchema struct {
   CommandInputSchemaBase // abstract
   CommandLineBindable `json:",inline"`
   
-  // sld:EnumSchema
-  Type  string    `json:"type"` // must be array
-  Items CommandInputType `json:"items"`
-  // From InputArraySchema
-  InputSchema `json:",inline"`
+  InputArraySchema `json:",inline"`
 }
 
-//type CommandOutputType struct {
-//
-//}
-
 type CommandOutputRecordField struct {
-  Name string
-  Documented `json:",inline"`
-  Type CommandOutputType
-  // From InputRecordField
-  FieldBase `json:",inline"`
-  OutputFormat `json:",inline"`
+  OutputRecordField  `json:",inline"`
+  OutputBinding *CommandOutputBinding  `json:"outputBinding"`
 }
 
 type CommandOutputRecordSchema struct {
   // sld:
-  Type   string
-  Fields []CommandOutputRecordField
-  // From InputRecordSchema
-  OutputSchema `json:",inline"`
+  OutputRecordSchema `json:",inline"`
+}
+
+type CommandOutputEnumSchema struct {
+  OutputEnumSchema `json:",inline"`
+}
+
+type CommandOutputArraySchema struct {
+  OutputArraySchema `json:",inline"`
+}
+
+
+// CommandInputType
+// a collect for CWLType,stdin, CommandInputRecordSchema, CommandInputEnumSchema, CommandInputArraySchema, string
+// and array of them
+type CommandInputType struct {
+  SaladType      `salad:"type"`
+}
+
+
+type CommandOutputType struct {
+  SaladType `salad:"type"`
 }

@@ -101,14 +101,21 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 	return e, nil
 }
 
-func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (cwl.Values , error){
+func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (outs cwl.Values ,err error){
+	err = e.ResolveProcess(process, params)
+	return
+}
+
+
+// 解析但不执行
+func (e *Engine) ResolveProcess(process *Process, params cwl.Values) ( error){
 	tool , ok := process.tool.Process.(*cwl.CommandLineTool)
 	if !ok {
-		return nil, e.errorf("need to be CommandLineTool %s", process.tool.Process.Base().ID)
+		return  e.errorf("need to be CommandLineTool %s", process.tool.Process.Base().ID)
 	}
 	setDefault(e.params, tool.Inputs)
 	if err := process.initJVM(); err != nil {
-		return nil, err
+		return  err
 	}
 	// TODO better
 	process.runtime.RootHost = e.RootHost
@@ -122,65 +129,63 @@ func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (cwl.Values
 		in := inb.(*cwl.CommandInputParameter)
 		val := (*e.params)[in.ID]
 		k := sortKey{getPos(in.InputBinding)}
-		b, err := process.bindInput(in.ID, in.Type, in.InputBinding, in.SecondaryFiles, val, k)
+		b, err := process.bindInput(in.ID, in.Type.SaladType, in.InputBinding, in.SecondaryFiles, val, k)
 		if err != nil {
-			return nil, e.errorf("binding input %q: %s", in.ID, err)
+			return  e.errorf("binding input %q: %s", in.ID, err)
 		}
 		if b == nil {
-			return nil, e.errorf("no binding found for input: %s", in.ID)
+			return e.errorf("no binding found for input: %s", in.ID)
 		}
-	
+		
 		process.bindings = append(process.bindings, b...)
 	}
 	e.process = process
 	
 	err := process.loadReqs()
 	if err != nil {
-		return nil, err
+		return  err
 	}
 	
 	{
-		stdoutI, err := process.eval(process.tool.Stdout, nil)
+		stdoutI, err := process.eval(tool.Stdout, nil)
 		if err != nil {
-			return nil, fmt.Errorf("evaluating stdout expression : %s", err)
+			return fmt.Errorf("evaluating stdout expression : %s", err)
 		}
-	
-		stderrI, err := process.eval(process.tool.Stderr, nil)
+		
+		stderrI, err := process.eval(tool.Stderr, nil)
 		if err != nil {
-			return nil, fmt.Errorf("evaluating stderr expression : %s", err)
+			return fmt.Errorf("evaluating stderr expression : %s", err)
 		}
-	
+		
 		var stdoutStr, stderrStr string
 		var ok bool
-	
+		
 		if stdoutI != nil {
 			stdoutStr, ok = stdoutI.(string)
 			if !ok {
-				return nil, fmt.Errorf("stdout expression returned a non-string value")
+				return  fmt.Errorf("stdout expression returned a non-string value")
 			}
 		}
-	
+		
 		if stderrI != nil {
 			stderrStr, ok = stderrI.(string)
 			if !ok {
-				return nil, fmt.Errorf("stderr expression returned a non-string value")
+				return fmt.Errorf("stderr expression returned a non-string value")
 			}
 		}
-	
-		for _, out := range process.tool.Outputs {
-			if len(out.Types) == 1 {
-				if out.Types[0].Type == "stdout" && stdoutStr == "" {
-					stdoutStr = "stdout-" + uuid.New().String()
-				}
-				if out.Types[0].Type == "stderr" && stderrStr == "" {
-					stderrStr = "stderr-" + uuid.New().String()
-				}
+		
+		for _, out := range tool.Outputs {
+			outi :=out.(*cwl.CommandOutputParameter)
+			if outi.Type.TypeName() == "stdout"  {
+				stdoutStr = "stdout-" + uuid.New().String()
+			} else if outi.Type.TypeName() == "stderr" {
+				stderrStr = "stderr-" + uuid.New().String()
 			}
 		}
 		process.stdout = stdoutStr
 		process.stderr = stderrStr
 	}
-	return nil, nil
+	return nil
 }
 
 func (e *Engine) MainProcess() (*Process, error) {

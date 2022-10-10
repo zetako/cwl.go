@@ -1,23 +1,17 @@
 package cwl
 
-import (
-	//"fmt"
-	//"io/ioutil"
-	"reflect"
-)
-
 // InputDefault represents "default" field in an element of "inputs".
-type InputDefault struct {
-	ID string
-
-	Self  interface{}
-	Kind  reflect.Kind
-	Entry *FileDir
-	Error error
-
-	// TODO: Refactor
-	Int int
-}
+//type InputDefault struct {
+//	ID string
+//
+//	Self  interface{}
+//	Kind  reflect.Kind
+//	Entry *FileDir
+//	Error error
+//
+//	// TODO: Refactor
+//	Int int
+//}
 
 // New constructs new "InputDefault".
 //func (d InputDefault) New(i interface{}) *InputDefault {

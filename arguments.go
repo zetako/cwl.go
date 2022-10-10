@@ -4,34 +4,17 @@ import (
 	"encoding/json"
 )
 
-//// Argument represents an element of "arguments" of CWL
-//// @see http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineTool
-//type Argument struct {
-//	Value   string
-//	Binding *Binding
-//}
 
-//// New constructs an "Argument" struct from any interface.
-//func (_ Argument) New(i interface{}) Argument {
-//	dest := Argument{}
-//	switch x := i.(type) {
-//	case string:
-//		dest.Value = x
-//	case map[string]interface{}:
-//		dest.Binding = Binding{}.New(x)
-//	}
-//	return dest
-//}
 
 func (p *Argument) UnmarshalJSON(data []byte) error {
 	if len(data) == 0 {
 		p = nil
 		return nil
 	} else if data[0] == '{' {
-		p.binding = &CommandLineBinding{}
-		return json.Unmarshal(data, p.binding)
+		p.Binding = &CommandLineBinding{}
+		return json.Unmarshal(data, p.Binding)
 	}
-	return json.Unmarshal(data, &p.exp)
+	return json.Unmarshal(data, &p.Exp)
 }
 
 // Flatten ...
@@ -50,11 +33,11 @@ func (arg Argument) Flatten() []string {
 }
 
 func (arg Argument) MustString() string {
-	return string(arg.exp)
+	return string(arg.Exp)
 }
 
 func (arg Argument) MustBinding() *CommandLineBinding {
-	return arg.binding
+	return arg.Binding
 }
 
 // Len for sorting.
@@ -64,7 +47,7 @@ func (args Arguments) Len() int {
 
 // Less for sorting.
 func (args Arguments) Less(i, j int) bool {
-	prev, next := args[i].binding, args[j].binding
+	prev, next := args[i].Binding, args[j].Binding
 	switch [2]bool{prev == nil, next == nil} {
 	case [2]bool{true, true}:
 		return false

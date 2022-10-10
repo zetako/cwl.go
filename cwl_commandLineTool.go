@@ -1,7 +1,6 @@
 package cwl
 
 import (
-	"encoding/json"
 	"reflect"
 )
 
@@ -45,114 +44,19 @@ type CommandLineBindable struct {
 	InputBinding *CommandLineBinding `json:"inputBinding,omitempty"` // removed
 }
 
-//type CommandInputRecordField struct {
-//  CommandInputSchemaBase // abstract
-//  CommandLineBindable `json:",inline"`
-//  //InputRecordField `json:",inline"` // TODO
-//}
 
-//type CommandInputEnumSchema struct {
-//  CommandInputSchemaBase // abstract
-//  CommandLineBindable `json:",inline"`
-//  //InputEnumSchema `json:",inline"` // TODO
-//}
 
-//type CommandInputArraySchema struct {
-//  CommandInputSchemaBase // abstract
-//  CommandLineBindable `json:",inline"`
-//  //InputArraySchema `json:",inline"` // TODO
-//}
-
-//type CommandOutputRecordField struct {
-//  //OutputRecordField `json:",inline"` // TODO
-//  OutputBinding *CommandOutputBinding `json:"outputBinding,omitempty"`
-//}
-//
-//type CommandOutputRecordSchema struct {
-//  //OutputRecordSchema `json:",inline"` // TODO
-//}
-//
-//type CommandOutputEnumSchema struct {
-//  //OutputEnumSchema `json:",inline"` // TODO
-//}
-//
-//type CommandOutputArraySchema struct {
-//  //OutputArraySchema `json:",inline"` // TODO
-//}
-
-// CommandInputType
-// a collect for CWLType,stdin, CommandInputRecordSchema, CommandInputEnumSchema, CommandInputArraySchema, string
-// and array of them
-type CommandInputType struct {
-	SaladType
-	IsStdin bool                // stdin is extends for saladTypes
-	Binding *CommandLineBinding // TODO
-}
-
-func (recv *CommandInputType) UnmarshalJSON(data []byte) error {
-	err := json.Unmarshal(data, &recv.SaladType)
-	if err != nil {
-		return nil
-	}
-	if recv.SaladType.name == "stdin" {
-		recv.IsStdin = true
-	}
-	binding := &CommandLineBindable{}
-	if err = json.Unmarshal(data, binding); err != nil {
-		// simple type has no object format
-		//return err
-		return nil
-	}
-	if binding.InputBinding != nil {
-		recv.Binding = binding.InputBinding
-	}
-	return nil
-}
 
 type CommandInputParameter struct {
 	InputParameterBase `json:",inline"`
-	Type               CommandInputType    `json:"type"`
+	Type               CommandInputType    `json:"type" salad:"type"`
+	//Type               CommandInputType    `json:"type"`
 	InputBinding       *CommandLineBinding `json:"inputBinding,omitempty"`
-}
-
-type CommandOutputType struct {
-	SaladType
-	isStdout bool                  // extends for saladTypes
-	isStderr bool                  // extends for saladTypes
-	Binding  *CommandOutputBinding // TODO
-	// TODO
-}
-
-type outputBindable struct {
-	OutputBinding *CommandOutputBinding `json:"outputBinding,omitempty"` // removed
-}
-
-func (recv *CommandOutputType) UnmarshalJSON(data []byte) error {
-	err := json.Unmarshal(data, &recv.SaladType)
-	if err != nil {
-		return nil
-	}
-	if recv.SaladType.name == "stderr" {
-		recv.isStderr = true
-	}
-	if recv.SaladType.name == "stdout" {
-		recv.isStdout = true
-	}
-	binding := &outputBindable{}
-	if err = json.Unmarshal(data, binding); err != nil {
-		// simple type has no object format
-		//return err
-		return nil
-	}
-	if binding.OutputBinding != nil {
-		recv.Binding = binding.OutputBinding
-	}
-	return nil
 }
 
 type CommandOutputParameter struct {
 	OutputParameterBase `json:",inline"`
-	Type                CommandOutputType     `json:"type"`
+	Type                CommandOutputType     `json:"type" salad:"type"`
 	OutputBinding       *CommandOutputBinding `json:"outputBinding,omitempty"`
 }
 
@@ -252,8 +156,8 @@ type ToolTimeLimit struct {
 // Argument represents an element of "arguments" of CWL
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineTool
 type Argument struct {
-	exp     Expression
-	binding *CommandLineBinding
+	Exp     Expression
+	Binding *CommandLineBinding
 }
 
 // Arguments represents a list of "Argument"
@@ -270,6 +174,21 @@ func (p *CommandLineTool) UnmarshalJSON(data []byte) error {
 	//db["InputEnumSchema"] = &RecordFieldGraph{Example: CommandInputEnumSchema{}}
 	//db["InputArraySchema"] = &RecordFieldGraph{Example: CommandInputArraySchema{}}
 	db["InputBinding"] = &RecordFieldGraph{Example: CommandLineBinding{}}
+	//CommandInputType
+	db["CommandInputType"] = &RecordFieldGraph{Example: CommandInputType{},
+		Fields: map[string]*RecordFieldGraph{
+			"ArrayType": &RecordFieldGraph{ Example:  CommandInputArraySchema{} },
+			"EnumType": &RecordFieldGraph{ Example:  CommandInputEnumSchema{} },
+			"RecordType": &RecordFieldGraph{ Example:  CommandInputRecordSchema{} },
+		},
+	}
+	db["CommandOutputType"] = &RecordFieldGraph{Example: CommandOutputType{},
+		Fields: map[string]*RecordFieldGraph{
+			"ArrayType": &RecordFieldGraph{ Example:  CommandOutputArraySchema{} },
+			"EnumType": &RecordFieldGraph{ Example:  CommandInputEnumSchema{} },
+			"RecordType": &RecordFieldGraph{ Example:  CommandOutputRecordSchema{} },
+		},
+	}
 	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
 		return err
 	}

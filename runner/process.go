@@ -57,7 +57,7 @@ type Binding struct {
 	clb *cwl.CommandLineBinding
 	// the bound type (resolved by matching the input value to one of many allowed types)
 	// can be nil, which means no matching type could be determined.
-	Type cwl.CommandInputType
+	Type cwl.SaladType
 	// the value from the input object
 	Value cwl.Value
 	// used to determine the ordering of command line flags.
@@ -86,28 +86,28 @@ func (process *Process) Command() ([]string, error) {
 			args = append(args, b)
 		}
 	}
-
+	tool := process.tool.Process.(*cwl.CommandLineTool)
 	// Add "Tool.Arguments"
-	//for i, arg := range process.tool.Arguments {
-	//	if arg.Binding == nil && arg.Value != "" {
-	//		args = append(args, &Binding{
-	//			arg.Binding, cwl.Type{
-	//				Type: argType, // #TODO Check if Type ok
-	//			}, arg.Value, sortKey{0}, nil, "",
-	//		})
-	//		continue
-	//	} else if arg.Binding == nil {
-	//		return nil, fmt.Errorf("empty argument")
-	//	}
-	//	if arg.Binding != nil && arg.Binding.ValueFrom != nil && arg.Binding.ValueFrom.String() == "" {
-	//		return nil, fmt.Errorf("valueFrom is required but missing for argument %d", i)
-	//	}
-	//	args = append(args, &Binding{
-	//		arg.Binding, cwl.Type{
-	//			Type: argType, // #TODO Check if Type ok
-	//		}, nil, sortKey{arg.Binding.Position}, nil, "",
-	//	})
-	//}
+	for i, arg := range  tool.Arguments {
+		if arg.Binding == nil && arg.Exp != "" {
+			args = append(args, &Binding{
+				arg.Binding, cwl.SaladType{
+					Type: argType, // #TODO Check if Type ok
+				}, arg.Value, sortKey{0}, nil, "",
+			})
+			continue
+		} else if arg.Binding == nil {
+			return nil, fmt.Errorf("empty argument")
+		}
+		if arg.Binding != nil && arg.Binding.ValueFrom != nil && arg.Binding.ValueFrom.String() == "" {
+			return nil, fmt.Errorf("valueFrom is required but missing for argument %d", i)
+		}
+		args = append(args, &Binding{
+			arg.Binding, cwl.Type{
+				Type: argType, // #TODO Check if Type ok
+			}, nil, sortKey{arg.Binding.Position}, nil, "",
+		})
+	}
 	//
 	//// Evaluate "valueFrom" expression.
 	//for _, b := range args {
@@ -157,7 +157,7 @@ func toJSONMap(v interface{}) (interface{}, error) {
 	return data, nil
 }
 
-func (process *Process) eval(x string, self interface{}) (interface{}, error) {
+func (process *Process) eval(x cwl.Expression, self interface{}) (interface{}, error) {
 	return process.jsvm.Eval(x, self)
 }
 

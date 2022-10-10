@@ -13,7 +13,7 @@ import (
 
 type RecordFieldGraph struct {
 	Example interface{}
-	//Fields map[string]*RecordFieldGraph
+	Fields map[string]*RecordFieldGraph
 }
 
 type testClass struct {
@@ -153,7 +153,16 @@ func parseObject(typeOfRecv reflect.Type, valueOfRecv reflect.Value,
 			salad = v
 		}
 		log.Println("set fieldName", key, recvName)
-		if err = setField(fieldType, fieldValue, value, salad, db); err != nil {
+		fdb := db
+		if nextdb , got := db[fieldType.Name()]; got && nextdb.Fields != nil {
+			fdb = nextdb.Fields
+		}
+		if salad.IsType {
+			err = setType(fieldType, fieldValue, value, salad,  fdb)
+		} else {
+			err = setField(fieldType, fieldValue, value, salad, fdb)
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -169,7 +178,7 @@ func debugType(fieldType reflect.Type) {
 func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 	salad saladTags, db map[string]*RecordFieldGraph) (err error) {
 	fkind := fieldType.Kind()
-	log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
+	//log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
 	// 如果本身有解析函数则直接调用 ✅
 	debugType(fieldValue.Type())
 	// 可能需要分配空间的情况
@@ -348,6 +357,7 @@ type saladTags struct {
 	MapSubject   string
 	MapPredicate string
 	Default      string
+	IsType			 bool
 }
 
 func getSaladTags(txt string) saladTags {
@@ -367,6 +377,8 @@ func getSaladTags(txt string) saladTags {
 			s.MapPredicate = v
 		case "default":
 			s.Default = v
+		case "type":
+			s.IsType = true
 		}
 	}
 	return s
@@ -475,4 +487,128 @@ func NewBean(db map[string]*RecordFieldGraph, name string) ( interface{}, error)
 		return reflect.New(reflect.TypeOf(record.Example)).Interface() , nil
 	}
 	return nil, fmt.Errorf("Cannot Generate Type %s", name)
+}
+
+
+func setType(fieldType reflect.Type, fieldValue reflect.Value, data []byte, salad saladTags,
+	 db map[string]*RecordFieldGraph) (err error) {
+	fkind := fieldType.Kind()
+	log.Println("setType", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
+	saladVal :=  fieldValue
+	if fieldType.Name() != "SaladType" {
+		saladVal = saladVal.FieldByName("SaladType")
+	}
+	if saladVal.CanAddr() {
+		saladVal = saladVal.Addr()
+	}
+	t := saladVal.Interface().(*SaladType)
+	saladType := reflect.TypeOf(SaladType{})
+	arrayType := reflect.TypeOf(db["ArrayType"].Example)
+	enumType := reflect.TypeOf(db["EnumType"].Example)
+	recordType := reflect.TypeOf(db["RecordType"].Example)
+	// .. ..
+	var bean interface{}
+	if err = json.Unmarshal(data,&bean); err != nil {
+		return  err
+	}
+	switch v:= bean.(type) {
+	case string:
+		isOptional , isArray , restType := typeDSLResolution(v)
+		if !isOptional && !isArray {
+			t.SetTypename(restType)
+			return
+		}
+		innerType := &SaladType{}
+		innerType.SetTypename(restType)
+		if isOptional {
+			nullType := &SaladType{}
+			nullType.SetNull()
+			if isArray {
+				arrayValue := reflect.New(arrayType)
+				array := arrayValue.Interface().(ArrayType)
+				array.SetItems(*innerType)
+				//t.multi = []SaladType{  {primitive: "null"}, {array: &ArraySchema{Items: innerType}} }
+				tmpType := SaladType{}
+				tmpType.SetArray(array)
+				t.SetMulti([]SaladType{*nullType, tmpType})
+				return nil
+			}
+			t.SetMulti([]SaladType{*nullType, *innerType})
+			return nil
+		}
+		if isArray {
+			arrayValue := reflect.New(arrayType)
+			array := arrayValue.Interface().(ArrayType)
+			array.SetItems(*innerType)
+			t.SetArray(array)
+			return nil
+		}
+		return nil
+	case map[string]interface{}:
+		typenameRaw , got := v["type"]
+		if !got {
+			return fmt.Errorf("type filed is need for type object")
+		}
+		typenameStr , got := typenameRaw.(string)
+		if !got {
+			return fmt.Errorf("type filed need be STRING type for type object")
+		}
+		switch typenameStr {
+		case "record":
+			recordValue := reflect.New(recordType)
+			record := recordValue.Interface().(RecordType)
+			err = parseObject(recordType, recordValue, data, db)
+			if err != nil {
+				return err
+			}
+			t.SetRecord(record)
+			//return nil
+		case "enum":
+			enumValue := reflect.New(enumType)
+			enum := enumValue.Interface().(EnumType)
+			err = parseObject(enumType, enumValue, data, db)
+			if err != nil {
+				return err
+			}
+			t.SetEnum(enum)
+			//return err
+		case "array":
+			arrayValue := reflect.New(arrayType)
+			array := arrayValue.Interface().(ArrayType)
+			log.Printf("%#v", array)
+			err = parseObject(arrayType, arrayValue, data, db)
+			if err != nil {
+				return err
+			}
+			t.SetArray(array)
+			//return nil
+		}
+		// 可能有其他字段
+		beans := make(map[string]json.RawMessage,0)
+		if err = json.Unmarshal(data, &beans); err != nil {
+			return err
+		}
+		delete(beans, "type")
+		delete(beans, "items")
+		delete(beans, "fields")
+		delete(beans, "symbols")
+		data ,_ = json.Marshal(beans)
+		return setField(fieldType,fieldValue , data, salad, db)
+		//return nil
+	case []interface{}:
+		beans := make([]json.RawMessage,0)
+		if err = json.Unmarshal(data, &beans); err != nil {
+			return err
+		}
+		types := make([]SaladType, len(beans))
+		for i, beani := range beans {
+			err = setType(saladType, reflect.ValueOf(&types[i]), beani, salad, db)
+			if err!= nil {
+				return err
+			}
+		}
+		t.SetMulti(types)
+		return nil
+	}
+	return fmt.Errorf("unknown type %s", string(data))
 }
