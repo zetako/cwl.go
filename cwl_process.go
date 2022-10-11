@@ -11,6 +11,12 @@ type FileDir interface {
 	Classable
 }
 
+//type FileDir struct {
+//	ClassBase      `json:",inline"`
+//	file *File
+//	dir *Directory
+//}
+
 // File represents file entry.
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#File
 type File struct {
@@ -35,12 +41,21 @@ type Directory struct {
 	Location  string    `json:"location,omitempty"`
 	Path      string    `json:"path,omitempty"`
 	Basename  string    `json:"basename,omitempty"`
-	Listing   []FileDir `json:"listing,omitempty"`
+	//Listing   []FileDir `json:"listing,omitempty"`
+	Listing   EntryListing `json:"listing,omitempty"`
 	Values
 }
 
 func (File) filedir()      {}
 func (Directory) filedir() {}
+type EntryListing []FileDir
+
+//func (l *EntryListing) UnmarshalJSON(b []byte) error {
+//	return setField( reflect.TypeOf(l), reflect.ValueOf(l), b, saladTags{}, map[string]*RecordFieldGraph{
+//		"File" : &RecordFieldGraph{Example: File{}},
+//		"Directory" : &RecordFieldGraph{Example: Directory{}},
+//	} )
+//}
 
 // Labeled
 // alias SchemaBase in v1.0
@@ -102,7 +117,7 @@ type InputParameterBase struct {
 	Parameter    `json:",inline"`
 	InputFormat  `json:",inline"`
 	LoadContents `json:",inline"`
-	Default      interface{} `json:"default,omitempty"`
+	Default      Value `json:"default,omitempty"`
 }
 
 type InputParameter interface {

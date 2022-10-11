@@ -178,7 +178,7 @@ func debugType(fieldType reflect.Type) {
 func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 	salad saladTags, db map[string]*RecordFieldGraph) (err error) {
 	fkind := fieldType.Kind()
-	//log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
+	log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
 	// 如果本身有解析函数则直接调用 ✅
 	debugType(fieldValue.Type())
 	// 可能需要分配空间的情况
@@ -277,13 +277,27 @@ func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 			}
 		}
 		return nil
-
 	// 直接值的解析 ✅
 	case reflect.String, reflect.Int, reflect.Bool, reflect.Int64, reflect.Float64, reflect.Float32:
 		err := json.Unmarshal(bean, fieldValue.Addr().Interface())
 		if err != nil {
 			return err
 		}
+	case reflect.Interface:
+		if fieldType.Name() == "Value" {
+			var val interface{}
+			err = json.Unmarshal(bean, &val)
+			if err != nil {
+				return err
+			}
+			newVal, err := ConvertToValue(val)
+			if err != nil {
+				return err
+			}
+			fieldValue.Set(reflect.ValueOf(newVal))
+			return nil
+		}
+		return json.Unmarshal(bean, fieldValue.Addr().Interface())
 	default:
 		return json.Unmarshal(bean, fieldValue.Addr().Interface())
 		//return fmt.Errorf("not set values")

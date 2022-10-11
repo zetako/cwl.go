@@ -81,11 +81,15 @@ func TestCWL_tool_1(t *testing.T) {
 	if !pass {
 		t.Fatalf("input3 type err%#v %s", typein4, typein4.TypeName())
 	}
-	// 🚧 TODO Test input default , more
+	// ✅ Test input default , more
 	input4 := p.Inputs[4].(*cwl.CommandInputParameter)
-	//t.Logf("%#v",input4.Default)
+	t.Logf("default %#v",input4.Default)
 	if input4.Default == nil {
 		t.Fatalf("input4 default fail %#v", input4)
+	}
+	_ , ok = input4.Default.(cwl.File)
+	if !ok {
+		t.Fatalf("input4 default is not File Type %#v", input4)
 	}
 	// ✅ Test Arguments
 	args := p.Arguments
@@ -154,3 +158,4 @@ func TestCWL_tool_1(t *testing.T) {
 		t.Fatalf("out1 type err  %#v", ot2)
 	}
 }
+

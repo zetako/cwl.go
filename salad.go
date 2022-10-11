@@ -518,6 +518,10 @@ type secondaryFilesDSLPattern struct {
   Required interface{} `json:"required"`
 }
 
+func NewType(name string) SaladType {
+  return SaladType{ name: name }
+}
+
 func secondaryFilesDSLResolution(in string) (out secondaryFilesDSLPattern) {
   p := secondaryFilesDSLPattern{ Pattern: in, Required: nil }
   if strings.HasSuffix(in, "?") {

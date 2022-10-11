@@ -12,5 +12,13 @@ func init() {
 	classMap["ScatterFeatureRequirement"] = ScatterFeatureRequirement{}
 	classMap["MultipleInputFeatureRequirement"] = MultipleInputFeatureRequirement{}
 	classMap["StepInputExpressionRequirement"] = StepInputExpressionRequirement{}
-
+	
+	classMap["File"] = File{}
+	classMap["Directory"] = Directory{}
+	
 }
+
+var (
+	NullType = SaladType{ primitive: "null"}
+	//ArgType = SaladType{ primitive: 	"arg"}
+)

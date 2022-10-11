@@ -17,21 +17,6 @@ func (p *Argument) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &p.Exp)
 }
 
-// Flatten ...
-func (arg Argument) Flatten() []string {
-	flattened := []string{}
-	// TODO Do arg Flatten
-	//if arg.Value != "" {
-	//	flattened = append(flattened, arg.Value)
-	//}
-	//if arg.Binding != nil {
-	//	if arg.Binding.Prefix != "" {
-	//		flattened = append([]string{arg.Binding.Prefix}, flattened...)
-	//	}
-	//}
-	return flattened
-}
-
 func (arg Argument) MustString() string {
 	return string(arg.Exp)
 }

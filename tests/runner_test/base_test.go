@@ -1,8 +1,6 @@
 package runnertest
 
 import (
-	"encoding/json"
-	"github.com/lijiang2014/cwl.go"
 	"log"
 	"testing"
 	
@@ -31,11 +29,7 @@ func TestCWLR2_detail(t *testing.T) {
 	e, err := newEngine("v1.0/bwa-mem-tool.cwl", "v1.0/bwa-mem-job.json")
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
-	inVals := cwl.NewValues()
-	if err := json.Unmarshal(e.Log.Params, inVals); err != nil {
-		t.Fatal(err)
-	}
-	e.ResolveProcess(p, *inVals)
+	err = e.ResolveProcess(p)
 	Expect(t, err).ToBe(nil)
 	cmds, err := p.Command()
 	Expect(t, err).ToBe(nil)

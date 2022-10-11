@@ -25,7 +25,7 @@ func TestDecode_binding_test(t *testing.T) {
 	input0 := root.Inputs[0].(*cwl.CommandInputParameter)
 	Expect(t, input0.ID).ToBe("#args.py")
 	Expect(t, input0.Type.TypeName()).ToBe("File")
-	Expect(t, input0.Default.(map[string]interface{})["class"]).ToBe("File")
+	Expect(t, input0.Default.(cwl.File).Location).ToBe("args.py")
 	Expect(t, int(*input0.InputBinding.Position.Int)).ToBe(-1)
 	
 	input1 := root.Inputs[1].(*cwl.CommandInputParameter)

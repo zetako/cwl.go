@@ -102,18 +102,20 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 }
 
 func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (outs cwl.Values ,err error){
-	err = e.ResolveProcess(process, params)
+	process.inputs = &params
+	err = e.ResolveProcess(process)
 	return
 }
 
 
 // 解析但不执行
-func (e *Engine) ResolveProcess(process *Process, params cwl.Values) ( error){
+func (e *Engine) ResolveProcess(process *Process) ( error){
 	tool , ok := process.tool.Process.(*cwl.CommandLineTool)
+	params := process.inputs
 	if !ok {
 		return  e.errorf("need to be CommandLineTool %s", process.tool.Process.Base().ID)
 	}
-	setDefault(e.params, tool.Inputs)
+	setDefault(params, tool.Inputs)
 	if err := process.initJVM(); err != nil {
 		return  err
 	}
@@ -127,7 +129,7 @@ func (e *Engine) ResolveProcess(process *Process, params cwl.Values) ( error){
 	// which is why we bind in the ProcessBase constructor.
 	for _, inb := range tool.Inputs {
 		in := inb.(*cwl.CommandInputParameter)
-		val := (*e.params)[in.ID]
+		val := (*params)[in.ID]
 		k := sortKey{getPos(in.InputBinding)}
 		b, err := process.bindInput(in.ID, in.Type.SaladType, in.InputBinding, in.SecondaryFiles, val, k)
 		if err != nil {
@@ -204,7 +206,7 @@ func (e *Engine) MainProcess() (*Process, error) {
 	//
 	//}
 	inputs := e.root.Process.Base().Inputs
-	setDefault(e.params, inputs)
+	setDefault(process.inputs, inputs)
 
 	if err := process.initJVM(); err != nil {
 		return nil, err

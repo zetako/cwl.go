@@ -173,6 +173,8 @@ Loop:
 			def, ok := val.(*cwl.File)
 			if ok {
 				v = *def
+			} else {
+				v, ok = val.(cwl.File)
 			}
 			if !ok {
 				continue Loop

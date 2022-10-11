@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"sort"
+	"strings"
 )
 
 type Process struct {
@@ -90,48 +92,49 @@ func (process *Process) Command() ([]string, error) {
 	// Add "Tool.Arguments"
 	for i, arg := range  tool.Arguments {
 		if arg.Binding == nil && arg.Exp != "" {
+			expStr := string(arg.Exp)
+			expResult , expErr :=  process.Eval(arg.Exp, nil)
+			if expErr == nil {
+				expStr = fmt.Sprint(expResult)
+			}
 			args = append(args, &Binding{
-				arg.Binding, cwl.SaladType{
-					Type: argType, // #TODO Check if Type ok
-				}, arg.Value, sortKey{0}, nil, "",
+				arg.Binding,  cwl.NewType(argType), expStr, sortKey{0}, nil, "",
 			})
 			continue
 		} else if arg.Binding == nil {
 			return nil, fmt.Errorf("empty argument")
 		}
-		if arg.Binding != nil && arg.Binding.ValueFrom != nil && arg.Binding.ValueFrom.String() == "" {
+		if arg.Binding != nil && arg.Binding.ValueFrom == ""  {
 			return nil, fmt.Errorf("valueFrom is required but missing for argument %d", i)
 		}
 		args = append(args, &Binding{
-			arg.Binding, cwl.Type{
-				Type: argType, // #TODO Check if Type ok
-			}, nil, sortKey{arg.Binding.Position}, nil, "",
+			arg.Binding, cwl.NewType(argType), nil, sortKey{arg.Binding.Position}, nil, "",
 		})
 	}
 	//
-	//// Evaluate "valueFrom" expression.
-	//for _, b := range args {
-	//	if b.clb != nil && b.clb.ValueFrom != nil && b.clb.ValueFrom.String() != "" {
-	//		val, err := process.eval(b.clb.ValueFrom.String(), b.Value)
-	//		if err != nil {
-	//			return nil, fmt.Errorf("failed to eval argument value: %s", err)
-	//		}
-	//		b.Value = val
-	//	}
-	//}
-	//
-	//sort.Stable(bySortKey(args))
-	////debug(args)
+	// Evaluate "valueFrom" expression.
+	for _, b := range args {
+		if b.clb != nil && b.clb.ValueFrom != ""  {
+			val, err := process.eval(b.clb.ValueFrom, b.Value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to eval argument value: %s", err)
+			}
+			b.Value = val
+		}
+	}
+	
+	sort.Stable(bySortKey(args))
+	//debug(args)
 	//
 	//// Now collect the input bindings into command line arguments
-	cmd := append([]string{}, process.tool.Process.(*cwl.CommandLineTool).BaseCommands...)
-	//for _, b := range args {
-	//	cmd = append(cmd, bindArgs(b)...)
-	//}
+	cmd := append([]string{}, tool.BaseCommands...)
+	for _, b := range args {
+		cmd = append(cmd, bindArgs(b)...)
+	}
 	//
-	//if process.tool.RequiresShellCommand() {
-	//	cmd = []string{"/bin/sh", "-c", strings.Join(cmd, " ")}
-	//}
+	if tool.RequiresShellCommand() {
+		cmd = []string{"/bin/sh", "-c", strings.Join(cmd, " ")}
+	}
 
 	//debug("COMMAND", cmd)
 	return cmd, nil
