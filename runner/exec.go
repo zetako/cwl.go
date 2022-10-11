@@ -9,10 +9,17 @@ import (
 type Executor interface {
 	Run(process *Process) (runid string, retChan <-chan int, err error)
 	// CWL 本身并无中断执行的机制，因此只需要Run 接口即可
+	QueryRuntime(limits ResourcesLimites) Runtime
 }
 
 // 本地运行环境
 type LocalExecutor struct {
+}
+
+func (exec LocalExecutor) QueryRuntime(limits ResourcesLimites) Runtime {
+	return Runtime{
+		Cores: int(limits.CoresMin),
+	}
 }
 
 func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int, err error) {
@@ -23,9 +30,9 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 	// set stdin
 	// set image
 	// migrate inputs
-	//if err = process.MigrateInputs(); err != nil {
-	//	return "", nil, err
-	//}
+	if err = process.MigrateInputs(); err != nil {
+		return "", nil, err
+	}
 	r := exec.Command(cmds[0], cmds[1:]...)
 	for k, v := range envs {
 		r.Env = append(r.Env, fmt.Sprintf("%s=%s", k, v))

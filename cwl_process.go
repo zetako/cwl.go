@@ -1,21 +1,53 @@
 package cwl
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 const version = "v1.0"
 
 // CWLType
 // sld:PrimitiveType extends
 // cwl:File cwl:Directory
 
-type FileDir interface {
+type FileDirI interface {
 	filedir()
 	Classable
 }
 
-//type FileDir struct {
-//	ClassBase      `json:",inline"`
-//	file *File
-//	dir *Directory
-//}
+type FileDir struct {
+	ClassBase      `json:",inline"`
+	entry FileDirI
+}
+
+func (e *FileDir)  UnmarshalJSON(b []byte) error {
+	err := json.Unmarshal(b, &e.ClassBase)
+	if err != nil {
+		return err
+	}
+	if e.Class == "File" {
+		entery := &File{}
+		e.entry = entery
+		return json.Unmarshal(b, e.entry)
+	} else if e.Class == "Directory" {
+		entery := &Directory{}
+		e.entry = entery
+		return json.Unmarshal(b, e.entry)
+	}
+	return fmt.Errorf("class need to be File/Directory")
+}
+
+func NewFileDir(entry FileDirI) FileDir  {
+	return FileDir{
+		ClassBase{ entry.ClassName()},
+		entry,
+	}
+}
+
+func (e *FileDir) Entery() FileDirI {
+	return e.entry
+}
 
 // File represents file entry.
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#File
@@ -41,9 +73,9 @@ type Directory struct {
 	Location  string    `json:"location,omitempty"`
 	Path      string    `json:"path,omitempty"`
 	Basename  string    `json:"basename,omitempty"`
-	//Listing   []FileDir `json:"listing,omitempty"`
-	Listing   EntryListing `json:"listing,omitempty"`
-	Values
+	Listing   []FileDir `json:"listing,omitempty"`
+	//Listing   EntryListing `json:"listing,omitempty"`
+	//Listing   EntryListing `json:"listing,omitempty"`
 }
 
 func (File) filedir()      {}

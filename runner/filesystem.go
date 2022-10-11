@@ -61,7 +61,7 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 		//if err != nil {
 		//  return x, process.errorf("creating file from inline content: %s", err)
 		//}
-		process.filesToCreate = append(process.filesToCreate, f)
+		process.filesToCreate = append(process.filesToCreate, cwl.NewFileDir(f))
 
 	} else {
 		x, err = process.fs.Info(f.Location)
@@ -149,7 +149,7 @@ func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFile
 		return err
 	}
 
-	file.SecondaryFiles = append(file.SecondaryFiles, f)
+	file.SecondaryFiles = append(file.SecondaryFiles, cwl.NewFileDir(f))
 	return nil
 }
 

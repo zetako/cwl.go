@@ -9,7 +9,8 @@ import (
 )
 
 type Process struct {
-	tool           *cwl.Root
+	root           *cwl.Root
+	tool	         *cwl.CommandLineTool
 	inputs         *cwl.Values
 	runtime        Runtime
 	fs             Filesystem
@@ -18,39 +19,14 @@ type Process struct {
 	env            map[string]string
 	filesToCreate  []cwl.FileDir
 	shell          bool
-	resources      Resources
+	resources      ResourcesLimites
 	stdout         string
 	stderr         string
 	*Log
 	*jsvm
 }
 
-type Mebibyte int
 
-// TODO this is provided to expressions early on in process processing,
-//      but it won't have real values from a scheduler until much later.
-type Runtime struct {
-	Outdir string
-	Tmpdir string
-	// TODO make these all strings?
-	RootHost   string `json:"rootHost"`
-	Cores      string `json:"cores"`
-	RAM        Mebibyte
-	OutdirSize Mebibyte
-	TmpdirSize Mebibyte
-}
-
-type Resources struct {
-	CoresMin,
-	CoresMax int
-
-	RAMMin,
-	RAMMax,
-	OutdirMin,
-	OutdirMax,
-	TmpdirMin,
-	TmpdirMax Mebibyte
-}
 
 // Binding binds an input type description (string, array, record, etc)
 // to a concrete input value. this information is used while building
@@ -88,7 +64,7 @@ func (process *Process) Command() ([]string, error) {
 			args = append(args, b)
 		}
 	}
-	tool := process.tool.Process.(*cwl.CommandLineTool)
+	tool := process.root.Process.(*cwl.CommandLineTool)
 	// Add "Tool.Arguments"
 	for i, arg := range  tool.Arguments {
 		if arg.Binding == nil && arg.Exp != "" {
@@ -173,22 +149,49 @@ func (process *Process) Env() map[string]string {
 }
 
 func (process *Process) loadReqs() error {
-	//if req := process.tool.RequiresInlineJavascript(); req != nil {
-	//  if err := process.initJVM(); err != nil {
-	//    return err
-	//  }
-	//}
-	//if req := process.tool.RequiresEnvVar(); req != nil {
-	//	// TODO env
-	//}
-	//if req := process.tool.RequiresResource(); req != nil {
-	//	process.loadRuntime()
-	//}
-	//if req := process.tool.RequiresSchemaDef(); req != nil {
-	//	// TODO env
-	//}
-	//if req := process.tool.RequiresInitialWorkDir(); req != nil {
-	//	// TODO env
-	//}
+	tool := process.root.Process.(*cwl.CommandLineTool)
+	if req := tool.RequiresInlineJavascript(); req != nil {
+		// TODO Add Libs
+	 if err := process.initJVM(); err != nil {
+	   return err
+	 }
+	}
+	if req := tool.RequiresEnvVar(); req != nil {
+		// TODO env
+	}
+	if req := tool.RequiresResource(); req != nil {
+		process.loadRuntime()
+	}
+	if req := tool.RequiresSchemaDef(); req != nil {
+		// TODO init schemaDef
+	}
+	if req := tool.RequiresInitialWorkDir(); req != nil {
+		// TODO env
+	}
 	return nil
+}
+
+
+func (process *Process) ResourcesLimites() (*ResourcesLimites , error){
+	limits := GetDefaultResourcesLimits()
+	if req := process.tool.RequiresResource(); req != nil {
+		//CoresMin        LongFloatExpression `json:"coresMin,omitempty"`
+		//CoresMax        LongFloatExpression `json:"coresMax,omitempty"`
+		//RamMin          LongFloatExpression `json:"ramMin,omitempty"` // Minimum reserved RAM in mebibytes (2**20) (default is 256)
+		//RamMax          LongFloatExpression `json:"ramMax,omitempty"`
+		//TmpdirMin       LongFloatExpression `json:"tmpdirMin,omitempty"` // Minimum reserved filesystem based storage for the designated temporary directory, in mebibytes (2**20) (default is 1024)
+		//TmpdirMax       LongFloatExpression `json:"tmpdirMax,omitempty"`
+		//OutdirMin       LongFloatExpression `json:"outdirMin,omitempty"` // Minimum reserved filesystem based storage for the designated output directory, in mebibytes (2**20) (default is 1024)
+		//OutdirMax       LongFloatExpression `json:"outdirMax,omitempty"`
+		
+		if !req.CoresMin.IsNull() {
+			err := req.CoresMin.Resolve(process.jsvm, nil)
+			if err != nil {
+				return nil, fmt.Errorf("ResourcesLimites CoresMin Expression Resolve Error %s", err)
+			}
+			limits.CoresMin = req.CoresMin.MustInt64()
+		}
+		// TODO Set more Resources
+	}
+	return &limits, nil
 }

@@ -1,4 +1,4 @@
-package irunner
+package runner
 
 import (
 	"encoding/json"
@@ -22,8 +22,9 @@ func (process *Process) Outputs(fs Filesystem) (cwl.Values, error) {
 	}
 
 	outputs := cwl.Values{}
-	for _, out := range process.tool.Outputs {
-		v, err := process.bindOutput(fs, out.Types, out.Binding, out.SecondaryFiles, nil)
+	for _, outi := range process.tool.Outputs {
+		out := outi.(*cwl.CommandOutputParameter)
+		v, err := process.bindOutput(fs, out.Type.SaladType, out.OutputBinding, out.SecondaryFiles, nil)
 		if err != nil {
 			return nil, fmt.Errorf(`failed to bind value for "%s": %s`, out.ID, err)
 		}
@@ -35,9 +36,9 @@ func (process *Process) Outputs(fs Filesystem) (cwl.Values, error) {
 // bindOutput binds the output value for a single CommandOutput.
 func (process *Process) bindOutput(
 	fs Filesystem,
-	types []cwl.Type,
-	binding *cwl.Binding,
-	secondaryFiles []cwl.SecondaryFile,
+	typei cwl.SaladType,
+	binding *cwl.CommandOutputBinding,
+	secondaryFiles []cwl.SecondaryFileSchema,
 	val interface{},
 ) (interface{}, error) {
 	var err error
@@ -49,30 +50,35 @@ func (process *Process) bindOutput(
 			return nil, fmt.Errorf("failed to evaluate glob expressions: %s", err)
 		}
 
-		files, err := process.matchFiles(fs, globs, binding.LoadContents)
+		files, err := process.matchFiles(fs, globs, binding.LoadContents.LoadContents)
 		if err != nil {
 			return nil, fmt.Errorf("failed to match files: %s", err)
 		}
 		val = files
 	}
 
-	if binding != nil && binding.Eval != nil && binding.Eval.Raw != "" {
-		val, err = process.eval(binding.Eval.Raw, val)
+	if binding != nil && binding.OutputEval  != "" {
+		val, err = process.eval(binding.OutputEval, val)
 		if err != nil {
 			return nil, fmt.Errorf("failed to evaluate outputEval: %s", err)
 		}
 	}
 
 	if val == nil {
-		for _, t := range types {
-			if t.Type == "null" {
-				return nil, nil
-			}
+		if typei.IsNullable() {
+			return nil, nil
 		}
+	}
+	
+	types := make([]cwl.SaladType,0)
+	if typei.IsMulti() {
+		types = typei.MustMulti()
+	} else {
+		types = append(types, typei)
 	}
 
 	for _, t := range types {
-		switch t.Type {
+		switch t.TypeName() {
 		// TODO validate stdout/err can only be at root
 		//      validate that stdout/err doesn't occur more than once
 		case "stdout":
@@ -110,7 +116,7 @@ func (process *Process) bindOutput(
 	// Bind the output value to one of the allowed types.
 Loop:
 	for _, t := range types {
-		switch t.Type {
+		switch t.TypeName() {
 		case "bool":
 			v, err := cast.ToBoolE(val)
 			if err == nil {
@@ -143,7 +149,7 @@ Loop:
 			}
 		case "File":
 			switch y := val.(type) {
-			case []cwl.FileDir:
+			case []cwl.File:
 				if len(y) != 1 {
 					continue Loop
 				}
@@ -168,7 +174,7 @@ Loop:
 			if typ.Kind() != reflect.Slice {
 				continue Loop
 			}
-
+			array := t.MustArraySchema().(*cwl.CommandOutputArraySchema)
 			var res []interface{}
 
 			arr := reflect.ValueOf(val)
@@ -177,7 +183,7 @@ Loop:
 				if !item.CanInterface() {
 					return nil, fmt.Errorf("can't get interface of array item")
 				}
-				r, err := process.bindOutput(fs, t.Items, t.Binding, nil, item.Interface())
+				r, err := process.bindOutput(fs, *array.GetItems(),nil, nil, item.Interface())
 				if err != nil {
 					return nil, err
 				}
@@ -210,21 +216,21 @@ func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents b
 
 		for _, m := range matches {
 			// TODO handle directories
-			v := cwl.FileDir{
-				Class:    "File",
+			v := cwl.File{
+				ClassBase: cwl.ClassBase{ "File"},
+				//Class:    "File",
 				Location: m.Location,
 				Path:     m.Path,
-				File: cwl.File{
+				//File: cwl.File{
 					Checksum: m.Checksum,
 					Size:     m.Size,
-				},
+				//},
 			}
-
 			f, err := process.resolveFile(v, loadContents)
 			if err != nil {
 				return nil, err
 			}
-			files = append(files, f)
+			files = append(files, cwl.NewFileDir(f) )
 		}
 	}
 	return files, nil
@@ -237,7 +243,7 @@ func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents b
 // cwl spec:
 // "If an expression is provided, the expression must return a string or an array
 //  of strings, which will then be evaluated as one or more glob patterns."
-func (process *Process) evalGlobPatterns(patterns []string) ([]string, error) {
+func (process *Process) evalGlobPatterns(patterns []cwl.Expression) ([]string, error) {
 	var out []string
 
 	for _, pattern := range patterns {

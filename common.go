@@ -162,3 +162,64 @@ func (e *LongFloatExpression) UnmarshalJSON(data []byte) error {
 	}
 	return fmt.Errorf("only long/float/Expression is available")
 }
+
+func (e *LongFloatExpression) IsNull() bool {
+	return e == nil ||
+		(
+			e.Long == nil &&
+				e.Float == nil &&
+				e.Expression == "" )
+}
+
+type JavaScriptInterpreter interface {
+	Eval(e Expression, data interface{}) (interface{}, error)
+}
+
+func (e Expression) Eval(i JavaScriptInterpreter, data interface{}) (interface{}, error) {
+	return i.Eval(e, data)
+}
+
+func (e *LongFloatExpression) MustFloat() float64 {
+	if e.Float != nil {
+		return *e.Float
+	}
+	if e.Long != nil {
+		return float64(*e.Long)
+	}
+	return 0
+}
+
+func (e *LongFloatExpression) MustInt64() int64 {
+	if e.Long != nil {
+		return *e.Long
+	}
+	if e.Float != nil {
+		return int64(*e.Float)
+	}
+	return 0
+}
+
+
+func (e *LongFloatExpression) Resolve(i JavaScriptInterpreter, data interface{}) error {
+	if e.Long != nil || e.Float != nil {
+		return nil
+	}
+	if e.Expression == "" {
+		return fmt.Errorf("no Expression")
+	}
+	out ,err := e.Expression.Eval(i,data)
+	if err != nil {
+		return err
+	}
+	switch v := out.(type) {
+	case int64:
+		e.Long = &v
+		break
+	case float64:
+		e.Float = &v
+		break
+	default:
+		return fmt.Errorf("need to be a number")
+	}
+	return nil
+}

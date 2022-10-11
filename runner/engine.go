@@ -16,6 +16,7 @@ type Engine struct {
 	sync.RWMutex `json:"-"`
 	// 配置接口
 	importer Importer
+	executor Executor
 	//
 	inputFS      Filesystem
 	outputFS     Filesystem
@@ -27,6 +28,7 @@ type Engine struct {
 	RunID    string // the workflow ID
 	RootHost string
 	Log *MainLog //
+	// executer
 }
 
 type EngineConfig struct {
@@ -107,13 +109,45 @@ func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (outs cwl.V
 	return
 }
 
+func (e *Engine) SetDefaultExecutor(exec Executor)  {
+	e.executor = exec
+}
+
+func (e *Engine) Run() (outs cwl.Values, err error) {
+	_, err = e.MainProcess()
+	if err != nil {
+		return nil, err
+	}
+	if e.process.tool != nil {
+		p := e.process
+		limits, err := p.ResourcesLimites()
+		runtime := e.executor.QueryRuntime(*limits)
+		p.SetRuntime(runtime)
+		err = e.ResolveProcess(p)
+		if err !=nil {
+			return nil, err
+		}
+		pid, ret, err := e.executor.Run(p)
+		if err !=nil {
+			return nil, err
+		}
+		p.JobID = pid
+		retCode, _ := <-ret
+		p.SetRuntime(Runtime{ExitCode: &retCode})
+		outputs, err := p.Outputs(e.outputFS)
+		return outputs, err
+	}
+	// TODO workflow run
+	return nil, fmt.Errorf("workflow is not ok yet ")
+}
+
 
 // 解析但不执行
 func (e *Engine) ResolveProcess(process *Process) ( error){
-	tool , ok := process.tool.Process.(*cwl.CommandLineTool)
+	tool , ok := process.root.Process.(*cwl.CommandLineTool)
 	params := process.inputs
 	if !ok {
-		return  e.errorf("need to be CommandLineTool %s", process.tool.Process.Base().ID)
+		return  e.errorf("need to be CommandLineTool %s", process.root.Process.Base().ID)
 	}
 	setDefault(params, tool.Inputs)
 	if err := process.initJVM(); err != nil {
@@ -195,32 +229,36 @@ func (e *Engine) MainProcess() (*Process, error) {
 		return e.process, nil
 	}
 	process := &Process{
-		tool:   e.root,
+		root:   e.root,
 		inputs: e.params,
 		//runtime: e.runtime,
 		fs:  e.inputFS,
 		env: map[string]string{},
 		Log: e.Log.Log,
 	}
+	process.SetRuntime(defaultRuntime)
 	//switch expr {
 	//
 	//}
+	if tool, ok := e.root.Process.(*cwl.CommandLineTool); ok {
+		process.tool = tool
+	}
 	inputs := e.root.Process.Base().Inputs
 	setDefault(process.inputs, inputs)
 
 	if err := process.initJVM(); err != nil {
 		return nil, err
 	}
+	
 	process.runtime.RootHost = e.RootHost
 	process.loadRuntime()
+	e.process = process
 	return process, nil
 }
 
+
+
+
 func (p *Process) loadRuntime() {
-	////e.runtime.Cores = "2"
-	//// TODO More
-	//if res := p.tool.Requirements.RequiresResource(); res != nil {
-	//	p.runtime.Cores = fmt.Sprint(res.CoresMin)
-	//}
 	p.vm.Set("runtime", p.runtime)
 }

@@ -12,7 +12,9 @@ func (p *Argument) UnmarshalJSON(data []byte) error {
 		return nil
 	} else if data[0] == '{' {
 		p.Binding = &CommandLineBinding{}
-		return json.Unmarshal(data, p.Binding)
+		//return json.Unmarshal(data, p.Binding)
+		return JsonUnmarshal(data, p.Binding)
+		//parseObject()
 	}
 	return json.Unmarshal(data, &p.Exp)
 }

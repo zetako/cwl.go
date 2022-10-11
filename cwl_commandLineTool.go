@@ -195,11 +195,3 @@ func (p *CommandLineTool) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *CommandLineTool) RequiresShellCommand() bool {
-	for _, r := range p.Requirements {
-		if r.ClassName() == "ShellCommandRequirement" {
-			return true
-		}
-	}
-	return false
-}

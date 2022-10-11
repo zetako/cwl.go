@@ -14,6 +14,7 @@ import (
 type RecordFieldGraph struct {
 	Example interface{}
 	Fields map[string]*RecordFieldGraph
+	ID string
 }
 
 type testClass struct {
@@ -61,6 +62,16 @@ func (p *ProcessBase) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func JsonUnmarshal(data []byte,bean interface{}, graphs... RecordFieldGraph) error {
+	typeOfRecv := reflect.TypeOf(bean).Elem()
+	valueOfRecv := reflect.ValueOf(bean).Elem()
+	db := make(map[string]*RecordFieldGraph)
+	for i, gi := range graphs {
+		db[gi.ID] = &graphs[i]
+	}
+	return parseObject(typeOfRecv, valueOfRecv, data, db)
 }
 
 // parseObject
@@ -152,7 +163,7 @@ func parseObject(typeOfRecv reflect.Type, valueOfRecv reflect.Value,
 		if v, got := saladFields[key]; got {
 			salad = v
 		}
-		log.Println("set fieldName", key, recvName)
+		//log.Println("set fieldName", key, recvName)
 		fdb := db
 		if nextdb , got := db[fieldType.Name()]; got && nextdb.Fields != nil {
 			fdb = nextdb.Fields
@@ -178,9 +189,9 @@ func debugType(fieldType reflect.Type) {
 func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 	salad saladTags, db map[string]*RecordFieldGraph) (err error) {
 	fkind := fieldType.Kind()
-	log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
+	//log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
 	// 如果本身有解析函数则直接调用 ✅
-	debugType(fieldValue.Type())
+	//debugType(fieldValue.Type())
 	// 可能需要分配空间的情况
 	switch fkind {
 	// 列表的解析
@@ -241,7 +252,7 @@ func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 				var nextType reflect.Type
 				if _, classable := fieldType.MethodByName("ClassName"); classable {
 					nextType, err = GenerateTypesFormClass(valuei, classMap)
-					log.Println("set field by class name", nextType.Name())
+					//log.Println("set field by class name", nextType.Name())
 				} else {
 					nextType, err = GenerateTypesFormInterface(fieldType, db)
 				}
@@ -506,8 +517,8 @@ func NewBean(db map[string]*RecordFieldGraph, name string) ( interface{}, error)
 
 func setType(fieldType reflect.Type, fieldValue reflect.Value, data []byte, salad saladTags,
 	 db map[string]*RecordFieldGraph) (err error) {
-	fkind := fieldType.Kind()
-	log.Println("setType", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
+	//fkind := fieldType.Kind()
+	//log.Println("setType", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
 	saladVal :=  fieldValue
 	if fieldType.Name() != "SaladType" {
 		saladVal = saladVal.FieldByName("SaladType")
@@ -589,7 +600,7 @@ func setType(fieldType reflect.Type, fieldValue reflect.Value, data []byte, sala
 		case "array":
 			arrayValue := reflect.New(arrayType)
 			array := arrayValue.Interface().(ArrayType)
-			log.Printf("%#v", array)
+			//log.Printf("%#v", array)
 			err = parseObject(arrayType, arrayValue, data, db)
 			if err != nil {
 				return err

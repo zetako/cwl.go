@@ -112,19 +112,19 @@ func filterTests(search TestDoc) []TestDoc {
 }
 
 func doTest(t *testing.T, doc TestDoc) {
+	defer func() {
+		if t.Failed() {
+			t.Logf("Test Failed: %d %s %s", doc.ID, doc.Tool, doc.Job)
+		}
+	}()
 	e, err := newEngine(doc.Tool, doc.Job)
 	Expect(t, err).ToBe(nil)
-	p, err := e.MainProcess()
-	ex := irunner.LocalExecutor{}
+	if t.Failed() {
+		return
+	}
+	ex := &irunner.LocalExecutor{}
 	err = os.RemoveAll("/tmp/testcwl")
-	Expect(t, err).ToBe(nil)
-	pid, ret, err := ex.Run(p)
-	Expect(t, err).ToBe(nil)
-	t.Log(pid)
-	retCode, _ := <-ret
-	Expect(t, retCode).ToBe(0)
-	//outputs, err := e.Outputs()
-	//Expect(t, err).ToBe(nil)
-	//t.Log(outputs)
-	//Expect(t, outputs).ToBe(doc.Output)
+	e.SetDefaultExecutor(ex)
+	outputs, err := e.Run()
+	Expect(t, outputs).ToBe(doc.Output)
 }
