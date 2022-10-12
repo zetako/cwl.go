@@ -219,7 +219,7 @@ type InlineJavascriptRequirement struct {
 }
 
 type CommandInputSchema interface {
-	SchemaTypename() string
+	SchemaTypename()
 }
 
 type CommandInputSchemaBase struct {
@@ -231,7 +231,7 @@ func (_ CommandInputSchemaBase) SchemaTypename() {}
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#SchemaDefRequirement
 type SchemaDefRequirement struct {
 	BaseRequirement `json:",inline"`
-	Types           []CommandInputSchema `json:"types,omitempty"`
+	Types           []CommandInputSchema `json:"types,omitempty" salad:"type"`
 }
 
 type SecondaryFileSchema struct {

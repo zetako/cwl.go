@@ -163,7 +163,7 @@ func parseObject(typeOfRecv reflect.Type, valueOfRecv reflect.Value,
 		if v, got := saladFields[key]; got {
 			salad = v
 		}
-		//log.Println("set fieldName", key, recvName)
+		log.Println("set fieldName", key, recvName)
 		fdb := db
 		if nextdb , got := db[fieldType.Name()]; got && nextdb.Fields != nil {
 			fdb = nextdb.Fields
@@ -186,10 +186,12 @@ func debugType(fieldType reflect.Type) {
 	}
 }
 
+
+// setField 解析
 func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 	salad saladTags, db map[string]*RecordFieldGraph) (err error) {
 	fkind := fieldType.Kind()
-	//log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
+	log.Println("setField", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
 	// 如果本身有解析函数则直接调用 ✅
 	//debugType(fieldValue.Type())
 	// 可能需要分配空间的情况
@@ -214,80 +216,7 @@ func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 		}
 		return parseObject(fieldType, fieldValue, bean, db)
 	case reflect.Slice:
-		fieldType = fieldType.Elem()
-		isInterface := fieldType.Kind() == reflect.Interface
-		var values []json.RawMessage
-		// 处理 mapSubject
-		// 初始化处理
-		isNull := false
-		if fieldValue.IsNil() {
-			fieldValue.Set(reflect.MakeSlice(reflect.SliceOf(fieldType), len(values), len(values)))
-			isNull = true
-		}
-		if got, err := checkUnmarshal(fieldValue, bean); got || err != nil {
-			return err
-		}
-
-		if salad.MapSubject != "" {
-			// 需要进行 mapSubject 处理
-			values, err = JsonldPredicateMapSubject(bean, salad.MapSubject, salad.MapPredicate)
-			//return nil
-		} else {
-			values = make([]json.RawMessage, 0)
-			err = json.Unmarshal(bean, &values)
-		}
-		if err != nil {
-			return err
-		}
-		// 空值处理
-		if len(values) == 0 {
-			if isNull {
-				fieldValue.Set(reflect.ValueOf(nil))
-			}
-			return nil
-		}
-		fieldValue.Set(reflect.MakeSlice(reflect.SliceOf(fieldType), len(values), len(values)))
-		if isInterface {
-			for i, valuei := range values {
-				var nextType reflect.Type
-				if _, classable := fieldType.MethodByName("ClassName"); classable {
-					nextType, err = GenerateTypesFormClass(valuei, classMap)
-					//log.Println("set field by class name", nextType.Name())
-				} else {
-					nextType, err = GenerateTypesFormInterface(fieldType, db)
-				}
-				if err != nil {
-					return err
-				}
-				fieldValue.Index(i).Set(reflect.New(nextType))
-				err = parseObject(nextType, fieldValue.Index(i), valuei, db)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-		// TODO values to array
-		//_ = values
-		//bean,_  = json.Marshal(values)
-		// 如果已经实现 unmarshal 则直接使用
-
-		for i, valuei := range values {
-			nextType := fieldType
-			fieldValue.Index(i).Set(reflect.New(nextType).Elem())
-			if got, err := checkUnmarshal(fieldValue.Index(i), valuei); got || err != nil {
-				if err != nil {
-					return err
-				}
-				continue
-			}
-
-			err = parseObject(nextType, fieldValue.Index(i), valuei, db)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		return applySlice(fieldType, fieldValue, bean, salad ,parseObject, db)
 	// 直接值的解析 ✅
 	case reflect.String, reflect.Int, reflect.Bool, reflect.Int64, reflect.Float64, reflect.Float32:
 		err := json.Unmarshal(bean, fieldValue.Addr().Interface())
@@ -314,6 +243,82 @@ func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
 		//return fmt.Errorf("not set values")
 	}
 
+	return nil
+}
+
+func applySlice(fieldType reflect.Type, fieldValue reflect.Value, bean []byte, salad saladTags,
+	itemCallback func( reflect.Type,  reflect.Value, []byte,  map[string]*RecordFieldGraph) error,
+	db map[string]*RecordFieldGraph) (err error) {
+	fieldType = fieldType.Elem()
+	isInterface := fieldType.Kind() == reflect.Interface
+	var values []json.RawMessage
+	// 处理 mapSubject
+	// 初始化处理
+	isNull := false
+	if fieldValue.IsNil() {
+		fieldValue.Set(reflect.MakeSlice(reflect.SliceOf(fieldType), len(values), len(values)))
+		isNull = true
+	}
+	if got, err := checkUnmarshal(fieldValue, bean); got || err != nil {
+		return err
+	}
+	
+	if salad.MapSubject != "" {
+		// 需要进行 mapSubject 处理
+		values, err = JsonldPredicateMapSubject(bean, salad.MapSubject, salad.MapPredicate)
+		//return nil
+	} else {
+		values = make([]json.RawMessage, 0)
+		err = json.Unmarshal(bean, &values)
+	}
+	if err != nil {
+		return err
+	}
+	// 空值处理
+	if len(values) == 0 {
+		if isNull {
+			fieldValue.Set(reflect.ValueOf(nil))
+		}
+		return nil
+	}
+	fieldValue.Set(reflect.MakeSlice(reflect.SliceOf(fieldType), len(values), len(values)))
+	if isInterface {
+		for i, valuei := range values {
+			var nextType reflect.Type
+			if _, classable := fieldType.MethodByName("ClassName"); classable {
+				nextType, err = GenerateTypesFormClass(valuei, classMap)
+				//log.Println("set field by class name", nextType.Name())
+			} else {
+				nextType, err = GenerateTypesFormInterface(fieldType, db)
+			}
+			if err != nil {
+				return err
+			}
+			fieldValue.Index(i).Set(reflect.New(nextType))
+			err = itemCallback(nextType, fieldValue.Index(i), valuei, db)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	
+	
+	for i, valuei := range values {
+		nextType := fieldType
+		fieldValue.Index(i).Set(reflect.New(nextType).Elem())
+		if got, err := checkUnmarshal(fieldValue.Index(i), valuei); got || err != nil {
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		
+		err = itemCallback(nextType, fieldValue.Index(i), valuei, db)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -517,7 +522,11 @@ func NewBean(db map[string]*RecordFieldGraph, name string) ( interface{}, error)
 
 func setType(fieldType reflect.Type, fieldValue reflect.Value, data []byte, salad saladTags,
 	 db map[string]*RecordFieldGraph) (err error) {
-	//fkind := fieldType.Kind()
+	 	
+	fkind := fieldType.Kind()
+	if fkind == reflect.Slice {
+		
+	}
 	//log.Println("setType", fieldType.Name(), fkind.String(), fieldValue.Type().Name(), fieldValue.Interface())
 	saladVal :=  fieldValue
 	if fieldType.Name() != "SaladType" {

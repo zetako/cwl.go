@@ -170,17 +170,16 @@ func (p *CommandLineTool) UnmarshalJSON(data []byte) error {
 	db := make(map[string]*RecordFieldGraph)
 	db["InputParameter"] = &RecordFieldGraph{Example: CommandInputParameter{}}
 	db["OutputParameter"] = &RecordFieldGraph{Example: CommandOutputParameter{}}
-	//db["InputRecordSchema"] = &RecordFieldGraph{Example: CommandInputRecordSchema{}}
-	//db["InputEnumSchema"] = &RecordFieldGraph{Example: CommandInputEnumSchema{}}
-	//db["InputArraySchema"] = &RecordFieldGraph{Example: CommandInputArraySchema{}}
+	inputFields := map[string]*RecordFieldGraph{
+		"ArrayType": &RecordFieldGraph{ Example:  CommandInputArraySchema{} },
+		"EnumType": &RecordFieldGraph{ Example:  CommandInputEnumSchema{} },
+		"RecordType": &RecordFieldGraph{ Example:  CommandInputRecordSchema{} },
+	}
+	db["CommandInputSchema"] = &RecordFieldGraph{Example: CommandInputType{}, Fields: inputFields}
 	db["InputBinding"] = &RecordFieldGraph{Example: CommandLineBinding{}}
 	//CommandInputType
 	db["CommandInputType"] = &RecordFieldGraph{Example: CommandInputType{},
-		Fields: map[string]*RecordFieldGraph{
-			"ArrayType": &RecordFieldGraph{ Example:  CommandInputArraySchema{} },
-			"EnumType": &RecordFieldGraph{ Example:  CommandInputEnumSchema{} },
-			"RecordType": &RecordFieldGraph{ Example:  CommandInputRecordSchema{} },
-		},
+		Fields: inputFields,
 	}
 	db["CommandOutputType"] = &RecordFieldGraph{Example: CommandOutputType{},
 		Fields: map[string]*RecordFieldGraph{

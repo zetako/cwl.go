@@ -33,14 +33,17 @@ func TestDecode_basename_fields_test(t *testing.T) {
 		switch st.ID {
 		case "root":
 			Expect(t, st.Run.ID).ToBe("echo-file-tool.cwl")
-			t.Logf("%#v",st.In[0])
-			Expect(t, string(st.In[0].ValueFrom)).ToBe("$(inputs.tool.nameroot)")
+			//t.Logf("in0 %#v",st.In[0])
+			//t.Logf("in1 %#v",st.In[1])
+			Expect(t, string(st.In[0].ValueFrom) + string(st.In[1].ValueFrom)).ToBe("$(inputs.tool.nameroot)")
 			Expect(t, st.Out[0].ID).ToBe("out")
 			// TODO tool: tool
 			count = count + 1
 		case "ext":
 			Expect(t, st.Run.ID).ToBe("echo-file-tool.cwl")
-			Expect(t, string(st.In[0].ValueFrom)).ToBe("$(inputs.tool.nameext)")
+			//t.Logf("in0 %#v",st.In[0])
+			//t.Logf("in1 %#v",st.In[1])
+			Expect(t, string(st.In[0].ValueFrom) + string(st.In[1].ValueFrom)).ToBe("$(inputs.tool.nameext)")
 			Expect(t, st.Out[0].ID).ToBe("out")
 			// TODO tool: tool
 			count = count + 1

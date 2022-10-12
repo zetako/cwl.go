@@ -54,7 +54,7 @@ func (l *Local) Create(path, contents string) (cwl.File, error) {
 	size := int64(len(b))
 	//if units.MetricBytes(size) > process.MaxContentsBytes {
 	if size > MaxContentsBytes {
-		return x, fmt.Errorf("contents is max allowed size (%s) ", MaxContentsBytes)
+		return x, fmt.Errorf("contents is max allowed size (%d) ", MaxContentsBytes)
 	}
 
 	loc := filepath.Join(l.workdir, path)

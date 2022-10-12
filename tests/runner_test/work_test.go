@@ -1,6 +1,7 @@
 package runnertest
 
 import (
+  "github.com/lijiang2014/cwl.go"
   . "github.com/otiai10/mint"
   "log"
   "testing"
@@ -11,6 +12,36 @@ func TestCWLR2_workon(t *testing.T) {
   Expect(t, err).ToBe(nil)
   p, err := e.MainProcess()
   Expect(t, err).ToBe(nil)
+  //t.Logf("%#v", p.Root().Process)
+  tool := p.Root().Process.(*cwl.CommandLineTool)
+  //for i, ini := range tool.Inputs {
+  //  t.Logf("%d %#v", i, ini)
+  //  in := ini.(*cwl.CommandInputParameter)
+  //  if in.Type.IsArray() {
+  //    t.Logf("%#v", in.Type.MustArraySchema())
+  //  }
+  //}
+  //t.Logf("%#v",tool.Outputs)
+  //for i, vali := range tool.Outputs {
+  // t.Logf("%d %#v", i, vali)
+  // val := vali.(*cwl.CommandOutputParameter)
+  // if val.Type.IsArray() {
+  //   t.Logf("%#v", val.Type.MustArraySchema())
+  // }
+  //  if val.OutputBinding != nil {
+  //    t.Logf("%#v", val.OutputBinding)
+  //  }
+  //}
+  t.Logf("%#v",tool.Requirements)
+  for i, vali := range tool.Requirements {
+    t.Logf("%d %#v", i, vali)
+    schema , ok:= vali.(*cwl.SchemaDefRequirement)
+    if ok {
+      for j, typej := range schema.Types {
+        t.Logf(" %d %#v",j, typej)
+      }
+    }
+  }
   limits, err := p.ResourcesLimites()
   Expect(t, err).ToBe(nil)
   runtime := L2R(*limits)

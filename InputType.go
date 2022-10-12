@@ -102,7 +102,8 @@ type CommandOutputArraySchema struct {
 // a collect for CWLType,stdin, CommandInputRecordSchema, CommandInputEnumSchema, CommandInputArraySchema, string
 // and array of them
 type CommandInputType struct {
-  SaladType      `salad:"type"`
+  CommandInputSchemaBase // abstract
+  SaladType     `salad:"type"`
 }
 
 

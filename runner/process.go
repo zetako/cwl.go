@@ -26,6 +26,9 @@ type Process struct {
 	*jsvm
 }
 
+func (p *Process) Root() *cwl.Root {
+	return p.root
+}
 
 
 // Binding binds an input type description (string, array, record, etc)
