@@ -2,11 +2,11 @@ package cwl
 
 import (
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
+	//"reflect"
 	
 	yaml "gopkg.in/yaml.v2"
 )
@@ -43,75 +43,75 @@ const (
 	NoClass   ParameterClass = "unknown"
 )
 
-func (recv *Values) UnmarshalJSON(b []byte) error {
-	if recv == nil {
-		recv = NewValues()
-	}
-	var any interface{}
-	if err := json.Unmarshal(b, &any); err != nil {
-		return err
-	}
-	params, ok := any.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("not a key-value type")
-	}
-	for key, value := range params {
-		v, err := ConvertToValue(value)
-		if err != nil {
-			return err
-		}
-		(*recv)[key] = v
-	}
-	return nil
-}
-
-func ConvertToValue(bean interface{}) (out Value, err error) {
-	switch t := bean.(type) {
-	case []interface{}:
-		arr := make([]Value, len(t))
-		for i, item := range t {
-			v, err := ConvertToValue(item)
-			if err != nil {
-				return nil, err
-			}
-			arr[i] = v
-		}
-		return arr, nil
-	case map[string]interface{}:
-		tClass, got := t["class"]
-		if !got {
-			break
-		}
-		switch tClass {
-		case "File":
-			var entry File
-			raw, err := json.Marshal(bean)
-			if err != nil {
-				return nil, err
-			}
-			if err = json.Unmarshal(raw, &entry); err != nil {
-				return nil, err
-			}
-			return entry, nil
-		case "Directory":
-			var entry Directory
-			entry.Listing = make([]FileDir,0)
-			raw, err := json.Marshal(bean)
-			if err != nil {
-				return nil, err
-			}
-			//if err = json.Unmarshal(raw, &entry); err != nil {
-			//	return err
-			//}
-			err = parseObject( reflect.TypeOf(entry), reflect.ValueOf(&entry), raw, map[string]*RecordFieldGraph{
-				"File" : &RecordFieldGraph{Example: File{}},
-				"Directory" : &RecordFieldGraph{Example: Directory{}},
-			} )
-			
-			return entry, err
-		}
-	default:
-		return bean, nil
-	}
-	return bean, nil
-}
+//func (recv *Values) UnmarshalJSON(b []byte) error {
+//	if recv == nil {
+//		recv = NewValues()
+//	}
+//	var any interface{}
+//	if err := json.Unmarshal(b, &any); err != nil {
+//		return err
+//	}
+//	params, ok := any.(map[string]interface{})
+//	if !ok {
+//		return fmt.Errorf("not a key-value type")
+//	}
+//	for key, value := range params {
+//		v, err := ConvertToValue(value)
+//		if err != nil {
+//			return err
+//		}
+//		(*recv)[key] = v
+//	}
+//	return nil
+//}
+//
+//func ConvertToValue(bean interface{}) (out Value, err error) {
+//	switch t := bean.(type) {
+//	case []interface{}:
+//		arr := make([]Value, len(t))
+//		for i, item := range t {
+//			v, err := ConvertToValue(item)
+//			if err != nil {
+//				return nil, err
+//			}
+//			arr[i] = v
+//		}
+//		return arr, nil
+//	case map[string]interface{}:
+//		tClass, got := t["class"]
+//		if !got {
+//			break
+//		}
+//		switch tClass {
+//		case "File":
+//			var entry File
+//			raw, err := json.Marshal(bean)
+//			if err != nil {
+//				return nil, err
+//			}
+//			if err = json.Unmarshal(raw, &entry); err != nil {
+//				return nil, err
+//			}
+//			return entry, nil
+//		case "Directory":
+//			var entry Directory
+//			entry.Listing = make([]FileDir,0)
+//			raw, err := json.Marshal(bean)
+//			if err != nil {
+//				return nil, err
+//			}
+//			//if err = json.Unmarshal(raw, &entry); err != nil {
+//			//	return err
+//			//}
+//			err = parseObject( reflect.TypeOf(entry), reflect.ValueOf(&entry), raw, map[string]*RecordFieldGraph{
+//				"File" : &RecordFieldGraph{Example: File{}},
+//				"Directory" : &RecordFieldGraph{Example: Directory{}},
+//			} )
+//
+//			return entry, err
+//		}
+//	default:
+//		return bean, nil
+//	}
+//	return bean, nil
+//}

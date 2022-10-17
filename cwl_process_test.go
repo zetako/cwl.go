@@ -26,7 +26,7 @@ func TestCWL_process_1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(p)
+	//t.Log(p)
 	if p.CWLVersion != "v1.0" {
 		t.Fail()
 	}

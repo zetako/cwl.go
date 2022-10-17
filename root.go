@@ -3,11 +3,12 @@ package cwl
 import (
 	"encoding/json"
 	"fmt"
+	
 	//"gopkg.in/yaml.v2"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
-
+	
 	"github.com/robertkrimen/otto"
 )
 
@@ -32,11 +33,12 @@ type Root struct {
 	Path string `json:"-"`
 	// InputsVM
 	InputsVM *otto.Otto
+	Importer Importer
 }
 
 // UnmarshalJSON ...
 func (root *Root) UnmarshalJSON(b []byte) error {
-	p, err :=ParseCWLProcess(b)
+	p, err :=ParseCWLProcessWithImporter(b, root.Importer)
 	if err != nil {
 		return err
 	}

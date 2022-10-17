@@ -149,7 +149,7 @@ type InputParameterBase struct {
 	Parameter    `json:",inline"`
 	InputFormat  `json:",inline"`
 	LoadContents `json:",inline"`
-	Default      Value `json:"default,omitempty"`
+	Default      Value `json:"default,omitempty" salad:"value"`
 }
 
 type InputParameter interface {
@@ -200,11 +200,12 @@ type ProcessBase struct {
 	Identified   `json:",inline"`
 	Labeled      `json:",inline"`
 	Documented   `json:",inline"`
-	Requirements `json:"requirements,omitempty" salad:"mapSubject:class"`
+	Requirements Requirements `json:"requirements,omitempty" salad:"mapSubject:class"`
 	Hints        Requirements `json:"hints,omitempty" salad:"mapSubject:class"`
 	//Inputs       []InputParameter  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
 	Inputs       Inputs  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
 	Outputs      []OutputParameter `json:"outputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
+	importer Importer
 }
 
 func (b *ProcessBase) Base()  *ProcessBase {
@@ -219,13 +220,15 @@ type InlineJavascriptRequirement struct {
 }
 
 type CommandInputSchema interface {
-	SchemaTypename()
+	SchemaTypename() string
 }
 
 type CommandInputSchemaBase struct {
 }
 
-func (_ CommandInputSchemaBase) SchemaTypename() {}
+func (_ CommandInputSchemaBase) SchemaTypename() string {
+	return ""
+}
 
 // SchemaDefRequirement is supposed to be embeded to Requirement.
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#SchemaDefRequirement

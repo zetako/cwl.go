@@ -81,7 +81,7 @@ func TestCWL_tool_1(t *testing.T) {
 	if !pass {
 		t.Fatalf("input3 type err%#v %s", typein4, typein4.TypeName())
 	}
-	// ✅ Test input default , more
+	//  Test input default , more
 	input4 := p.Inputs[4].(*cwl.CommandInputParameter)
 	t.Logf("default %#v",input4.Default)
 	if input4.Default == nil {

@@ -22,6 +22,7 @@ func (ins Inputs) Swap(i, j int) {
 // abstract types
 
 type IOSchema struct {
+	Name string `json:"name"`
 	Labeled `json:",inline"`
 	Documented `json:",inline"`
 }

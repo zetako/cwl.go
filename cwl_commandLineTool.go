@@ -1,9 +1,5 @@
 package cwl
 
-import (
-	"reflect"
-)
-
 // Doc: cwltool/schemas/v1.2/CommandLineTool.yml
 
 const (
@@ -62,7 +58,7 @@ type CommandOutputParameter struct {
 
 type CommandLineTool struct {
 	ClassBase          `json:",inline"`
-	ProcessBase        `json:",inline"`
+	ProcessBase        `json:",inline" salad:"abstract"`
 	BaseCommands       ArrayString `json:"baseCommand,omitempty"`
 	Arguments          Arguments   `json:"arguments,omitempty"`
 	Stdin              Expression  `json:"stdin,omitempty"`
@@ -162,35 +158,4 @@ type Argument struct {
 
 // Arguments represents a list of "Argument"
 type Arguments []Argument
-
-//
-func (p *CommandLineTool) UnmarshalJSON(data []byte) error {
-	typeOfRecv := reflect.TypeOf(*p)
-	valueOfRecv := reflect.ValueOf(p).Elem()
-	db := make(map[string]*RecordFieldGraph)
-	db["InputParameter"] = &RecordFieldGraph{Example: CommandInputParameter{}}
-	db["OutputParameter"] = &RecordFieldGraph{Example: CommandOutputParameter{}}
-	inputFields := map[string]*RecordFieldGraph{
-		"ArrayType": &RecordFieldGraph{ Example:  CommandInputArraySchema{} },
-		"EnumType": &RecordFieldGraph{ Example:  CommandInputEnumSchema{} },
-		"RecordType": &RecordFieldGraph{ Example:  CommandInputRecordSchema{} },
-	}
-	db["CommandInputSchema"] = &RecordFieldGraph{Example: CommandInputType{}, Fields: inputFields}
-	db["InputBinding"] = &RecordFieldGraph{Example: CommandLineBinding{}}
-	//CommandInputType
-	db["CommandInputType"] = &RecordFieldGraph{Example: CommandInputType{},
-		Fields: inputFields,
-	}
-	db["CommandOutputType"] = &RecordFieldGraph{Example: CommandOutputType{},
-		Fields: map[string]*RecordFieldGraph{
-			"ArrayType": &RecordFieldGraph{ Example:  CommandOutputArraySchema{} },
-			"EnumType": &RecordFieldGraph{ Example:  CommandInputEnumSchema{} },
-			"RecordType": &RecordFieldGraph{ Example:  CommandOutputRecordSchema{} },
-		},
-	}
-	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
-		return err
-	}
-	return nil
-}
 

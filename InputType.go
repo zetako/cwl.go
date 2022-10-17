@@ -110,3 +110,7 @@ type CommandInputType struct {
 type CommandOutputType struct {
   SaladType `salad:"type"`
 }
+
+//func (i *CommandInputType)  SchemaTypename() string {
+//  if i.(IOSchema)
+//}

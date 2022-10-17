@@ -15,7 +15,7 @@ import (
 type Engine struct {
 	sync.RWMutex `json:"-"`
 	// 配置接口
-	importer Importer
+	importer cwl.Importer
 	executor Executor
 	//
 	inputFS      Filesystem
@@ -34,7 +34,7 @@ type Engine struct {
 type EngineConfig struct {
 	RunID    string
 	UserName string
-	Importer
+	cwl.Importer
 	InputFS       Filesystem
 	OutputFS      Filesystem
 	Process       []byte
@@ -97,6 +97,8 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 	if err := json.Unmarshal(c.Params, &e.params); err != nil {
 		return nil, err
 	}
+	// import Doc
+	e.root.Importer = c.Importer
 	if err := json.Unmarshal(c.Process, &e.root); err != nil {
 		return nil, err
 	}

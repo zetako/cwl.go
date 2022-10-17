@@ -22,7 +22,7 @@ func TestCWLR2_run2(t *testing.T) {
   testByID(t, 2)
 }
 
-// TODO  Cannot Generate Type CommandInputSchema
+// ✅ 1017 完成
 func TestCWLR2_run3(t *testing.T) {
  testByID(t, 3)
 }
@@ -32,12 +32,13 @@ func TestCWLR2_run4(t *testing.T) {
   testByID(t, 4)
 }
 
-// FAILED TODO
+// ✅ 1017  TODO
 func TestCWLR2_run5(t *testing.T) {
   testByID(t, 5)
 }
 
 // FAILED TODO
+// $include JS FILE
 func TestCWLR2_run6(t *testing.T) {
   testByID(t, 6)
 }

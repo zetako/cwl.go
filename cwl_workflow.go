@@ -3,7 +3,6 @@ package cwl
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 type ExpressionToolOutputParameter struct {
@@ -19,7 +18,7 @@ type WorkflowInputParameter struct {
 
 type ExpressionTool struct {
 	ClassBase   `json:",inline"`
-	ProcessBase `json:",inline"`
+	ProcessBase `json:",inline" salad:"abstract"`
 	Expression  Expression `json:"expression"`
 }
 
@@ -130,7 +129,7 @@ type WorkflowStep struct {
 }
 
 type Workflow struct {
-	ProcessBase `json:",inline"`
+	ProcessBase `json:",inline" salad:"abstract"`
 	ClassBase   `json:",inline"`
 	Steps       []WorkflowStep `json:"steps" salad:"mapSubject:id"`
 }
@@ -151,49 +150,3 @@ type StepInputExpressionRequirement struct {
 	BaseRequirement `json:",inline"`
 }
 
-func (p *ExpressionTool) UnmarshalJSON(data []byte) error {
-	typeOfRecv := reflect.TypeOf(*p)
-	valueOfRecv := reflect.ValueOf(p).Elem()
-	db := make(map[string]*RecordFieldGraph)
-	db["InputParameter"] = &RecordFieldGraph{Example: WorkflowInputParameter{}}
-	db["OutputParameter"] = &RecordFieldGraph{Example: ExpressionToolOutputParameter{}}
-	
-	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
-		Fields: map[string]*RecordFieldGraph{
-			"ArrayType": &RecordFieldGraph{ Example:  ArraySchema{} },
-			"EnumType": &RecordFieldGraph{ Example:  EnumSchema{} },
-			"RecordType": &RecordFieldGraph{ Example:  RecordSchema{} },
-		},
-	}
-	//db["CommandOutputType"] = &RecordFieldGraph{Example: CommandOutputType{},
-	//	Fields: map[string]*RecordFieldGraph{
-	//		"ArrayType": &RecordFieldGraph{ Example:  ArraySchema{} },
-	//		"EnumType": &RecordFieldGraph{ Example:  EnumSchema{} },
-	//		"RecordType": &RecordFieldGraph{ Example:  RecordSchema{} },
-	//	},
-	//}
-	
-	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *Workflow) UnmarshalJSON(data []byte) error {
-	typeOfRecv := reflect.TypeOf(*p)
-	valueOfRecv := reflect.ValueOf(p).Elem()
-	db := make(map[string]*RecordFieldGraph)
-	db["InputParameter"] = &RecordFieldGraph{Example: WorkflowInputParameter{}}
-	db["OutputParameter"] = &RecordFieldGraph{Example: WorkflowOutputParameter{}}
-	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
-		Fields: map[string]*RecordFieldGraph{
-			"ArrayType": &RecordFieldGraph{ Example:  ArraySchema{} },
-			"EnumType": &RecordFieldGraph{ Example:  EnumSchema{} },
-			"RecordType": &RecordFieldGraph{ Example:  RecordSchema{} },
-		},
-	}
-	if err := parseObject(typeOfRecv, valueOfRecv, data, db); err != nil {
-		return err
-	}
-	return nil
-}

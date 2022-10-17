@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-type Importer interface {
-	Load(string) ([]byte, error)
-}
-
 type DefaultImporter struct {
 	BaseDir string
 }

@@ -3,9 +3,12 @@ package runner
 import (
 	"github.com/lijiang2014/cwl.go"
 	"github.com/spf13/cast"
+	"log"
 	"path/filepath"
 )
 
+// bindInput
+// 根据 input 产生 binding 数据
 func (process *Process) bindInput(
 	name string,
 	typein cwl.SaladType,
@@ -39,7 +42,8 @@ Loop:
 	// Loop over the types, looking for the best match for the given input value.
 	for _, ti := range types {
 		switch ti.TypeName() {
-		
+		case "null":
+			continue
 		case "array":
 			vals, ok := val.([]cwl.Value)
 			if !ok {
@@ -52,9 +56,9 @@ Loop:
 			out := []*Binding{}
 			t := typein.MustArraySchema().(*cwl.CommandInputArraySchema)
 			
-			for i, val := range vals {
+			for i, itemVal := range vals {
 				subkey := append(key, sortKey{getPos(t.InputBinding), i}...)
-				b, err := process.bindInput("", t.Items, t.InputBinding, nil, val, subkey)
+				var b, err = process.bindInput("", t.Items, t.InputBinding, nil, itemVal, subkey)
 				if err != nil {
 					return nil, err
 				}
@@ -71,6 +75,24 @@ Loop:
 			// TODO revisit whether creating a nested tree (instead of flat) is always better/ok
 			return []*Binding{b}, nil
 		
+		case "enum":
+			v, ok := val.(string)
+			if !ok {
+				// input value is not a record.
+				continue Loop
+			}
+			t := typein.MustEnum().(*cwl.CommandInputEnumSchema)
+			if clb == nil && t.InputBinding != nil {
+				clb = t.InputBinding
+			}
+			for _, symbol := range t.Symbols {
+				if v == symbol {
+					return []*Binding{
+						{clb, ti, v, key, nil, name},
+					}, nil
+				}
+			}
+			continue Loop
 		case "record":
 			vals, ok := val.(map[string]cwl.Value)
 			if !ok {
@@ -78,7 +100,6 @@ Loop:
 				continue Loop
 			}
 			t := typein.MustRecord().(*cwl.CommandInputRecordSchema)
-			
 			var out []*Binding
 			
 			for i, fieldi := range t.Fields {
@@ -86,13 +107,18 @@ Loop:
 				val, ok := vals[field.Name]
 				// TODO lower case?
 				if !ok {
+					if field.Type.IsNullable() {
+						continue
+					}
 					continue Loop
 				}
-				
-				subkey := append(key, sortKey{getPos(field.InputBinding), i}...)
+				// 如没有指定则采用 key 进行排序
+				_ = i
+				subkey := append(key, sortKey{getPos(field.InputBinding), field.Name}...)
 				b, err := process.bindInput(field.Name, field.Type, field.InputBinding, nil, val, subkey)
 				if err != nil {
-					return nil, err
+					//return nil, err
+					continue Loop
 				}
 				if b == nil {
 					continue Loop
@@ -103,9 +129,8 @@ Loop:
 			if out != nil {
 				nested := make([]*Binding, len(out))
 				copy(nested, out)
-				b := &Binding{clb, ti, val, key, nested, name}
-				out = append(out, b)
-				return out, nil
+				b := &Binding{clb, ti, vals, key, nested, name}
+				return []*Binding{b}, nil
 			}
 		
 		case "any":
@@ -113,7 +138,7 @@ Loop:
 				{clb, ti, val, key, nil, name},
 			}, nil
 		
-		case "bool":
+		case "boolean":
 			v, err := cast.ToBoolE(val)
 			if err != nil {
 				continue Loop
@@ -207,20 +232,47 @@ Loop:
 				{clb, ti, v, key, nil, name},
 			}, nil
 		default:
-			
-			//case cwl.TypeRef:
-			//if rsd, ok := process.RequiresSchemaDef(); ok {
-			//	for _, rsdT := range rsd.Types {
-			//		if rsdT.Name == t.Name || (rsdT.Name == t.Name[1:] && t.Name[1] == '#') {
-			//			//do something
-			//			// how to parse Value -> rsdT.Type ?
-			//			st := rsdT.Type
-			//			return []*Binding{
-			//				{clb, t, st, key, nil, name},
-			//			}, nil
-			//		}
-			//	}
-			//}
+			tiTypeName := ti.TypeName()
+			//if len(tiTypeName) > 0 && tiTypeName[0] == '#' {
+				// is Ref Types
+				if rsd :=  process.tool.RequiresSchemaDef(); rsd != nil {
+					for _, rsdT := range rsd.Types {
+						var binding *cwl.CommandLineBinding
+						rsdType := rsdT.(*cwl.CommandInputType)
+						SName := rsdType.SchemaTypename()
+						if SName == "" {
+							if record := rsdType.MustRecord(); record != nil {
+								cmdRecord := record.(*cwl.CommandInputRecordSchema)
+								SName = cmdRecord.Name
+								binding = cmdRecord.InputBinding
+							} else if enum := rsdType.MustEnum(); enum != nil {
+								cmdEnum := enum.(*cwl.CommandInputEnumSchema)
+								SName = cmdEnum.Name
+								binding = cmdEnum.InputBinding
+								
+							}
+						}
+						log.Println(SName, rsdType.TypeName())
+						
+						if SName == tiTypeName || (SName == tiTypeName[1:] && tiTypeName[0] == '#') {
+						//	//do something
+						//	// how to parse Value -> rsdT.Type ?
+						//	st := rsdT.Type
+						//	return []*Binding{
+						//		{clb, ti, st, key, nil, name},
+						//	}, nil
+							b, err := process.bindInput(name, rsdType.SaladType, binding, nil, val, key)
+							if err != nil {
+								continue Loop
+							}
+							if b == nil {
+								continue Loop
+							}
+							return b, nil
+						}
+						continue
+					}
+				}
 			// TODO with TypeRef
 			continue Loop
 		}

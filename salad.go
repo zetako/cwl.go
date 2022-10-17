@@ -6,30 +6,6 @@ import (
 	"strings"
 )
 
-//// 4.1
-//// primitive or record or enum
-//// or array of them
-//type TypeBase interface {
-//	typebase()
-//	TypeName() string
-//	//IsMulti() bool
-//	//MustMulti
-//	Len() int
-//	Index(int) TypeBase
-//	// array
-//	MustArraySchema() ArrayType
-//	// enum
-//	MustEnum() EnumType
-//	MustRecord() RecordType
-//	// record
-//	SetTypename(name string)
-//	SetMulti([]TypeBase)
-//	SetArray(ArrayType)
-//	SetRecord(RecordType)
-//	SetEnum( EnumType)
-//	SetNull()
-//}
-
 type RecordType interface {
 	recordType()
 }
@@ -92,8 +68,8 @@ func (t *SaladType) SetEnum(i EnumType) {
 
 // 4.1.3
 type RecordSchema struct {
-  Type string
-  Fields []FieldType
+  Type string `json:"fields"`
+  Fields []FieldType `json:"fields"`
 }
 
 func (_ RecordSchema) 	recordType() {
@@ -114,8 +90,8 @@ type FieldType interface {
 }
 
 type RecordField struct {
- Name string
- Type SaladType
+ Name string `json:"name"`
+ Type SaladType `json:"type" salad:"type"`
 }
 
 
@@ -136,7 +112,7 @@ func (f *RecordField) FieldType() *SaladType {
 // 4.1.4.1
 type EnumSchema struct {
   Type string // must be enum
-  Symbols []string
+  Symbols []string `json:"symbols"`
 }
 
 
@@ -547,37 +523,4 @@ func checkPrimitive(typePrim string, v interface{}) bool {
     return got
   }
   return false
-}
-
-// jsonldPredicateMapSubject
-// convert { key: obj1 , key2: notObjVal } => [{ sub: key, obj1... },{ sub: key2, predicate: notObjVal }]
-func JsonldPredicateMapSubject(raw []byte, subject , predicate string) ([]json.RawMessage, error) {
-  rawArray := make([]json.RawMessage, 0)
-  rawMap := make(map[string]json.RawMessage)
-  if raw[0] == '[' {
-    err := json.Unmarshal(raw, &rawArray)
-    return rawArray, err
-  }
-  err := json.Unmarshal(raw, &rawMap)
-  if err != nil {
-    return nil, err
-  }
-  for key, value := range rawMap {
-    newObj := make(map[string]interface{})
-    if len(value) > 0 && value[0] == '{' {
-      err = json.Unmarshal(value, &newObj)
-      if err != nil {
-        return nil, err
-      }
-    } else {
-      newObj[predicate] = value
-    }
-    newObj[subject] = key
-    newObjRaw , err := json.Marshal(newObj)
-    if err != nil {
-      return nil, err
-    }
-    rawArray = append(rawArray, newObjRaw)
-  }
-  return rawArray, nil
 }

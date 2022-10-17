@@ -48,6 +48,7 @@ type Binding struct {
 	name    string
 }
 
+// 多层的排序 key
 type sortKey []interface{}
 
 func setDefault(values *cwl.Values, inputs cwl.Inputs) {

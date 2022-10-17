@@ -3,6 +3,7 @@ package runner
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"sort"
 	"strings"
 )
 
@@ -97,7 +98,8 @@ func getPos(in *cwl.CommandLineBinding) int {
 
 // args converts a binding into a list of formatted command line arguments.
 func bindArgs(b *Binding) []string {
-	switch b.Type.TypeName() {
+	bindTypeName :=b.Type.TypeName()
+	switch  bindTypeName {
 
 	case "array":
 		// cwl conformance test:
@@ -131,14 +133,18 @@ func bindArgs(b *Binding) []string {
 		}
 
 	case "record":
-		// TODO
-
-	case "any", "string", "int", "long", "float", "double", "File", "Directory", argType:
+		args := formatArgs(b.clb)
+		sort.Stable(bySortKey(b.nested))
+		for _, nb := range b.nested {
+			args = append(args, bindArgs(nb)...)
+		}
+		return args
+	case "any", "string", "int", "long", "float", "double", "File", "Directory", argType, "enum":
 		//  case cwl.Any, cwl.String, cwl.Int, cwl.Long, cwl.Float, cwl.Double, cwl.FileType,
 		//cwl.DirectoryType, argType:
 		return formatArgs(b.clb, b.Value)
 
-	case "bool":
+	case "boolean":
 		// cwl spec:
 		// "boolean: If true, add prefix to the command line. If false, add nothing."
 		bv := b.Value.(bool)
