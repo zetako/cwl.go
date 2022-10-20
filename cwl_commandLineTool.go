@@ -98,19 +98,19 @@ type Dirent struct {
 	Writable  bool       `json:"writable,omitempty"`
 }
 
-// ToSet different
-type ListingCollect struct {
-	dirents []Dirent
-}
+//// ToSet different
+//type ListingCollect struct {
+//	dirents []Dirent
+//}
 
 type InitialWorkDirRequirement struct {
 	BaseRequirement `json:",inline"`
-	Listing         ListingCollect `json:"listing"`
+	Listing         []Dirent `json:"listing"`
 }
 
 type EnvVarRequirement struct {
 	BaseRequirement `json:",inline"`
-	EnvDef          []EnvironmentDef `json:"envDef"`
+	EnvDef          []EnvironmentDef `json:"envDef" salad:"mapSubject:envName,mapPredicate:envValue"`
 }
 
 type ShellCommandRequirement struct {

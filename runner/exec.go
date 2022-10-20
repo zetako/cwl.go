@@ -2,7 +2,9 @@ package runner
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path"
 )
 
 // 用于运行 process 的环境
@@ -38,6 +40,39 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 		r.Env = append(r.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 	r.Dir = process.runtime.RootHost
+	// Set Std OUT ERR IN
+	if process.stdout != "" {
+		outpath := path.Join(process.runtime.RootHost, process.stdout)
+		fout , err := os.Create(outpath)
+		if err != nil {
+			return "", nil, err
+		}
+		r.Stdout = fout
+	}
+	if process.stderr != "" {
+		errpath := path.Join(process.runtime.RootHost, process.stderr)
+		ferr , err := os.Create(errpath)
+		if err != nil {
+			return "", nil, err
+		}
+		r.Stderr = ferr
+	}
+	//if process.tool.Stdout != "" {
+	//	stdout , err := process.jsvm.Eval(process.tool.Stdout, nil)
+	//	if err != nil {
+	//		return "", nil, err
+	//	}
+	//	outpath, ok := stdout.(string)
+	//	if !ok {
+	//		return "", nil, fmt.Errorf("stdout should be string")
+	//	}
+	//	outpath = path.Join(process.runtime.RootHost, outpath)
+	//	fout , err := os.Create(outpath)
+	//	if err != nil {
+	//		return "", nil, err
+	//	}
+	//	r.Stdout = fout
+	//}
 	err = r.Start()
 	if err != nil {
 		return "", nil, err

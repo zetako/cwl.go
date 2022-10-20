@@ -20,6 +20,8 @@ type Filesystem interface {
 func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, error) {
 	// TODO revisit pointer to File
 	var x cwl.File
+	var err error
+	
 	x.Class = f.Class
 	// http://www.commonwl.org/v1.0/CommandLineTool.html#File
 	// "As a special case, if the path field is provided but the location field is not,
@@ -40,7 +42,6 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 		return x, process.error("location and contents are both non-empty")
 	}
 
-	var err error
 
 	if f.Contents != "" {
 		// Determine the file path of the literal.

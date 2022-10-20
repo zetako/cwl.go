@@ -20,8 +20,8 @@ type Parser struct {
   Name string
   classMap  map[string]interface{}
   //graph map[string]*RecordFieldGraph
-  root *RecordFieldGraph
-  salad saladTags
+  root     *RecordFieldGraph
+  salad    saladTags
 }
 
 type RecordFieldGraph struct {
@@ -47,7 +47,7 @@ func NewParser(root *RecordFieldGraph, classMap  map[string]interface{}) *Parser
   if classMap == nil {
     classMap = map[string]interface{}{}
   }
-  return &Parser{ "",classMap ,root , saladTags{}}
+  return &Parser{ "",classMap ,root , saladTags{} }
 }
 
 func (p *Parser) Unmarshal(data []byte,bean interface{}) error  {
@@ -284,7 +284,7 @@ func (p *Parser) applySlice(fieldType reflect.Type, fieldValue reflect.Value, be
   // 空值处理
   if len(values) == 0 {
     if isNull {
-      fieldValue.Set(reflect.ValueOf(nil))
+      //fieldValue.Set(reflect.ValueOf(nil))
     }
     return nil
   }

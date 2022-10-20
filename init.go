@@ -7,11 +7,14 @@ func init() {
 
 	classMap["DockerRequirement"] = DockerRequirement{}
 	classMap["ResourceRequirement"] = ResourceRequirement{}
+	classMap["InitialWorkDirRequirement"] = InitialWorkDirRequirement{}
 
 	classMap["SubworkflowFeatureRequirement"] = SubworkflowFeatureRequirement{}
 	classMap["ScatterFeatureRequirement"] = ScatterFeatureRequirement{}
 	classMap["MultipleInputFeatureRequirement"] = MultipleInputFeatureRequirement{}
 	classMap["StepInputExpressionRequirement"] = StepInputExpressionRequirement{}
+	classMap["ShellCommandRequirement"] = ShellCommandRequirement{}
+	classMap["EnvVarRequirement"] = EnvVarRequirement{}
 	
 	classMap["File"] = File{}
 	classMap["Directory"] = Directory{}

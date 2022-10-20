@@ -133,7 +133,7 @@ Loop:
 				return []*Binding{b}, nil
 			}
 		
-		case "any":
+		case "any", "Any":
 			return []*Binding{
 				{clb, ti, val, key, nil, name},
 			}, nil
@@ -235,7 +235,7 @@ Loop:
 			tiTypeName := ti.TypeName()
 			//if len(tiTypeName) > 0 && tiTypeName[0] == '#' {
 				// is Ref Types
-				if rsd :=  process.tool.RequiresSchemaDef(); rsd != nil {
+				if rsd :=  process.root.Process.Base().RequiresSchemaDef(); rsd != nil {
 					for _, rsdT := range rsd.Types {
 						var binding *cwl.CommandLineBinding
 						rsdType := rsdT.(*cwl.CommandInputType)
@@ -316,9 +316,39 @@ func (process *Process) MigrateInputs() (err error) {
 			return err
 		}
 	}
+	if riwd := process.tool.RequiresInitialWorkDir() ; riwd != nil {
+		if err = process.initWorkDir(riwd.Listing); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func FlattenFiles(f cwl.File) []cwl.File {
 	return []cwl.File{f}
+}
+
+func (process *Process) initWorkDir(listing []cwl.Dirent) (error)  {
+	for _, dirent := range listing {
+		filename,err := process.Eval(dirent.EntryName, nil)
+		if err != nil {
+			return err
+		}
+		content , err := process.Eval(dirent.Entry, nil)
+		if err != nil {
+			return err
+		}
+		filenamestr, ok := filename.(string)
+		if !ok {
+			return process.error("entryName need be string")
+		}
+		contentstr, ok := content.(string)
+		if !ok {
+			return process.error("entry need be string")
+		}
+		if _, err = process.fs.Create(process.runtime.RootHost+"/" + filenamestr, contentstr); err != nil {
+			return err
+		}
+	}
+	return nil
 }

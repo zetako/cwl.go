@@ -139,7 +139,7 @@ func bindArgs(b *Binding) []string {
 			args = append(args, bindArgs(nb)...)
 		}
 		return args
-	case "any", "string", "int", "long", "float", "double", "File", "Directory", argType, "enum":
+	case "Any", "any", "string", "int", "long", "float", "double", "File", "Directory", argType, "enum":
 		//  case cwl.Any, cwl.String, cwl.Int, cwl.Long, cwl.Float, cwl.Double, cwl.FileType,
 		//cwl.DirectoryType, argType:
 		return formatArgs(b.clb, b.Value)

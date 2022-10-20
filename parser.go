@@ -280,11 +280,8 @@ func GenerateTypesFormInterface(iType reflect.Type, db map[string]*RecordFieldGr
 //	return nil
 //}
 
-func ParseCWLProcess(data []byte) (Process, error) {
-	return ParseCWLProcessWithImporter(data, nil)
-}
 
-func ParseCWLProcessWithImporter(data []byte, i Importer) (Process, error) {
+func ParseCWLProcess(data []byte) (Process, error) {
 	var err error
 	trimed := strings.TrimSpace(string(data))
 	if len(trimed) == 0 {
@@ -321,7 +318,6 @@ func ParseCWLProcessWithImporter(data []byte, i Importer) (Process, error) {
 		default:
 			return nil, fmt.Errorf("unknown class for Process %s", name)
 		}
-		p.Base().importer = i
 		err = json.Unmarshal(raw, p)
 		return p, err
 	}

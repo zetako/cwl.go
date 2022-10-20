@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"log"
 	"sort"
 	"strings"
 )
@@ -53,8 +54,8 @@ type sortKey []interface{}
 
 func setDefault(values *cwl.Values, inputs cwl.Inputs) {
 	for _, in := range inputs {
-		_, ok := (*values)[in.GetInputParameter().ID]
-		if !ok && in.GetInputParameter().Default != nil {
+		any, ok := (*values)[in.GetInputParameter().ID]
+		if (!ok || any == nil )&& in.GetInputParameter().Default != nil {
 			(*values)[in.GetInputParameter().ID] = in.GetInputParameter().Default
 		}
 	}
@@ -120,6 +121,56 @@ func (process *Process) Command() ([]string, error) {
 	return cmd, nil
 }
 
+func (p *Process) loadRuntime() {
+	p.vm.Set("runtime", p.runtime)
+}
+
+//
+func (p *Process) RunExpression() (cwl.Values, error) {
+	tool, ok := p.root.Process.(*cwl.ExpressionTool)
+	if !ok {
+		return nil, fmt.Errorf("not ExpressionTool")
+	}
+	for _, inb := range tool.Inputs {
+		var binding *cwl.CommandLineBinding
+		in := inb.(*cwl.WorkflowInputParameter)
+		val := (*p.inputs)[in.ID]
+		k := sortKey{0}
+		if in.InputBinding != nil {
+			binding = &cwl.CommandLineBinding{ InputBinding: *in.InputBinding }
+		}
+		b, err := p.bindInput(in.ID, in.Type, binding, in.SecondaryFiles, val, k)
+		if err != nil {
+			return nil,  p.errorf("binding input %q: %s", in.ID, err)
+		}
+		if b == nil {
+			return nil,  p.errorf("no binding found for input: %s", in.ID)
+		}
+		p.bindings = append(p.bindings, b...)
+	}
+	if err := p.initJVM(); err != nil {
+		return nil, err
+	}
+	
+	out, err := p.jsvm.Eval(tool.Expression,nil)
+	log.Printf("out %#v",out)
+	// TODO Convert out into values
+	valMap,ok := out.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("output format err")
+	}
+	values := cwl.Values{}
+	for key, v := range valMap {
+		newv, err := cwl.ConvertToValue(v)
+		if err != nil {
+			return nil, err
+		}
+		values[key] = newv
+	}
+	return values, err
+}
+
+
 func toJSONMap(v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
@@ -158,6 +209,13 @@ func (process *Process) loadReqs() error {
 		// TODO Add Libs
 	 if err := process.initJVM(); err != nil {
 	   return err
+	 }
+	 for _, lib := range req.ExpressionLib {
+	 	//out, err := process.eval(cwl.Expression(lib), nil )
+	 	v, err := process.jsvm.vm.Run(lib)
+	 	if err != nil {
+	 		log.Println(v, err)
+		}
 	 }
 	}
 	if req := tool.RequiresEnvVar(); req != nil {

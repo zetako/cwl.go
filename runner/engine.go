@@ -15,7 +15,7 @@ import (
 type Engine struct {
 	sync.RWMutex `json:"-"`
 	// 配置接口
-	importer cwl.Importer
+	importer Importer
 	executor Executor
 	//
 	inputFS      Filesystem
@@ -34,7 +34,7 @@ type Engine struct {
 type EngineConfig struct {
 	RunID    string
 	UserName string
-	cwl.Importer
+	Importer
 	InputFS       Filesystem
 	OutputFS      Filesystem
 	Process       []byte
@@ -71,12 +71,14 @@ func initConfig(c *EngineConfig) {
 	}
 	if c.OutputFS == nil {
 		c.OutputFS = NewLocal(c.RootHost)
+		c.OutputFS.(*Local).CalcChecksum = true
 	}
 
 }
 
 // Engine runs an instance of the mariner engine job
 func NewEngine(c EngineConfig) (*Engine, error) {
+	var err error
 	initConfig(&c)
 	e := &Engine{
 		params:   cwl.NewValues(),
@@ -98,8 +100,10 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 		return nil, err
 	}
 	// import Doc
-	e.root.Importer = c.Importer
-	if err := json.Unmarshal(c.Process, &e.root); err != nil {
+	if c.Process, err = e.EnsureImportedDoc(c.Process); err != nil {
+		return nil, err
+	}
+	if err = json.Unmarshal(c.Process, &e.root); err != nil {
 		return nil, err
 	}
 	return e, nil
@@ -120,7 +124,7 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if e.process.tool != nil {
+	if _, isCLT := e.process.root.Process.(*cwl.CommandLineTool); isCLT {
 		p := e.process
 		limits, err := p.ResourcesLimites()
 		runtime := e.executor.QueryRuntime(*limits)
@@ -137,6 +141,9 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 		retCode, _ := <-ret
 		p.SetRuntime(Runtime{ExitCode: &retCode})
 		outputs, err := p.Outputs(e.outputFS)
+		return outputs, err
+	} else if _, isExpTool := e.process.root.Process.(*cwl.ExpressionTool); isExpTool {
+		outputs, err := e.process.RunExpression()
 		return outputs, err
 	}
 	// TODO workflow run
@@ -167,6 +174,9 @@ func (e *Engine) ResolveProcess(process *Process) ( error){
 		in := inb.(*cwl.CommandInputParameter)
 		val := (*params)[in.ID]
 		k := sortKey{getPos(in.InputBinding)}
+		if val == nil {
+			continue
+		}
 		b, err := process.bindInput(in.ID, in.Type.SaladType, in.InputBinding, in.SecondaryFiles, val, k)
 		if err != nil {
 			return  e.errorf("binding input %q: %s", in.ID, err)
@@ -184,7 +194,7 @@ func (e *Engine) ResolveProcess(process *Process) ( error){
 		return  err
 	}
 	
-	{
+	{ // set stdout stderr
 		stdoutI, err := process.eval(tool.Stdout, nil)
 		if err != nil {
 			return fmt.Errorf("evaluating stdout expression : %s", err)
@@ -215,13 +225,29 @@ func (e *Engine) ResolveProcess(process *Process) ( error){
 		for _, out := range tool.Outputs {
 			outi :=out.(*cwl.CommandOutputParameter)
 			if outi.Type.TypeName() == "stdout"  {
-				stdoutStr = "stdout-" + uuid.New().String()
+				if stdoutStr == "" {
+					stdoutStr = "stdout-" + uuid.New().String()
+				}
 			} else if outi.Type.TypeName() == "stderr" {
-				stderrStr = "stderr-" + uuid.New().String()
+				if stderrStr == "" {
+					stderrStr =  "stderr-" + uuid.New().String()
+				}
 			}
 		}
 		process.stdout = stdoutStr
 		process.stderr = stderrStr
+	}
+	{// set env
+		if req := tool.RequiresEnvVar(); req != nil {
+			for _, env := range req.EnvDef {
+				envExp, err := process.Eval(env.EnvValue, nil)
+				if err != nil {
+					return err
+				}
+				process.env[env.EnvName] = fmt.Sprint(envExp)
+			}
+		}
+	
 	}
 	return nil
 }
@@ -256,11 +282,4 @@ func (e *Engine) MainProcess() (*Process, error) {
 	process.loadRuntime()
 	e.process = process
 	return process, nil
-}
-
-
-
-
-func (p *Process) loadRuntime() {
-	p.vm.Set("runtime", p.runtime)
 }

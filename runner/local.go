@@ -56,8 +56,10 @@ func (l *Local) Create(path, contents string) (cwl.File, error) {
 	if size > MaxContentsBytes {
 		return x, fmt.Errorf("contents is max allowed size (%d) ", MaxContentsBytes)
 	}
-
-	loc := filepath.Join(l.workdir, path)
+	loc := path
+	if path[0] != '/' {
+		loc = filepath.Join(l.workdir, path)
+	}
 	abs, err := filepath.Abs(loc)
 	if err != nil {
 		return x, fmt.Errorf("getting absolute path for %s: %s", loc, err)
@@ -111,7 +113,6 @@ func (l *Local) Info(loc string) (cwl.File, error) {
 		}
 		checksum = "sha1$" + fmt.Sprintf("%x", sha1.Sum(b))
 	}
-
 	return cwl.File{
 		ClassBase:   cwl.ClassBase{   "File"} ,
 		Location: abs,

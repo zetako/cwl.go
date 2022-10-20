@@ -33,12 +33,11 @@ type Root struct {
 	Path string `json:"-"`
 	// InputsVM
 	InputsVM *otto.Otto
-	Importer Importer
 }
 
 // UnmarshalJSON ...
 func (root *Root) UnmarshalJSON(b []byte) error {
-	p, err :=ParseCWLProcessWithImporter(b, root.Importer)
+	p, err :=ParseCWLProcess(b)
 	if err != nil {
 		return err
 	}

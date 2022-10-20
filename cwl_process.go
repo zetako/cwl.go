@@ -38,6 +38,10 @@ func (e *FileDir)  UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("class need to be File/Directory")
 }
 
+func (e *FileDir)  MarshalJSON()([]byte ,error) {
+	return json.Marshal(e.Entery())
+}
+
 func NewFileDir(entry FileDirI) FileDir  {
 	return FileDir{
 		ClassBase{ entry.ClassName()},
@@ -50,11 +54,11 @@ func (e *FileDir) Entery() FileDirI {
 }
 
 // File represents file entry.
-// @see http://www.commonwl.org/v1.0/CommandLineTool.html#File
+// https://www.commonwl.org/v1.2/CommandLineTool.html#File
 type File struct {
 	ClassBase      `json:",inline"`
-	Location       string    `json:"location,omitempty"`
-	Path           string    `json:"path,omitempty"`
+	Location       string    `json:"location,omitempty"`	// file:// http://
+	Path           string    `json:"path,omitempty"`			// runtime local path
 	Basename       string    `json:"basename,omitempty"`
 	Dirname        string    `json:"dirname,omitempty"`
 	Nameroot       string    `json:"nameroot,omitempty"`
@@ -203,9 +207,8 @@ type ProcessBase struct {
 	Requirements Requirements `json:"requirements,omitempty" salad:"mapSubject:class"`
 	Hints        Requirements `json:"hints,omitempty" salad:"mapSubject:class"`
 	//Inputs       []InputParameter  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
-	Inputs       Inputs  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
-	Outputs      []OutputParameter `json:"outputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
-	importer Importer
+	Inputs   Inputs  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
+	Outputs  []OutputParameter `json:"outputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
 }
 
 func (b *ProcessBase) Base()  *ProcessBase {

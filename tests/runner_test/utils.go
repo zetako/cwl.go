@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -126,5 +127,77 @@ func doTest(t *testing.T, doc TestDoc) {
 	err = os.RemoveAll("/tmp/testcwl")
 	e.SetDefaultExecutor(ex)
 	outputs, err := e.Run()
-	Expect(t, outputs).ToBe(doc.Output)
+	//Expect(t, outputs).ToBe(doc.Output)
+	if !ExpectOutputs(outputs , doc.Output) {
+		Expect(t, outputs).ToBe(doc.Output)
+		//t.Fail()
+	}
+}
+
+func ExpectOutputs(actual interface{}, expect interface{}) bool {
+	switch t := expect.(type) {
+	case cwl.Values:
+		amap , ok := actual.(cwl.Values)
+		if !ok {
+			return false
+		}
+		for key, val := range t {
+			aval := amap[key]
+			if !ExpectOutputs(aval, val) {
+				return false
+			}
+		}
+		return true
+	case []cwl.Value:
+		alist, ok := actual.([]cwl.Value)
+		if !ok {
+			return false
+		}
+		if len(alist) != len(t) {
+			return false
+		}
+		for i, val := range t {
+			aval := alist[i]
+			if !ExpectOutputs(aval, val) {
+				return false
+			}
+		}
+		return true
+	case cwl.File:
+		aFile, ok := actual.(cwl.File)
+		if !ok {
+			return false
+		}
+		if t.Location != "Any" && t.Location != "" {
+			if !strings.HasSuffix(aFile.Location, t.Location) {
+				return false
+			}
+			return true
+		}
+		if len(t.SecondaryFiles) != len(aFile.SecondaryFiles) {
+			return false
+		}
+		for i, val := range t.SecondaryFiles {
+			aval := aFile.SecondaryFiles[i]
+			if !ExpectOutputs(aval, val) {
+				return false
+			}
+		}
+		return (t.Checksum == "" || t.Checksum == aFile.Checksum ) &&
+			t.Size == aFile.Size && t.Contents == aFile.Contents
+	case float64:
+		switch at := actual.(type) {
+		case float64:
+			return t == at
+		case int64:
+			return t == float64(at)
+		case int32:
+			return t == float64(at)
+		case int:
+			return t == float64(at)
+		}
+		return false
+	default:
+		return actual == expect
+	}
 }
