@@ -53,12 +53,16 @@ func (vm *jsvm) Eval(e cwl.Expression, data interface{}) (interface{}, error) {
 type ExpPart struct {
 	Raw        string
 	Expr       string
-	Start, End int
+	//Start, End int
 	// true if the expression is a javascript function body (e.g. ${return "foo"})
 	IsFuncBody bool
 }
 
-var rx = regexp.MustCompile(`\$\((.*)\)`)
+// See https://www.commonwl.org/v1.2/CommandLineTool.html#Expressions_(Optional)
+//var rx = regexp.MustCompile(`\$\((.*)\)`)
+//Parameter references
+var rx = regexp.MustCompile(`\$\([\pL\pN]+(\.[\pL\pN]+|\['[^'| ]+'\]|\["[^"| ]+"\]|\[\d+\])*\)`)
+
 
 func parseExp(expr cwl.Expression) []*ExpPart {
 	e := string(expr)
@@ -73,48 +77,55 @@ func parseExp(expr cwl.Expression) []*ExpPart {
 			{
 				Raw:        e,
 				Expr:       strings.TrimSpace(ev[2 : len(ev)-1]),
-				Start:      0,
-				End:        len(e),
+				//Start:      0,
+				//End:        len(e),
 				IsFuncBody: true,
 			},
 		}
 	}
 
 	var parts []*ExpPart
-
-	// parse parameter reference
-	last := 0
-	matches := rx.FindAllStringSubmatchIndex(e, -1)
+	matches := CwlExprSacner(e)
 	for _, match := range matches {
-		start := match[0]
-		end := match[1]
-		gstart := match[2]
-		gend := match[3]
-
-		if start > last {
 			parts = append(parts, &ExpPart{
-				Raw:   e[last:start],
-				Start: last,
-				End:   start,
+				Raw: match[0],
+				Expr: match[1] + match[2],
+				IsFuncBody: match[2] != "",
 			})
-		}
-
-		parts = append(parts, &ExpPart{
-			Raw:   string(e[start:end]),
-			Expr:  string(e[gstart:gend]),
-			Start: start,
-			End:   end,
-		})
-		last = end
 	}
-
-	if last < len(e)-1 {
-		parts = append(parts, &ExpPart{
-			Raw:   string(e[last:]),
-			Start: last,
-			End:   len(e),
-		})
-	}
+	// parse parameter reference
+	//last := 0
+	//matches := rx.FindAllStringSubmatchIndex(e, -1)
+	//for _, match := range matches {
+	//	start := match[0]
+	//	end := match[1]
+	//	gstart := match[2]
+	//	gend := match[3]
+	//
+	//	if start > last {
+	//		parts = append(parts, &ExpPart{
+	//			Raw:   e[last:start],
+	//			Start: last,
+	//			End:   start,
+	//		})
+	//	}
+	//
+	//	parts = append(parts, &ExpPart{
+	//		Raw:   string(e[start:end]),
+	//		Expr:  string(e[gstart:gend]),
+	//		Start: start,
+	//		End:   end,
+	//	})
+	//	last = end
+	//}
+	//
+	//if last < len(e)-1 {
+	//	parts = append(parts, &ExpPart{
+	//		Raw:   string(e[last:]),
+	//		Start: last,
+	//		End:   len(e),
+	//	})
+	//}
 
 	return parts
 }
@@ -179,4 +190,85 @@ func (j *jsvm) EvalParts(parts []*ExpPart) (interface{}, error) {
 		}
 	}
 	return res, nil
+}
+
+func CwlExprSacner(in string) [][3]string  {
+	var pass, l = 0 , len(in)
+	var str , exp , funCode string
+	var inExp , inFun bool
+	var deep int
+	ret := make([][3]string,0)
+	for i, c := range in {
+		if pass > 0 {
+			pass --
+			continue
+		}
+		// scan 3 byte
+		if !inExp && !inFun {
+			if l - i < 2 {
+				// do nothing
+			} else if c == '\\' {
+				if in[i:i+2] == "\\$(" {
+					pass = 2
+					str += "$("
+					continue
+				}
+				if in[i:i+2] == "\\${" {
+					pass = 2
+					str += "${"
+					continue
+				}
+				if in[i:i+2] == `\\` {
+					pass = 1
+					str += "\\"
+					continue
+				}
+			} else if c == '$' {
+				if in[i+1] == '(' {
+					pass = 1
+					inExp = true
+					continue
+				} else if in[i+1] == '{' {
+					pass = 1
+					inFun = true
+					continue
+				}
+			}
+		}
+		if inExp {
+			if c == '(' {
+				deep ++
+			} else if c == ')' {
+				if deep == 0 {
+					// close Exp
+					ret = append(ret, [3]string{str,exp, funCode})
+					str, exp, funCode = "", "", ""
+					inExp = false
+					continue
+				}
+				deep--
+			}
+			exp = exp + in[i:i+1]
+		} else if inFun {
+			if c == '{' {
+				deep ++
+			} else if c == '}' {
+				if deep == 0 {
+					// close Exp
+					ret = append(ret, [3]string{str,exp, funCode})
+					str, exp, funCode = "", "", ""
+					inFun = false
+					continue
+				}
+				deep--
+			}
+			funCode = funCode + in[i:i+1]
+		} else {
+			str += in[i:i+1]
+		}
+	}
+	if str != "" {
+		ret = append(ret, [3]string{str,exp,funCode})
+	}
+	return ret
 }

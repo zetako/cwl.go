@@ -116,6 +116,8 @@ func doTest(t *testing.T, doc TestDoc) {
 	defer func() {
 		if t.Failed() {
 			t.Logf("Test Failed: %d %s %s", doc.ID, doc.Tool, doc.Job)
+			t.Logf("Labels: %s Tag: %v ", doc.Label , doc.Tags)
+			
 		}
 	}()
 	e, err := newEngine(doc.Tool, doc.Job)

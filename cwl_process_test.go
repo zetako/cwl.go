@@ -2,10 +2,11 @@ package cwl_test
 
 import (
 	"encoding/json"
-	"github.com/lijiang2014/cwl.go"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/lijiang2014/cwl.go"
 )
 
 func TestCWL_process_1(t *testing.T) {
