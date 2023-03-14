@@ -246,7 +246,7 @@ func (process *Process) loadReqs() error {
 		// TODO init schemaDef
 	}
 	if req := tool.RequiresInitialWorkDir(); req != nil {
-		// TODO env
+		// 创建初始文件
 	}
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func TestCWLR2_workon(t *testing.T) {
-	e, err := newEngine("v1.0/glob-expr-list.cwl", "v1.0/abc.json")
+	e, err := newEngine("v1.0/stagefile.cwl", "v1.0/stagefile-job.yml")
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
