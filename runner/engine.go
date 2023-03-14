@@ -3,11 +3,12 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/lijiang2014/cwl.go"
 	"os"
 	"os/user"
 	"sync"
+
+	"github.com/google/uuid"
+	"github.com/lijiang2014/cwl.go"
 )
 
 // Engine
@@ -18,16 +19,16 @@ type Engine struct {
 	importer Importer
 	executor Executor
 	//
-	inputFS      Filesystem
-	outputFS     Filesystem
-	root         *cwl.Root // root Documents.
-	params       *cwl.Values
+	inputFS  Filesystem
+	outputFS Filesystem
+	root     *cwl.Root // root Documents.
+	params   *cwl.Values
 	//runtime Runtime
-	process *Process // root process
-	UserID   string // the userID for the user who requested the workflow run
-	RunID    string // the workflow ID
+	process  *Process // root process
+	UserID   string   // the userID for the user who requested the workflow run
+	RunID    string   // the workflow ID
 	RootHost string
-	Log *MainLog //
+	Log      *MainLog //
 	// executer
 }
 
@@ -109,13 +110,13 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 	return e, nil
 }
 
-func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (outs cwl.Values ,err error){
+func (e *Engine) RunCommandLine(process *Process, params cwl.Values) (outs cwl.Values, err error) {
 	process.inputs = &params
 	err = e.ResolveProcess(process)
 	return
 }
 
-func (e *Engine) SetDefaultExecutor(exec Executor)  {
+func (e *Engine) SetDefaultExecutor(exec Executor) {
 	e.executor = exec
 }
 
@@ -130,11 +131,11 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 		runtime := e.executor.QueryRuntime(*limits)
 		p.SetRuntime(runtime)
 		err = e.ResolveProcess(p)
-		if err !=nil {
+		if err != nil {
 			return nil, err
 		}
 		pid, ret, err := e.executor.Run(p)
-		if err !=nil {
+		if err != nil {
 			return nil, err
 		}
 		p.JobID = pid
@@ -150,17 +151,16 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 	return nil, fmt.Errorf("workflow is not ok yet ")
 }
 
-
 // 解析但不执行
-func (e *Engine) ResolveProcess(process *Process) ( error){
-	tool , ok := process.root.Process.(*cwl.CommandLineTool)
+func (e *Engine) ResolveProcess(process *Process) error {
+	tool, ok := process.root.Process.(*cwl.CommandLineTool)
 	params := process.inputs
 	if !ok {
-		return  e.errorf("need to be CommandLineTool %s", process.root.Process.Base().ID)
+		return e.errorf("need to be CommandLineTool %s", process.root.Process.Base().ID)
 	}
 	setDefault(params, tool.Inputs)
 	if err := process.initJVM(); err != nil {
-		return  err
+		return err
 	}
 	// TODO better
 	process.runtime.RootHost = e.RootHost
@@ -179,65 +179,82 @@ func (e *Engine) ResolveProcess(process *Process) ( error){
 		}
 		b, err := process.bindInput(in.ID, in.Type.SaladType, in.InputBinding, in.SecondaryFiles, val, k)
 		if err != nil {
-			return  e.errorf("binding input %q: %s", in.ID, err)
+			return e.errorf("binding input %q: %s", in.ID, err)
 		}
 		if b == nil {
 			return e.errorf("no binding found for input: %s", in.ID)
 		}
-		
+
 		process.bindings = append(process.bindings, b...)
 	}
 	e.process = process
-	
+
 	err := process.loadReqs()
 	if err != nil {
-		return  err
+		return err
 	}
-	
+	if err := process.initJVM(); err != nil {
+		return err
+	}
+
 	{ // set stdout stderr
 		stdoutI, err := process.eval(tool.Stdout, nil)
 		if err != nil {
 			return fmt.Errorf("evaluating stdout expression : %s", err)
 		}
-		
+
 		stderrI, err := process.eval(tool.Stderr, nil)
 		if err != nil {
 			return fmt.Errorf("evaluating stderr expression : %s", err)
 		}
-		
+
 		var stdoutStr, stderrStr string
 		var ok bool
-		
+
 		if stdoutI != nil {
 			stdoutStr, ok = stdoutI.(string)
 			if !ok {
-				return  fmt.Errorf("stdout expression returned a non-string value")
+				return fmt.Errorf("stdout expression returned a non-string value")
 			}
 		}
-		
+
 		if stderrI != nil {
 			stderrStr, ok = stderrI.(string)
 			if !ok {
 				return fmt.Errorf("stderr expression returned a non-string value")
 			}
 		}
-		
+
 		for _, out := range tool.Outputs {
-			outi :=out.(*cwl.CommandOutputParameter)
-			if outi.Type.TypeName() == "stdout"  {
+			outi := out.(*cwl.CommandOutputParameter)
+			if outi.Type.TypeName() == "stdout" {
 				if stdoutStr == "" {
 					stdoutStr = "stdout-" + uuid.New().String()
 				}
 			} else if outi.Type.TypeName() == "stderr" {
 				if stderrStr == "" {
-					stderrStr =  "stderr-" + uuid.New().String()
+					stderrStr = "stderr-" + uuid.New().String()
 				}
 			}
 		}
 		process.stdout = stdoutStr
 		process.stderr = stderrStr
+		{
+			stdinI, err := process.eval(tool.Stdin, nil)
+			if err != nil {
+				return fmt.Errorf("evaluating stdin expression : %s %s", tool.Stdin, err)
+			}
+			if stdinI != nil {
+				stdinStr, ok := stdinI.(string)
+				if !ok {
+					return fmt.Errorf("stdin expression returned a non-string value")
+				}
+				process.stdin = stdinStr
+			}
+
+		}
 	}
-	{// set env
+	{ // set env
 		if req := tool.RequiresEnvVar(); req != nil {
 			for _, env := range req.EnvDef {
 				envExp, err := process.Eval(env.EnvValue, nil)
@@ -247,7 +264,7 @@ func (e *Engine) ResolveProcess(process *Process) ( error){
 				process.env[env.EnvName] = fmt.Sprint(envExp)
 			}
 		}
-	
+
 	}
 	return nil
 }
@@ -277,7 +294,7 @@ func (e *Engine) MainProcess() (*Process, error) {
 	if err := process.initJVM(); err != nil {
 		return nil, err
 	}
-	
+
 	process.runtime.RootHost = e.RootHost
 	process.loadRuntime()
 	e.process = process

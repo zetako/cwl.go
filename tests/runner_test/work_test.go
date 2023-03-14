@@ -11,7 +11,7 @@ import (
 )
 
 func TestCWLR2_workon(t *testing.T) {
-	e, err := newEngine("v1.0/record-output.cwl", "v1.0/record-output-job.json")
+	e, err := newEngine("v1.0/template-tool.cwl", "v1.0/cat-job.json")
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
@@ -76,7 +76,7 @@ func TestCWLR2_workon(t *testing.T) {
 	}
 	ex := runner.LocalExecutor{}
 	err = os.RemoveAll("/tmp/testcwl")
-	//Expect(t, err).ToBe(nil)
+	// Expect(t, err).ToBe(nil)
 	pid, ret, err := ex.Run(p)
 	Expect(t, err).ToBe(nil)
 	t.Log(pid)

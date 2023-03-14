@@ -23,16 +23,16 @@ type ArrayType interface {
 
 // TypeBase 的一个基础实例
 type SaladType struct {
-  name      string // null / boolean / int / long / float / double / string / `definedType`
-  primitive string
-  //record    *RecordSchema
-  //enum      *EnumSchema
-  //array      *ArraySchema
-  //multi     []SaladType
-	record    RecordType
-	enum      EnumType
-	array     ArrayType
-	multi     []SaladType
+	name      string // null / boolean / int / long / float / double / string / `definedType`
+	primitive string
+	//record    *RecordSchema
+	//enum      *EnumSchema
+	//array      *ArraySchema
+	//multi     []SaladType
+	record RecordType
+	enum   EnumType
+	array  ArrayType
+	multi  []SaladType
 }
 
 func (SaladType) typebase() {
@@ -47,7 +47,7 @@ func (t *SaladType) SetTypename(s string) {
 }
 
 func (t *SaladType) SetNull() {
-		t.primitive = "null"
+	t.primitive = "null"
 }
 
 func (t *SaladType) SetMulti(m []SaladType) {
@@ -65,40 +65,36 @@ func (t *SaladType) SetEnum(i EnumType) {
 	t.enum = i
 }
 
-
 // 4.1.3
 type RecordSchema struct {
-  Type string `json:"fields"`
-  Fields []FieldType `json:"fields"`
+	Type   string      `json:"fields"`
+	Fields []FieldType `json:"fields"`
 }
 
-func (_ RecordSchema) 	recordType() {
+func (_ RecordSchema) recordType() {
 }
 
-func (s *RecordSchema) 	Len() int {
+func (s *RecordSchema) Len() int {
 	return len(s.Fields)
 }
 
-func (s *RecordSchema) 	Index(i int) FieldType {
+func (s *RecordSchema) Index(i int) FieldType {
 	return s.Fields[i]
 }
 
 type FieldType interface {
-  fieldType()
+	fieldType()
 	FieldName() string
 	FieldType() *SaladType
 }
 
 type RecordField struct {
- Name string `json:"name"`
- Type SaladType `json:"type" salad:"type"`
+	Name string    `json:"name"`
+	Type SaladType `json:"type" salad:"type"`
 }
 
-
-
-func (_ RecordField) fieldType()  {
+func (_ RecordField) fieldType() {
 }
-
 
 func (f *RecordField) FieldName() string {
 	return f.Name
@@ -108,26 +104,23 @@ func (f *RecordField) FieldType() *SaladType {
 	return &f.Type
 }
 
-
 // 4.1.4.1
 type EnumSchema struct {
-  Type string // must be enum
-  Symbols []string `json:"symbols"`
+	Type    string   // must be enum
+	Symbols []string `json:"symbols"`
 }
-
 
 func (_ EnumSchema) enumType() {
 }
 
-func (s *EnumSchema) GetEnumSchema() *EnumSchema{
+func (s *EnumSchema) GetEnumSchema() *EnumSchema {
 	return s
 }
 
-
 // 4.1.4.2
 type ArraySchema struct {
-  Type  string    `json:"type"` // must be array
-  Items SaladType `json:"items" salad:"type"`
+	Type  string    `json:"type"` // must be array
+	Items SaladType `json:"items" salad:"type"`
 }
 
 func (_ ArraySchema) arrayType() {
@@ -137,19 +130,20 @@ func (s *ArraySchema) GetItems() *SaladType {
 	return &s.Items
 }
 
-func (s *ArraySchema) SetItems(b SaladType)  {
+func (s *ArraySchema) SetItems(b SaladType) {
 	s.Items = b
 }
 
 func isPrimitive(v string) bool {
-  return v == "null" || v== "boolean" || v == "int" || v == "long" ||
-    v == "float" || v == "double" || v == "string"
+	return v == "null" || v == "boolean" || v == "int" || v == "long" ||
+		v == "float" || v == "double" || v == "string"
 }
 
 func IsPrimitiveSaladType(v string) bool {
-  return v == "null" || v== "boolean" || v == "int" || v == "long" ||
-    v == "float" || v == "double" || v == "string"
+	return v == "null" || v == "boolean" || v == "int" || v == "long" ||
+		v == "float" || v == "double" || v == "string"
 }
+
 //
 //func ParseToType(data []byte, db map[string]*RecordFieldGraph) (t TypeBase, err error){
 //	newTypeBase := func() (TypeBase ,error){
@@ -361,68 +355,71 @@ func IsPrimitiveSaladType(v string) bool {
 //  //return fmt.Errorf("unknown type %s", string(data))
 //}
 
-func (t ArraySchema) MarshalJSON()([]byte, error){
-  t.Type = "array"
-  type rawArray ArraySchema
-  return json.Marshal((rawArray)(t))
+func (t ArraySchema) MarshalJSON() ([]byte, error) {
+	t.Type = "array"
+	type rawArray ArraySchema
+	return json.Marshal((rawArray)(t))
 }
 
-func (t SaladType) MarshalJSON()([]byte, error){
-  if t.primitive != "" {
-    return json.Marshal(t.primitive)
-  } else if t.name != "" {
-    return json.Marshal(t.name)
-  } else if t.array != nil {
-    return json.Marshal(t.array)
-  } else if t.enum != nil {
-    return json.Marshal(t.enum)
-  } else if t.record != nil {
-    return json.Marshal(t.record)
-  } else if t.multi != nil {
-    return json.Marshal(t.multi)
-  }
-  return nil, fmt.Errorf("invaild type")
+func (t SaladType) MarshalJSON() ([]byte, error) {
+	if t.primitive != "" {
+		return json.Marshal(t.primitive)
+	} else if t.name != "" {
+		return json.Marshal(t.name)
+	} else if t.array != nil {
+		return json.Marshal(t.array)
+	} else if t.enum != nil {
+		return json.Marshal(t.enum)
+	} else if t.record != nil {
+		return json.Marshal(t.record)
+	} else if t.multi != nil {
+		return json.Marshal(t.multi)
+	}
+	return nil, fmt.Errorf("invaild type")
 }
 
 func (t *SaladType) String() string {
-  raw , err := t.MarshalJSON()
-  if err != nil {
-    return "ErrType:" + err.Error()
-  }
-  return string(raw)
+	raw, err := t.MarshalJSON()
+	if err != nil {
+		return "ErrType:" + err.Error()
+	}
+	return string(raw)
 }
 
 func (t *SaladType) IsPrimitive() bool {
-  return t.primitive != ""
+	return t.primitive != ""
 }
 
-
-func (t *SaladType) MustString() string  {
-  if t.primitive != "" {
-    return t.primitive
-  } else if t.name !="" {
-    return t.name
-  }
-  return ""
+func (t *SaladType) MustString() string {
+	if t.primitive != "" {
+		return t.primitive
+	} else if t.name != "" {
+		return t.name
+	}
+	return ""
 }
 
 func (t *SaladType) IsNullable() bool {
-  if t.primitive == "null" {
-    return true
-  }
-  for i := 0; i < len(t.multi) ; i++{
-    if t.multi[i].TypeName() == "null" {
-      return true
-    }
-  }
-  return false
+	if t.primitive == "null" {
+		return true
+	}
+	for i := 0; i < len(t.multi); i++ {
+		if t.multi[i].TypeName() == "null" {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *SaladType) IsArray() bool {
-  if t.array != nil  {
-    return true
-  }
-  return false
+	if t.array != nil {
+		return true
+	}
+	return false
+}
+
+func (t *SaladType) IsRecord() bool {
+	return t.record != nil
 }
 
 func (t *SaladType) IsMulti() bool {
@@ -437,90 +434,87 @@ func (t *SaladType) Index(i int) SaladType {
 	return t.multi[i]
 }
 
-
-func (t *SaladType) MustArraySchema() ArrayType  {
-  return t.array
+func (t *SaladType) MustArraySchema() ArrayType {
+	return t.array
 }
 
-func (t *SaladType) MustEnum() EnumType  {
+func (t *SaladType) MustEnum() EnumType {
 	return t.enum
 }
 
-
-func (t *SaladType) MustMulti() []SaladType  {
-  return t.multi
+func (t *SaladType) MustMulti() []SaladType {
+	return t.multi
 }
 
-func (t *SaladType) MustRecord() RecordType  {
+func (t *SaladType) MustRecord() RecordType {
 	return t.record
 }
 
-
-func typeDSLResolution(dslType string) (isOptional bool, isArray    bool, restType string) {
-  if strings.HasSuffix(dslType, "?") {
-    isOptional = true
-    dslType = dslType[:len(dslType)-1]
-  }
-  if strings.HasSuffix(dslType, "[]") {
-    isArray = true
-    dslType = dslType[:len(dslType)-2]
-  }
-  return isOptional, isArray, dslType
+func typeDSLResolution(dslType string) (isOptional bool, isArray bool, restType string) {
+	if strings.HasSuffix(dslType, "?") {
+		isOptional = true
+		dslType = dslType[:len(dslType)-1]
+	}
+	if strings.HasSuffix(dslType, "[]") {
+		isArray = true
+		dslType = dslType[:len(dslType)-2]
+	}
+	return isOptional, isArray, dslType
 }
 
 func (t *SaladType) TypeName() string {
-  if t.primitive != "" {
-    return t.primitive
-  } else if t.name !="" {
-    return t.name
-  } else if t.array != nil {
-    return "array"
-  } else if t.enum != nil {
-    return "enum"
-  } else if t.record != nil {
-    return "record"
-  } else if t.multi != nil {
-    types := make([]string, len(t.multi))
-    for i, ti := range t.multi {
-      types[i] = ti.TypeName()
-    }
-    return "[" + strings.Join(types, ",") + "]"
-  }
-  return "_unknownType_"
+	if t.primitive != "" {
+		return t.primitive
+	} else if t.name != "" {
+		return t.name
+	} else if t.array != nil {
+		return "array"
+	} else if t.enum != nil {
+		return "enum"
+	} else if t.record != nil {
+		return "record"
+	} else if t.multi != nil {
+		types := make([]string, len(t.multi))
+		for i, ti := range t.multi {
+			types[i] = ti.TypeName()
+		}
+		return "[" + strings.Join(types, ",") + "]"
+	}
+	return "_unknownType_"
 }
 
 type secondaryFilesDSLPattern struct {
-  Pattern string `json:"pattern"`
-  Required interface{} `json:"required"`
+	Pattern  string      `json:"pattern"`
+	Required interface{} `json:"required"`
 }
 
 func NewType(name string) SaladType {
-  return SaladType{ name: name }
+	return SaladType{name: name}
 }
 
 func secondaryFilesDSLResolution(in string) (out secondaryFilesDSLPattern) {
-  p := secondaryFilesDSLPattern{ Pattern: in, Required: nil }
-  if strings.HasSuffix(in, "?") {
-    p.Pattern = in[:len(in)-1]
-    p.Required = false
-  }
-  return p
+	p := secondaryFilesDSLPattern{Pattern: in, Required: nil}
+	if strings.HasSuffix(in, "?") {
+		p.Pattern = in[:len(in)-1]
+		p.Required = false
+	}
+	return p
 }
 
 func checkPrimitive(typePrim string, v interface{}) bool {
-  switch typePrim {
-  case "string":
-    _, got := v.(string)
-    return got
-  case "boolean":
-    _, got := v.(bool)
-    return got
-  case "int","long":
-    _, got := v.(int64)
-    return got
-  case "float","double":
-    _, got := v.(float64)
-    return got
-  }
-  return false
+	switch typePrim {
+	case "string":
+		_, got := v.(string)
+		return got
+	case "boolean":
+		_, got := v.(bool)
+		return got
+	case "int", "long":
+		_, got := v.(int64)
+		return got
+	case "float", "double":
+		_, got := v.(float64)
+		return got
+	}
+	return false
 }

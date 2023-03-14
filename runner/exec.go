@@ -43,7 +43,7 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 	// Set Std OUT ERR IN
 	if process.stdout != "" {
 		outpath := path.Join(process.runtime.RootHost, process.stdout)
-		fout , err := os.Create(outpath)
+		fout, err := os.Create(outpath)
 		if err != nil {
 			return "", nil, err
 		}
@@ -51,11 +51,22 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 	}
 	if process.stderr != "" {
 		errpath := path.Join(process.runtime.RootHost, process.stderr)
-		ferr , err := os.Create(errpath)
+		ferr, err := os.Create(errpath)
 		if err != nil {
 			return "", nil, err
 		}
 		r.Stderr = ferr
+	}
+	if process.stdin != "" {
+		inPath := process.stdin
+		if !path.IsAbs(inPath) {
+			inPath = path.Join(process.runtime.RootHost, inPath)
+		}
+		fin, err := os.OpenFile(inPath, os.O_RDONLY, 0)
+		if err != nil {
+			return "", nil, err
+		}
+		r.Stdin = fin
 	}
 	//if process.tool.Stdout != "" {
 	//	stdout , err := process.jsvm.Eval(process.tool.Stdout, nil)

@@ -3,15 +3,16 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/lijiang2014/cwl.go"
 	"log"
 	"sort"
 	"strings"
+
+	"github.com/lijiang2014/cwl.go"
 )
 
 type Process struct {
 	root           *cwl.Root
-	tool	         *cwl.CommandLineTool
+	tool           *cwl.CommandLineTool
 	inputs         *cwl.Values
 	runtime        Runtime
 	fs             Filesystem
@@ -23,6 +24,7 @@ type Process struct {
 	resources      ResourcesLimites
 	stdout         string
 	stderr         string
+	stdin          string
 	*Log
 	*jsvm
 }
@@ -30,7 +32,6 @@ type Process struct {
 func (p *Process) Root() *cwl.Root {
 	return p.root
 }
-
 
 // Binding binds an input type description (string, array, record, etc)
 // to a concrete input value. this information is used while building
@@ -55,7 +56,7 @@ type sortKey []interface{}
 func setDefault(values *cwl.Values, inputs cwl.Inputs) {
 	for _, in := range inputs {
 		any, ok := (*values)[in.GetInputParameter().ID]
-		if (!ok || any == nil )&& in.GetInputParameter().Default != nil {
+		if (!ok || any == nil) && in.GetInputParameter().Default != nil {
 			(*values)[in.GetInputParameter().ID] = in.GetInputParameter().Default
 		}
 	}
@@ -64,38 +65,40 @@ func setDefault(values *cwl.Values, inputs cwl.Inputs) {
 func (process *Process) Command() ([]string, error) {
 	// Copy "Tool.Inputs" bindings
 	args := make([]*Binding, 0, len(process.bindings))
-	for _, b := range process.bindings {
+	// flat binding
+	// process.FlatBinding()
+	for _, b := range flatBinding(process.bindings, true) {
 		if b.clb != nil {
 			args = append(args, b)
 		}
 	}
 	tool := process.root.Process.(*cwl.CommandLineTool)
 	// Add "Tool.Arguments"
-	for i, arg := range  tool.Arguments {
+	for i, arg := range tool.Arguments {
 		if arg.Binding == nil && arg.Exp != "" {
 			expStr := string(arg.Exp)
-			expResult , expErr :=  process.Eval(arg.Exp, nil)
+			expResult, expErr := process.Eval(arg.Exp, nil)
 			if expErr == nil {
 				expStr = fmt.Sprint(expResult)
 			}
 			args = append(args, &Binding{
-				arg.Binding,  cwl.NewType(argType), expStr, sortKey{0}, nil, "",
+				arg.Binding, cwl.NewType(argType), expStr, sortKey{0}, nil, "",
 			})
 			continue
 		} else if arg.Binding == nil {
 			return nil, fmt.Errorf("empty argument")
 		}
-		if arg.Binding != nil && arg.Binding.ValueFrom == ""  {
+		if arg.Binding != nil && arg.Binding.ValueFrom == "" {
 			return nil, fmt.Errorf("valueFrom is required but missing for argument %d", i)
 		}
 		args = append(args, &Binding{
-			arg.Binding, cwl.NewType(argType), nil, sortKey{arg.Binding.Position}, nil, "",
+			arg.Binding, cwl.NewType(argType), nil, sortKey{getPos(arg.Binding)}, nil, "",
 		})
 	}
 	//
 	// Evaluate "valueFrom" expression.
 	for _, b := range args {
-		if b.clb != nil && b.clb.ValueFrom != ""  {
+		if b.clb != nil && b.clb.ValueFrom != "" {
 			val, err := process.eval(b.clb.ValueFrom, b.Value)
 			if err != nil {
 				return nil, fmt.Errorf("failed to eval argument value: %s", err)
@@ -103,7 +106,7 @@ func (process *Process) Command() ([]string, error) {
 			b.Value = val
 		}
 	}
-	
+
 	sort.Stable(bySortKey(args))
 	//debug(args)
 	//
@@ -119,6 +122,22 @@ func (process *Process) Command() ([]string, error) {
 
 	//debug("COMMAND", cmd)
 	return cmd, nil
+}
+
+func flatBinding(nested []*Binding, checkClb bool) []*Binding {
+	outs := make([]*Binding, 0, len(nested))
+	for i, bi := range nested {
+		var checked = bi.clb != nil
+
+		if checkClb && checked {
+			outs = append(outs, nested[i])
+		} else if bi.nested != nil {
+			outs = append(outs, flatBinding(nested[i].nested, checkClb)...)
+		} else if !checkClb {
+			outs = append(outs, nested[i])
+		}
+	}
+	return outs
 }
 
 func (p *Process) loadRuntime() {
@@ -137,25 +156,25 @@ func (p *Process) RunExpression() (cwl.Values, error) {
 		val := (*p.inputs)[in.ID]
 		k := sortKey{0}
 		if in.InputBinding != nil {
-			binding = &cwl.CommandLineBinding{ InputBinding: *in.InputBinding }
+			binding = &cwl.CommandLineBinding{InputBinding: *in.InputBinding}
 		}
 		b, err := p.bindInput(in.ID, in.Type, binding, in.SecondaryFiles, val, k)
 		if err != nil {
-			return nil,  p.errorf("binding input %q: %s", in.ID, err)
+			return nil, p.errorf("binding input %q: %s", in.ID, err)
 		}
 		if b == nil {
-			return nil,  p.errorf("no binding found for input: %s", in.ID)
+			return nil, p.errorf("no binding found for input: %s", in.ID)
 		}
 		p.bindings = append(p.bindings, b...)
 	}
 	if err := p.initJVM(); err != nil {
 		return nil, err
 	}
-	
-	out, err := p.jsvm.Eval(tool.Expression,nil)
-	log.Printf("out %#v",out)
+
+	out, err := p.jsvm.Eval(tool.Expression, nil)
+	log.Printf("out %#v", out)
 	// TODO Convert out into values
-	valMap,ok := out.(map[string]interface{})
+	valMap, ok := out.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("output format err")
 	}
@@ -169,7 +188,6 @@ func (p *Process) RunExpression() (cwl.Values, error) {
 	}
 	return values, err
 }
-
 
 func toJSONMap(v interface{}) (interface{}, error) {
 	if v == nil {
@@ -207,16 +225,16 @@ func (process *Process) loadReqs() error {
 	tool := process.root.Process.(*cwl.CommandLineTool)
 	if req := tool.RequiresInlineJavascript(); req != nil {
 		// TODO Add Libs
-	 if err := process.initJVM(); err != nil {
-	   return err
-	 }
-	 for _, lib := range req.ExpressionLib {
-	 	//out, err := process.eval(cwl.Expression(lib), nil )
-	 	v, err := process.jsvm.vm.Run(lib)
-	 	if err != nil {
-	 		log.Println(v, err)
+		if err := process.initJVM(); err != nil {
+			return err
 		}
-	 }
+		for _, lib := range req.ExpressionLib {
+			//out, err := process.eval(cwl.Expression(lib), nil )
+			v, err := process.jsvm.vm.Run(lib)
+			if err != nil {
+				log.Println(v, err)
+			}
+		}
 	}
 	if req := tool.RequiresEnvVar(); req != nil {
 		// TODO env
@@ -233,8 +251,7 @@ func (process *Process) loadReqs() error {
 	return nil
 }
 
-
-func (process *Process) ResourcesLimites() (*ResourcesLimites , error){
+func (process *Process) ResourcesLimites() (*ResourcesLimites, error) {
 	limits := GetDefaultResourcesLimits()
 	if req := process.tool.RequiresResource(); req != nil {
 		//CoresMin        LongFloatExpression `json:"coresMin,omitempty"`
@@ -245,7 +262,7 @@ func (process *Process) ResourcesLimites() (*ResourcesLimites , error){
 		//TmpdirMax       LongFloatExpression `json:"tmpdirMax,omitempty"`
 		//OutdirMin       LongFloatExpression `json:"outdirMin,omitempty"` // Minimum reserved filesystem based storage for the designated output directory, in mebibytes (2**20) (default is 1024)
 		//OutdirMax       LongFloatExpression `json:"outdirMax,omitempty"`
-		
+
 		if !req.CoresMin.IsNull() {
 			err := req.CoresMin.Resolve(process.jsvm, nil)
 			if err != nil {

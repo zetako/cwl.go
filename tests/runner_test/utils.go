@@ -3,14 +3,15 @@ package runnertest
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/lijiang2014/cwl.go"
-	irunner "github.com/lijiang2014/cwl.go/runner"
-	. "github.com/otiai10/mint"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lijiang2014/cwl.go"
+	irunner "github.com/lijiang2014/cwl.go/runner"
+	. "github.com/otiai10/mint"
 )
 
 const version = "1.0"
@@ -116,8 +117,8 @@ func doTest(t *testing.T, doc TestDoc) {
 	defer func() {
 		if t.Failed() {
 			t.Logf("Test Failed: %d %s %s", doc.ID, doc.Tool, doc.Job)
-			t.Logf("Labels: %s Tag: %v ", doc.Label , doc.Tags)
-			
+			t.Logf("Labels: %s Tag: %v ", doc.Label, doc.Tags)
+
 		}
 	}()
 	e, err := newEngine(doc.Tool, doc.Job)
@@ -130,7 +131,7 @@ func doTest(t *testing.T, doc TestDoc) {
 	e.SetDefaultExecutor(ex)
 	outputs, err := e.Run()
 	//Expect(t, outputs).ToBe(doc.Output)
-	if !ExpectOutputs(outputs , doc.Output) {
+	if !ExpectOutputs(outputs, doc.Output) {
 		Expect(t, outputs).ToBe(doc.Output)
 		//t.Fail()
 	}
@@ -138,8 +139,22 @@ func doTest(t *testing.T, doc TestDoc) {
 
 func ExpectOutputs(actual interface{}, expect interface{}) bool {
 	switch t := expect.(type) {
+	case map[string]interface{}:
+		vt := cwl.Values{}
+		for k, v := range t {
+			vt[k] = v
+		}
+		return ExpectOutputs(actual, vt)
+	case map[string]cwl.Value:
+		vt := cwl.Values{}
+		for k, v := range t {
+			vt[k] = v
+		}
+		return ExpectOutputs(actual, vt)
+	}
+	switch t := expect.(type) {
 	case cwl.Values:
-		amap , ok := actual.(cwl.Values)
+		amap, ok := actual.(cwl.Values)
 		if !ok {
 			return false
 		}
@@ -174,7 +189,7 @@ func ExpectOutputs(actual interface{}, expect interface{}) bool {
 			if !strings.HasSuffix(aFile.Location, t.Location) {
 				return false
 			}
-			return true
+			// return true
 		}
 		if len(t.SecondaryFiles) != len(aFile.SecondaryFiles) {
 			return false
@@ -185,7 +200,7 @@ func ExpectOutputs(actual interface{}, expect interface{}) bool {
 				return false
 			}
 		}
-		return (t.Checksum == "" || t.Checksum == aFile.Checksum ) &&
+		return (t.Checksum == "" || t.Checksum == aFile.Checksum) &&
 			t.Size == aFile.Size && t.Contents == aFile.Contents
 	case float64:
 		switch at := actual.(type) {

@@ -2,10 +2,11 @@ package runner
 
 import (
 	"fmt"
-	"github.com/lijiang2014/cwl.go"
-	"github.com/robertkrimen/otto"
 	"regexp"
 	"strings"
+
+	"github.com/lijiang2014/cwl.go"
+	"github.com/robertkrimen/otto"
 )
 
 type jsvm struct {
@@ -16,7 +17,14 @@ type jsvm struct {
 }
 
 func (process *Process) initJVM() error {
-	vm := &jsvm{}
+	var vm *jsvm
+	if process.jsvm == nil {
+		vm = &jsvm{}
+		vm.vm = otto.New()
+		process.jsvm = vm
+	} else {
+		vm = process.jsvm
+	}
 	inputsData := map[string]interface{}{}
 	for _, b := range process.bindings {
 		v, err := toJSONMap(b.Value)
@@ -38,8 +46,6 @@ func (process *Process) initJVM() error {
 		"outdirSize": r.OutdirSize,
 		"tmpdirSize": r.TmpdirSize,
 	}
-	process.jsvm = vm
-	vm.vm = otto.New()
 	vm.vm.Set("inputs", inputsData)
 	vm.vm.Set("runtime", vm.runtime)
 	return nil
@@ -51,8 +57,8 @@ func (vm *jsvm) Eval(e cwl.Expression, data interface{}) (interface{}, error) {
 }
 
 type ExpPart struct {
-	Raw        string
-	Expr       string
+	Raw  string
+	Expr string
 	//Start, End int
 	// true if the expression is a javascript function body (e.g. ${return "foo"})
 	IsFuncBody bool
@@ -62,7 +68,6 @@ type ExpPart struct {
 //var rx = regexp.MustCompile(`\$\((.*)\)`)
 //Parameter references
 var rx = regexp.MustCompile(`\$\([\pL\pN]+(\.[\pL\pN]+|\['[^'| ]+'\]|\["[^"| ]+"\]|\[\d+\])*\)`)
-
 
 func parseExp(expr cwl.Expression) []*ExpPart {
 	e := string(expr)
@@ -75,8 +80,8 @@ func parseExp(expr cwl.Expression) []*ExpPart {
 	if strings.HasPrefix(ev, "${") && strings.HasSuffix(ev, "}") {
 		return []*ExpPart{
 			{
-				Raw:        e,
-				Expr:       strings.TrimSpace(ev[2 : len(ev)-1]),
+				Raw:  e,
+				Expr: strings.TrimSpace(ev[2 : len(ev)-1]),
 				//Start:      0,
 				//End:        len(e),
 				IsFuncBody: true,
@@ -87,11 +92,11 @@ func parseExp(expr cwl.Expression) []*ExpPart {
 	var parts []*ExpPart
 	matches := CwlExprSacner(e)
 	for _, match := range matches {
-			parts = append(parts, &ExpPart{
-				Raw: match[0],
-				Expr: match[1] + match[2],
-				IsFuncBody: match[2] != "",
-			})
+		parts = append(parts, &ExpPart{
+			Raw:        match[0],
+			Expr:       match[1] + match[2],
+			IsFuncBody: match[2] != "",
+		})
 	}
 	// parse parameter reference
 	//last := 0
@@ -192,20 +197,20 @@ func (j *jsvm) EvalParts(parts []*ExpPart) (interface{}, error) {
 	return res, nil
 }
 
-func CwlExprSacner(in string) [][3]string  {
-	var pass, l = 0 , len(in)
-	var str , exp , funCode string
-	var inExp , inFun bool
+func CwlExprSacner(in string) [][3]string {
+	var pass, l = 0, len(in)
+	var str, exp, funCode string
+	var inExp, inFun bool
 	var deep int
-	ret := make([][3]string,0)
+	ret := make([][3]string, 0)
 	for i, c := range in {
 		if pass > 0 {
-			pass --
+			pass--
 			continue
 		}
 		// scan 3 byte
 		if !inExp && !inFun {
-			if l - i < 2 {
+			if l-i < 2 {
 				// do nothing
 			} else if c == '\\' {
 				if in[i:i+2] == "\\$(" {
@@ -237,11 +242,11 @@ func CwlExprSacner(in string) [][3]string  {
 		}
 		if inExp {
 			if c == '(' {
-				deep ++
+				deep++
 			} else if c == ')' {
 				if deep == 0 {
 					// close Exp
-					ret = append(ret, [3]string{str,exp, funCode})
+					ret = append(ret, [3]string{str, exp, funCode})
 					str, exp, funCode = "", "", ""
 					inExp = false
 					continue
@@ -251,11 +256,11 @@ func CwlExprSacner(in string) [][3]string  {
 			exp = exp + in[i:i+1]
 		} else if inFun {
 			if c == '{' {
-				deep ++
+				deep++
 			} else if c == '}' {
 				if deep == 0 {
 					// close Exp
-					ret = append(ret, [3]string{str,exp, funCode})
+					ret = append(ret, [3]string{str, exp, funCode})
 					str, exp, funCode = "", "", ""
 					inFun = false
 					continue
@@ -264,11 +269,11 @@ func CwlExprSacner(in string) [][3]string  {
 			}
 			funCode = funCode + in[i:i+1]
 		} else {
-			str += in[i:i+1]
+			str += in[i : i+1]
 		}
 	}
 	if str != "" {
-		ret = append(ret, [3]string{str,exp,funCode})
+		ret = append(ret, [3]string{str, exp, funCode})
 	}
 	return ret
 }
