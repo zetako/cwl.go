@@ -201,6 +201,19 @@ Loop:
 				return clearOutputFile(*f, process.runtime.RootHost), nil
 			case cwl.File:
 				return y, nil
+			case cwl.FileDir:
+				yi := y.Entery()
+				fi, ok := yi.(*cwl.File)
+				if !ok {
+					return nil, fmt.Errorf("not File, not ok yet!: %s", yi.ClassName())
+				}
+				for _, expr := range secondaryFiles {
+					err := process.resolveSecondaryFiles(*fi, expr)
+					if err != nil {
+						return nil, fmt.Errorf("resolving secondary files: %s", err)
+					}
+				}
+				return clearOutputFile(*fi, process.runtime.RootHost), nil
 			default:
 				continue Loop
 			}
@@ -212,8 +225,7 @@ Loop:
 				continue Loop
 			}
 			array := t.MustArraySchema().(*cwl.CommandOutputArraySchema)
-			var res []interface{}
-
+			var res []cwl.Value
 			arr := reflect.ValueOf(val)
 			for i := 0; i < arr.Len(); i++ {
 				item := arr.Index(i)
@@ -293,6 +305,18 @@ func (process *Process) evalGlobPatterns(patterns []cwl.Expression) ([]string, e
 		switch z := val.(type) {
 		case string:
 			out = append(out, z)
+		case []string:
+			out = append(out, z...)
+		case []interface{}:
+			for _, val := range z {
+				z, ok := val.(string)
+				if !ok {
+					return nil, fmt.Errorf(
+						"glob expression returned an invalid type. Only string or []string "+
+							"are allowed. Got: %#v", z)
+				}
+				out = append(out, z)
+			}
 		case []cwl.Value:
 			for _, val := range z {
 				z, ok := val.(string)

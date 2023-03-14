@@ -189,7 +189,7 @@ func ExpectOutputs(actual interface{}, expect interface{}) bool {
 			if !strings.HasSuffix(aFile.Location, t.Location) {
 				return false
 			}
-			// return true
+			return true
 		}
 		if len(t.SecondaryFiles) != len(aFile.SecondaryFiles) {
 			return false
