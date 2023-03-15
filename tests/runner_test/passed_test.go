@@ -215,7 +215,7 @@ func TestCWLR2_run92(t *testing.T) {
 	testByID(t, 92)
 }
 
-// ❌
+// ✅ 03/15
 func TestCWLR2_run93(t *testing.T) {
 	testByID(t, 93)
 }
@@ -232,23 +232,23 @@ func TestCWLR2_run96(t *testing.T) {
 	testByID(t, 96)
 }
 
-// initial_workdir_output
+// ❌ initial_workdir_output
 // v1.0/initialworkdirrequirement-docker-out.cwl v1.0/initialworkdirrequirement-docker-out-job.json
 func TestCWLR2_run98(t *testing.T) {
 	testByID(t, 98)
 }
 
-// filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json
+// ❌ filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json
 func TestCWLR2_run100(t *testing.T) {
 	testByID(t, 100)
 }
 
-// dockeroutputdir v1.0/docker-output-dir.cwl v1.0/empty.json
+// ❌ dockeroutputdir v1.0/docker-output-dir.cwl v1.0/empty.json
 func TestCWLR2_run103(t *testing.T) {
 	testByID(t, 103)
 }
 
-// hit imports
+// ✅ 3/15 hit imports
 func TestCWLR2_run104(t *testing.T) {
 	testByID(t, 104)
 }
@@ -261,12 +261,12 @@ func TestCWLR2_run106(t *testing.T) {
 	testByID(t, 105)
 }
 
-// input_dir_recurs_copy_writable v1.0/recursive-input-directory.cwl v1.0/recursive-input-directory.yml
+// ❌ input_dir_recurs_copy_writable v1.0/recursive-input-directory.cwl v1.0/recursive-input-directory.yml
 func TestCWLR2_run107(t *testing.T) {
 	testByID(t, 107)
 }
 
-// null_missing_params v1.0/null-defined.cwl v1.0/empty.json
+// ❌ null_missing_params v1.0/null-defined.cwl v1.0/empty.json
 func TestCWLR2_run108(t *testing.T) {
 	testByID(t, 108)
 }
@@ -283,17 +283,17 @@ func TestCWLR2_run115(t *testing.T) {
 	testByID(t, 115)
 }
 
-// shelldir_quoted v1.0/shellchar2.cwl v1.0/empty.json
+// ❌ shelldir_quoted v1.0/shellchar2.cwl v1.0/empty.json
 func TestCWLR2_run116(t *testing.T) {
 	testByID(t, 116)
 }
 
-// initial_workdir_empty_writable v1.0/writable-dir.cwl v1.0/empty.json
+// ❌ initial_workdir_empty_writable v1.0/writable-dir.cwl v1.0/empty.json
 func TestCWLR2_run117(t *testing.T) {
 	testByID(t, 117)
 }
 
-// initial_workdir_empty_writable_docker v1.0/writable-dir-docker.cwl v1.0/empty.json
+// ❌ initial_workdir_empty_writable_docker v1.0/writable-dir-docker.cwl v1.0/empty.json
 func TestCWLR2_run118(t *testing.T) {
 	testByID(t, 118)
 }
@@ -311,7 +311,6 @@ func TestCWLR2_run127(t *testing.T) {
 	testByID(t, 127)
 }
 
-//
 func TestCWLR2_run129(t *testing.T) {
 	t.Fail()
 	//testByID(t, 129)

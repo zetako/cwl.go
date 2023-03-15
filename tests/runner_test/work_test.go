@@ -11,7 +11,7 @@ import (
 )
 
 func TestCWLR2_workon(t *testing.T) {
-	e, err := newEngine("v1.0/dir6.cwl", "v1.0/dir-job.yml")
+	e, err := newEngine("v1.0/imported-hint.cwl", "v1.0/empty.json")
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)

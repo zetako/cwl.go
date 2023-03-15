@@ -3,17 +3,19 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/lijiang2014/cwl.go"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/lijiang2014/cwl.go"
 )
 
+// Importer to support $include & $import
+// https://www.commonwl.org/v1.0/CommandLineTool.html#Document_preprocessing
 type Importer interface {
 	Load(string) ([]byte, error)
 }
-
 
 type DefaultImporter struct {
 	BaseDir string
@@ -46,7 +48,6 @@ func (e *Engine) loadRoot(uri string) (*cwl.Root, error) {
 	return root, err
 }
 
-
 func (e *Engine) EnsureImportedDoc(data []byte) ([]byte, error) {
 	var bean interface{}
 	err := json.Unmarshal(data, &bean)
@@ -60,7 +61,7 @@ func (e *Engine) EnsureImportedDoc(data []byte) ([]byte, error) {
 	return json.Marshal(bean)
 }
 
-func (e *Engine) importBeans(bean interface{} ) ( out interface{}  ,err error) {
+func (e *Engine) importBeans(bean interface{}) (out interface{}, err error) {
 	switch t := bean.(type) {
 	case map[string]interface{}:
 		ret, err := e.tryInclude(t)
@@ -71,12 +72,26 @@ func (e *Engine) importBeans(bean interface{} ) ( out interface{}  ,err error) {
 			return ret, nil
 		}
 		for key, value := range t {
-			ret, err := e.tryInclude(value)
+			var ret string
+			var iret json.RawMessage
+			ret, err = e.tryInclude(value)
 			if err != nil {
 				return nil, err
 			}
 			if ret != "" {
 				t[key] = ret
+				continue
+			}
+			iret, err = e.tryImport(value)
+			if err != nil {
+				return nil, nil
+			}
+			if iret != nil {
+				var ival interface{}
+				if err = json.Unmarshal(iret, &ival); err != nil {
+					return nil, err
+				}
+				t[key] = ival
 				continue
 			}
 			out, err = e.importBeans(value)
@@ -88,12 +103,26 @@ func (e *Engine) importBeans(bean interface{} ) ( out interface{}  ,err error) {
 		return t, nil
 	case []interface{}:
 		for i, value := range t {
-			ret, err := e.tryInclude(value)
+			var ret string
+			var iret json.RawMessage
+			ret, err = e.tryInclude(value)
 			if err != nil {
-				return nil, nil
+				return nil, err
 			}
 			if ret != "" {
 				t[i] = ret
+				continue
+			}
+			iret, err = e.tryImport(value)
+			if err != nil {
+				return nil, err
+			}
+			if iret != nil {
+				var ival interface{}
+				if err = json.Unmarshal(iret, &ival); err != nil {
+					return nil, err
+				}
+				t[i] = ival
 				continue
 			}
 			out, err = e.importBeans(value)
@@ -108,18 +137,17 @@ func (e *Engine) importBeans(bean interface{} ) ( out interface{}  ,err error) {
 	}
 }
 
-
-func (e *Engine) tryInclude(bean interface{} ) ( string , error) {
-	if dict, got  := bean.(map[string]interface{}); got {
-		if value , got := dict["$include"]; got {
+func (e *Engine) tryInclude(bean interface{}) (string, error) {
+	if dict, got := bean.(map[string]interface{}); got {
+		if value, got := dict["$include"]; got {
 			if len(dict) != 1 {
-				return "", fmt.Errorf("bad import format")
+				return "", fmt.Errorf("bad include format")
 			}
 			valStr, ok := value.(string)
 			if ok {
 				data, err := e.importer.Load(valStr)
 				if err != nil {
-					return "", fmt.Errorf("import %s Err : %s", valStr, err)
+					return "", fmt.Errorf("import($include) %s Err : %s", valStr, err)
 				}
 				return string(data), nil
 			}
@@ -128,9 +156,9 @@ func (e *Engine) tryInclude(bean interface{} ) ( string , error) {
 	return "", nil
 }
 
-func (e *Engine) tryImport(bean interface{} ) ( json.RawMessage , error) {
-	if dict, got  := bean.(map[string]interface{}); got {
-		if value , got := dict["$include"]; got {
+func (e *Engine) tryImport(bean interface{}) (json.RawMessage, error) {
+	if dict, got := bean.(map[string]interface{}); got {
+		if value, got := dict["$import"]; got {
 			if len(dict) != 1 {
 				return nil, fmt.Errorf("bad import format")
 			}
@@ -138,9 +166,11 @@ func (e *Engine) tryImport(bean interface{} ) ( json.RawMessage , error) {
 			if ok {
 				data, err := e.importer.Load(valStr)
 				if err != nil {
-					return nil, fmt.Errorf("import %s Err : %s", valStr, err)
+					return nil, fmt.Errorf("import($import) %s Err : %s", valStr, err)
 				}
-				return data, nil
+				// 可能为 YAML
+				return cwl.Y2J(data)
+				// return data, nil
 			}
 		}
 	}
