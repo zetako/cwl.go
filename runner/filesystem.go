@@ -1,16 +1,18 @@
 package runner
 
 import (
-	"github.com/google/uuid"
-	"github.com/lijiang2014/cwl.go"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/lijiang2014/cwl.go"
 )
 
 type Filesystem interface {
 	Create(path, contents string) (cwl.File, error)
 	Info(loc string) (cwl.File, error)
+	// DirInfo(loc string, list, deep bool) (cwl.Directory, error)
 	Contents(loc string) (string, error)
 	Glob(pattern string) ([]cwl.File, error)
 	EnsureDir(dir string, mode os.FileMode) error
@@ -21,7 +23,7 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 	// TODO revisit pointer to File
 	var x cwl.File
 	var err error
-	
+
 	x.Class = f.Class
 	// http://www.commonwl.org/v1.0/CommandLineTool.html#File
 	// "As a special case, if the path field is provided but the location field is not,
@@ -42,7 +44,6 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 		return x, process.error("location and contents are both non-empty")
 	}
 
-
 	if f.Contents != "" {
 		// Determine the file path of the literal.
 		// Use the path, or the basename, or generate a random name.
@@ -56,6 +57,7 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 				return x, process.errorf("generating a random name for a file literal: %s", err)
 			}
 			path = id.String()
+			f.Path = path
 		}
 		// Create Later
 		//x, err = process.fs.Create(path, f.Contents)
@@ -63,7 +65,16 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 		//  return x, process.errorf("creating file from inline content: %s", err)
 		//}
 		process.filesToCreate = append(process.filesToCreate, cwl.NewFileDir(f))
-
+		// literal File logic
+		// f.Location = x.Location
+		// f.Checksum = x.Checksum
+		f.Size = int64(len(f.Contents))
+		if f.Basename == "" {
+			f.Basename = filepath.Base(f.Path)
+		}
+		f.Nameroot, f.Nameext = splitname(f.Basename)
+		f.Dirname = filepath.Dir(f.Path)
+		return f, nil
 	} else {
 		x, err = process.fs.Info(f.Location)
 
@@ -100,6 +111,69 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 	f.Dirname = filepath.Dir(f.Path)
 	//f.Nameroot = process.runtime.RootHost
 	return f, nil
+}
+
+func (process *Process) resolveDir(d cwl.Directory) (cwl.Directory, error) {
+	// TODO revisit pointer to File
+	var x cwl.Directory
+	var err error
+
+	x.Class = d.Class
+	// https://www.commonwl.org/v1.0/CommandLineTool.html#Directory
+	if d.Location == "" && d.Path != "" && d.Listing == nil {
+		d.Location = d.Path
+		d.Path = ""
+	}
+
+	if d.Location == "" && len(d.Listing) == 0 {
+		return x, process.error("location and listing are empty")
+	}
+
+	// If both location and listing are set, one will get overwritten.
+	// Can't know which one the caller intended, so fail instead.
+	if d.Location != "" && len(d.Listing) != 0 {
+		return x, process.error("location and listing are both non-empty")
+	}
+
+	if len(d.Listing) != 0 {
+		// Determine the file path of the literal.
+		// Use the path, or the basename, or generate a random name.
+		path := d.Path
+		if path == "" {
+			path = d.Basename
+		}
+		if path == "" {
+			id, err := uuid.NewRandom()
+			if err != nil {
+				return x, process.errorf("generating a random name for a file literal: %s", err)
+			}
+			path = id.String()
+			d.Path = path
+		}
+		process.filesToCreate = append(process.filesToCreate, cwl.NewFileDir(d))
+		if d.Basename == "" {
+			d.Basename = filepath.Base(d.Path)
+		}
+		// resovle Files in Dir
+
+		return d, nil
+	}
+	// location Dir
+	var x2 cwl.File
+	x2, err = process.fs.Info(d.Location)
+
+	if err != nil {
+		return x, process.errorf("getting file info for %q: %s", d.Location, err)
+	}
+	d.Location = x2.Location
+	d.Path = filepath.Base(x2.Path)
+	// cwl spec:
+	// "If basename is provided, it is not required to match the value from location"
+	if d.Basename == "" {
+		d.Basename = filepath.Base(d.Path)
+	}
+	//f.Nameroot = process.runtime.RootHost
+	return d, nil
 }
 
 func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFileSchema) error {

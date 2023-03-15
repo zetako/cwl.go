@@ -40,14 +40,11 @@ type CommandLineBindable struct {
 	InputBinding *CommandLineBinding `json:"inputBinding,omitempty"` // removed
 }
 
-
-
-
 type CommandInputParameter struct {
 	InputParameterBase `json:",inline"`
-	Type               CommandInputType    `json:"type" salad:"type"`
+	Type               CommandInputType `json:"type" salad:"type"`
 	//Type               CommandInputType    `json:"type"`
-	InputBinding       *CommandLineBinding `json:"inputBinding,omitempty"`
+	InputBinding *CommandLineBinding `json:"inputBinding,omitempty"`
 }
 
 type CommandOutputParameter struct {
@@ -96,6 +93,7 @@ type Dirent struct {
 	Entry     Expression `json:"entry,omitempty"`
 	EntryName Expression `json:"entryname,omitempty"`
 	Writable  bool       `json:"writable,omitempty"`
+	// Extends for InitialWorkDirRequirement List
 }
 
 //// ToSet different
@@ -103,9 +101,16 @@ type Dirent struct {
 //	dirents []Dirent
 //}
 
+type FileDirExpDirent struct {
+	File       *File
+	Directory  *Directory
+	Dirent     *Dirent
+	Expression Expression
+}
+
 type InitialWorkDirRequirement struct {
 	BaseRequirement `json:",inline"`
-	Listing         []Dirent `json:"listing"`
+	Listing         []FileDirExpDirent `json:"listing"`
 }
 
 type EnvVarRequirement struct {
@@ -158,4 +163,3 @@ type Argument struct {
 
 // Arguments represents a list of "Argument"
 type Arguments []Argument
-

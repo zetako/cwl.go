@@ -164,11 +164,12 @@ func TestCWLR2_run73(t *testing.T) {
 }
 
 // multiple_glob_expr_list  v1.0/glob-expr-list.cwl v1.0/abc.json
+// ✅ 3/14
 func TestCWLR2_run76(t *testing.T) {
 	testByID(t, 76)
 }
 
-// dir job 84 ~ 88
+// dir job 84 ~ 88 ❌ 后置？
 // directory_input_param_ref block
 func TestCWLR2_run84(t *testing.T) {
 	t.Fail()
@@ -195,16 +196,17 @@ func TestCWLR2_run88(t *testing.T) {
 	//testByID(t, 84)
 }
 
-// writable_stagedfiles
+// writable_stagedfiles ✅ 3/14
 func TestCWLR2_run89(t *testing.T) {
 	testByID(t, 89)
 }
 
-// input_file_literal
+// input_file_literal ✅ 03/15
 func TestCWLR2_run90(t *testing.T) {
 	testByID(t, 90)
 }
 
+// ✅ 03/15
 func TestCWLR2_run91(t *testing.T) {
 	testByID(t, 91)
 }
@@ -213,8 +215,7 @@ func TestCWLR2_run92(t *testing.T) {
 	testByID(t, 92)
 }
 
-// 91, 92 TODO
-
+// ❌
 func TestCWLR2_run93(t *testing.T) {
 	testByID(t, 93)
 }

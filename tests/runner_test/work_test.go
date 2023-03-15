@@ -11,7 +11,7 @@ import (
 )
 
 func TestCWLR2_workon(t *testing.T) {
-	e, err := newEngine("v1.0/stagefile.cwl", "v1.0/stagefile-job.yml")
+	e, err := newEngine("v1.0/dir6.cwl", "v1.0/dir-job.yml")
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
@@ -55,6 +55,8 @@ func TestCWLR2_workon(t *testing.T) {
 	//  }
 	//}
 	//}
+	err = os.RemoveAll("/tmp/testcwl")
+
 	limits, err := p.ResourcesLimites()
 	Expect(t, err).ToBe(nil)
 	runtime := L2R(*limits)
@@ -75,7 +77,6 @@ func TestCWLR2_workon(t *testing.T) {
 		log.Printf("SET %s=%s", k, v)
 	}
 	ex := runner.LocalExecutor{}
-	err = os.RemoveAll("/tmp/testcwl")
 	// Expect(t, err).ToBe(nil)
 	pid, ret, err := ex.Run(p)
 	Expect(t, err).ToBe(nil)

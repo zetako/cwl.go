@@ -2,6 +2,7 @@ package runner
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"path"
 	"path/filepath"
@@ -231,13 +232,27 @@ Loop:
 			}, nil
 
 		case "Directory":
-			v, ok := val.(cwl.Directory)
+			var v cwl.Directory
+			def, ok := val.(*cwl.Directory)
+			if ok {
+				v = *def
+			} else {
+				v, ok = val.(cwl.Directory)
+			}
 			if !ok {
 				continue Loop
 			}
+			f, err := process.resolveDir(v)
+			if err != nil {
+				return nil, err
+			}
+			// use process.runtime.RootHost as /
+			// TODO 这种命名方式可能导致同名文件冲突问题
+			f.Path = filepath.Join(process.runtime.RootHost, "/inputs/", f.Path)
+
 			// TODO resolve directory
 			return []*Binding{
-				{clb, ti, v, key, nil, name},
+				{clb, ti, f, key, nil, name},
 			}, nil
 		default:
 			tiTypeName := ti.TypeName()
@@ -301,10 +316,13 @@ func getLoadContents(clb *cwl.CommandLineBinding) bool {
 
 func (process *Process) MigrateInputs() (err error) {
 	files := []cwl.File{}
+	dirs := []cwl.Directory{}
 	flatted := flatBinding(process.bindings, false)
 	for _, in := range flatted {
 		if f, ok := in.Value.(cwl.File); ok {
 			files = append(files, FlattenFiles(f)...)
+		} else if d, ok := in.Value.(cwl.Directory); ok {
+			dirs = append(dirs, d)
 		}
 	}
 	// Do migrate
@@ -320,8 +338,22 @@ func (process *Process) MigrateInputs() (err error) {
 			if _, err = fs.Create(filei.Path, filei.Contents); err != nil {
 				return err
 			}
+		} else if err = fs.Migrate(filei.Location, filei.Path); err != nil {
+			return err
 		}
-		if err = fs.Migrate(filei.Location, filei.Path); err != nil {
+	}
+	for _, diri := range dirs {
+		// 没有 listing 的文件夹 直接迁移；有 listing 的文件夹 按 listing 创建
+		// https://common-workflow-lab.github.io/CWLDotNet/reference/CWLDotNet.Directory.html
+		if len(diri.Listing) != 0 {
+			// TODO 递归创建
+			return process.error("dir listing stage not ok yet !")
+		}
+		// if diri.Path == "" {
+		// 	diri.Path = path.Join(process.runtime.RootHost, "inputs", )
+		// }
+		// log.Println(diri.Location, diri.Path)
+		if err = fs.Migrate(diri.Location, diri.Path); err != nil {
 			return err
 		}
 	}
@@ -338,43 +370,93 @@ func FlattenFiles(f cwl.File) []cwl.File {
 	return []cwl.File{f}
 }
 
-func (process *Process) initWorkDir(listing []cwl.Dirent) error {
-	for _, dirent := range listing {
-		filename, err := process.Eval(dirent.EntryName, nil)
-		if err != nil {
-			return err
-		}
-		entry, err := process.Eval(dirent.Entry, nil)
-		if err != nil {
-			return err
-		}
-		filenamestr, ok := filename.(string)
-		if !ok {
-			return process.error("entryName need be string")
-		}
-		switch entryV := entry.(type) {
-		case string:
-			if _, err = process.fs.Create(process.runtime.RootHost+"/"+filenamestr, entryV); err != nil {
-				return err
-			}
-		case map[string]interface{}:
-			if entryV["class"] != "File" {
-				return process.error("entry is not File, not ok yet!")
-			}
-			var file cwl.File
-			raw, _ := json.Marshal(entryV)
-			err = json.Unmarshal(raw, &file)
+func (process *Process) initWorkDir(listing []cwl.FileDirExpDirent) error {
+	for _, v := range listing {
+		if v.Expression != "" {
+			out, err := process.eval(v.Expression, nil)
 			if err != nil {
+				return process.error(fmt.Sprintf("initWorkDir eval expression err %s", err))
+			}
+			filedir := cwl.FileDir{}
+			raw, err := json.Marshal(out)
+			if err != nil {
+				return process.error(fmt.Sprintf("initWorkDir eval Marshal err %s", err))
+			}
+			err = json.Unmarshal(raw, &filedir)
+			if err != nil {
+				return process.error(fmt.Sprintf("initWorkDir eval Unmarshal err %s", err))
+			}
+			if filedir.ClassName() == "File" {
+				v.File = filedir.Entery().(*cwl.File)
+			} else if filedir.ClassName() == "Directory" {
+				v.Directory = filedir.Entery().(*cwl.Directory)
+			} else {
+				return process.error(fmt.Sprintf("initWorkDir eval need File/Directory but not! :%s", string(raw)))
+			}
+		}
+		if dirent := v.Dirent; dirent != nil {
+			if err := process.initWorkDirDirent(*dirent); dirent != nil {
 				return err
 			}
-			if file.Path != "" {
-				newpath := path.Join(process.runtime.RootHost, filenamestr)
-				return process.fs.Migrate(file.Location, newpath)
+			continue
+		}
+		if file := v.File; file != nil {
+			if err := process.initWorkDirFile(*file); err != nil {
+				return err
 			}
-			return process.error("bad file")
-		default:
-			return process.error("bad entry")
+			continue
+		}
+		if dir := v.Directory; dir != nil {
+			return process.error(fmt.Sprintf("initWorkDir Directory not ok yet!"))
 		}
 	}
 	return nil
+}
+
+func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
+	filename, err := process.Eval(dirent.EntryName, nil)
+	if err != nil {
+		return err
+	}
+	entry, err := process.Eval(dirent.Entry, nil)
+	if err != nil {
+		return err
+	}
+	filenamestr, ok := filename.(string)
+	if !ok {
+		return process.error("entryName need be string")
+	}
+	switch entryV := entry.(type) {
+	case string:
+		if _, err = process.fs.Create(process.runtime.RootHost+"/"+filenamestr, entryV); err != nil {
+			return err
+		}
+	case map[string]interface{}:
+		if entryV["class"] != "File" {
+			return process.error("entry is not File, not ok yet!")
+		}
+		var file cwl.File
+		raw, _ := json.Marshal(entryV)
+		err = json.Unmarshal(raw, &file)
+		if err != nil {
+			return err
+		}
+		if file.Path != "" {
+			newpath := path.Join(process.runtime.RootHost, filenamestr)
+			return process.fs.Migrate(file.Location, newpath)
+		}
+		return process.error("bad file")
+	default:
+		return process.error("bad entry")
+	}
+	return nil
+}
+
+func (process *Process) initWorkDirFile(file cwl.File) error {
+	filenamestr := file.Basename
+	if file.Path != "" {
+		newpath := path.Join(process.runtime.RootHost, filenamestr)
+		return process.fs.Migrate(file.Location, newpath)
+	}
+	return process.error("bad file")
 }

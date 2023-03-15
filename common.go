@@ -165,10 +165,9 @@ func (e *LongFloatExpression) UnmarshalJSON(data []byte) error {
 
 func (e *LongFloatExpression) IsNull() bool {
 	return e == nil ||
-		(
-			e.Long == nil &&
-				e.Float == nil &&
-				e.Expression == "" )
+		(e.Long == nil &&
+			e.Float == nil &&
+			e.Expression == "")
 }
 
 type JavaScriptInterpreter interface {
@@ -199,7 +198,6 @@ func (e *LongFloatExpression) MustInt64() int64 {
 	return 0
 }
 
-
 func (e *LongFloatExpression) Resolve(i JavaScriptInterpreter, data interface{}) error {
 	if e.Long != nil || e.Float != nil {
 		return nil
@@ -207,7 +205,7 @@ func (e *LongFloatExpression) Resolve(i JavaScriptInterpreter, data interface{})
 	if e.Expression == "" {
 		return fmt.Errorf("no Expression")
 	}
-	out ,err := e.Expression.Eval(i,data)
+	out, err := e.Expression.Eval(i, data)
 	if err != nil {
 		return err
 	}
@@ -222,4 +220,28 @@ func (e *LongFloatExpression) Resolve(i JavaScriptInterpreter, data interface{})
 		return fmt.Errorf("need to be a number")
 	}
 	return nil
+}
+
+func (e *FileDirExpDirent) UnmarshalJSON(data []byte) error {
+	var bean interface{}
+	err := json.Unmarshal(data, &bean)
+	if err != nil {
+		return err
+	}
+	switch v := bean.(type) {
+	case string:
+		e.Expression = Expression(v)
+		return nil
+	case map[string]interface{}:
+		if v["class"] == "File" {
+			e.File = &File{}
+			return json.Unmarshal(data, e.File)
+		} else if v["class"] == "Directory" {
+			e.Directory = &Directory{}
+			return json.Unmarshal(data, e.Directory)
+		}
+		e.Dirent = &Dirent{}
+		return json.Unmarshal(data, e.Dirent)
+	}
+	return fmt.Errorf("only Expression/File/Directory/Dirent is available")
 }

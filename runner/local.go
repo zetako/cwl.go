@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+
 	"github.com/lijiang2014/cwl.go"
+
 	//"github.com/alecthomas/units"
 	"io"
 	"io/ioutil"
@@ -73,11 +75,11 @@ func (l *Local) Create(path, contents string) (cwl.File, error) {
 		return x, fmt.Errorf("write file contents for %s: %s", loc, err)
 	}
 	return cwl.File{
-		ClassBase:   cwl.ClassBase{   "File"} ,
-		Location: abs,
-		Path:     path,
-			Checksum: "sha1$" + fmt.Sprintf("%x", sha1.Sum(b)),
-			Size:     size,
+		ClassBase: cwl.ClassBase{"File"},
+		Location:  abs,
+		Path:      path,
+		Checksum:  "sha1$" + fmt.Sprintf("%x", sha1.Sum(b)),
+		Size:      size,
 	}, nil
 }
 
@@ -95,14 +97,18 @@ func (l *Local) Info(loc string) (cwl.File, error) {
 		return x, err
 	}
 
-	// TODO make this work with directories
-	if st.IsDir() {
-		return x, fmt.Errorf("can't call Info() on a directory: %s", loc)
-	}
-
 	abs, err := filepath.Abs(loc)
 	if err != nil {
 		return x, fmt.Errorf("getting absolute path for %s: %s", loc, err)
+	}
+	// TODO make this work with directories
+	if st.IsDir() {
+		return cwl.File{
+			ClassBase: cwl.ClassBase{"Directory"},
+			Location:  abs,
+			Path:      abs,
+		}, nil
+		// return x, fmt.Errorf("can't call Info() on a directory: %s", loc)
 	}
 
 	checksum := ""
@@ -114,11 +120,11 @@ func (l *Local) Info(loc string) (cwl.File, error) {
 		checksum = "sha1$" + fmt.Sprintf("%x", sha1.Sum(b))
 	}
 	return cwl.File{
-		ClassBase:   cwl.ClassBase{   "File"} ,
-		Location: abs,
-		Path:     abs,
-			Checksum: checksum,
-			Size:     st.Size(),
+		ClassBase: cwl.ClassBase{"File"},
+		Location:  abs,
+		Path:      abs,
+		Checksum:  checksum,
+		Size:      st.Size(),
 	}, nil
 }
 

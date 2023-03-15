@@ -2,9 +2,10 @@ package runner
 
 import (
 	"fmt"
-	"github.com/lijiang2014/cwl.go"
 	"sort"
 	"strings"
+
+	"github.com/lijiang2014/cwl.go"
 )
 
 // bySortKey defines the rules for sorting bindings;
@@ -98,8 +99,8 @@ func getPos(in *cwl.CommandLineBinding) int {
 
 // args converts a binding into a list of formatted command line arguments.
 func bindArgs(b *Binding) []string {
-	bindTypeName :=b.Type.TypeName()
-	switch  bindTypeName {
+	bindTypeName := b.Type.TypeName()
+	switch bindTypeName {
 
 	case "array":
 		// cwl conformance test:
@@ -201,6 +202,8 @@ func valueToStrings(v cwl.Value) []string {
 	case int, int32, int64, float32, float64, bool, string:
 		return []string{fmt.Sprintf("%v", z)}
 	case cwl.File:
+		return []string{z.Path}
+	case cwl.Directory:
 		return []string{z.Path}
 	}
 	return nil
