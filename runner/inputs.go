@@ -1,7 +1,9 @@
 package runner
 
 import (
+	"encoding/json"
 	"log"
+	"path"
 	"path/filepath"
 
 	"github.com/lijiang2014/cwl.go"
@@ -323,6 +325,7 @@ func (process *Process) MigrateInputs() (err error) {
 			return err
 		}
 	}
+
 	if riwd := process.tool.RequiresInitialWorkDir(); riwd != nil {
 		if err = process.initWorkDir(riwd.Listing); err != nil {
 			return err
@@ -341,7 +344,7 @@ func (process *Process) initWorkDir(listing []cwl.Dirent) error {
 		if err != nil {
 			return err
 		}
-		content, err := process.Eval(dirent.Entry, nil)
+		entry, err := process.Eval(dirent.Entry, nil)
 		if err != nil {
 			return err
 		}
@@ -349,12 +352,28 @@ func (process *Process) initWorkDir(listing []cwl.Dirent) error {
 		if !ok {
 			return process.error("entryName need be string")
 		}
-		contentstr, ok := content.(string)
-		if !ok {
-			return process.error("entry need be string")
-		}
-		if _, err = process.fs.Create(process.runtime.RootHost+"/"+filenamestr, contentstr); err != nil {
-			return err
+		switch entryV := entry.(type) {
+		case string:
+			if _, err = process.fs.Create(process.runtime.RootHost+"/"+filenamestr, entryV); err != nil {
+				return err
+			}
+		case map[string]interface{}:
+			if entryV["class"] != "File" {
+				return process.error("entry is not File, not ok yet!")
+			}
+			var file cwl.File
+			raw, _ := json.Marshal(entryV)
+			err = json.Unmarshal(raw, &file)
+			if err != nil {
+				return err
+			}
+			if file.Path != "" {
+				newpath := path.Join(process.runtime.RootHost, filenamestr)
+				return process.fs.Migrate(file.Location, newpath)
+			}
+			return process.error("bad file")
+		default:
+			return process.error("bad entry")
 		}
 	}
 	return nil

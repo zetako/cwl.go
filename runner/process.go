@@ -221,6 +221,7 @@ func (process *Process) Env() map[string]string {
 	return env
 }
 
+// 不同的 requirements 可能需要在不同的时机加载；可能需要拆分
 func (process *Process) loadReqs() error {
 	tool := process.root.Process.(*cwl.CommandLineTool)
 	if req := tool.RequiresInlineJavascript(); req != nil {
@@ -245,9 +246,11 @@ func (process *Process) loadReqs() error {
 	if req := tool.RequiresSchemaDef(); req != nil {
 		// TODO init schemaDef
 	}
-	if req := tool.RequiresInitialWorkDir(); req != nil {
-		// 创建初始文件
-	}
+	// process.initWorkDir
+	// if req := tool.RequiresInitialWorkDir(); req != nil {
+	// 	// 创建初始文件
+	// 	process.initialWorkDir()
+	// }
 	return nil
 }
 

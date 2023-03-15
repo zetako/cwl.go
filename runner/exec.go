@@ -32,6 +32,7 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 	// set stdin
 	// set image
 	// migrate inputs
+
 	if err = process.MigrateInputs(); err != nil {
 		return "", nil, err
 	}
