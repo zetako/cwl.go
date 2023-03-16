@@ -97,13 +97,15 @@ func (process *Process) Command() ([]string, error) {
 	}
 	//
 	// Evaluate "valueFrom" expression.
-	for _, b := range args {
+	for i, b := range args {
 		if b.clb != nil && b.clb.ValueFrom != "" {
 			val, err := process.eval(b.clb.ValueFrom, b.Value)
 			if err != nil {
 				return nil, fmt.Errorf("failed to eval argument value: %s", err)
 			}
-			b.Value = val
+			// 如果发生了文件赋值，可能会导致 migrateFile 失效，因此需要先备份
+			args[i] = &Binding{b.clb, b.Type, val, b.sortKey, b.nested, b.name}
+			// b.Value = val
 		}
 	}
 
@@ -239,6 +241,9 @@ func (process *Process) loadReqs() error {
 	}
 	if req := tool.RequiresEnvVar(); req != nil {
 		// TODO env
+		if err := process.bindEnvVar(req); err != nil {
+			return err
+		}
 	}
 	if req := tool.RequiresResource(); req != nil {
 		process.loadRuntime()

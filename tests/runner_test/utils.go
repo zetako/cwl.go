@@ -114,10 +114,14 @@ func filterTests(search TestDoc) []TestDoc {
 }
 
 func doTest(t *testing.T, doc TestDoc) {
+	var rawout []byte
 	defer func() {
 		if t.Failed() {
 			t.Logf("Test Failed: %d %s %s", doc.ID, doc.Tool, doc.Job)
 			t.Logf("Labels: %s Tag: %v ", doc.Label, doc.Tags)
+			t.Logf("actual outraw: %s ", string(rawout))
+			rawout, _ = json.Marshal(doc.Output)
+			t.Logf("excepted outraw: %s ", string(rawout))
 
 		}
 	}()
@@ -130,6 +134,7 @@ func doTest(t *testing.T, doc TestDoc) {
 	err = os.RemoveAll("/tmp/testcwl")
 	e.SetDefaultExecutor(ex)
 	outputs, err := e.Run()
+	rawout, _ = json.Marshal(outputs)
 	//Expect(t, outputs).ToBe(doc.Output)
 	if !ExpectOutputs(outputs, doc.Output) {
 		Expect(t, outputs).ToBe(doc.Output)
@@ -180,6 +185,26 @@ func ExpectOutputs(actual interface{}, expect interface{}) bool {
 			}
 		}
 		return true
+	case cwl.Directory:
+		aDict, ok := actual.(cwl.Directory)
+		if !ok {
+			return false
+		}
+		if t.Location != "Any" && t.Location != "" {
+			if !strings.HasSuffix(aDict.Location, t.Location) {
+				return false
+			}
+			// return true
+		}
+		if len(t.Listing) != len(aDict.Listing) {
+			return false
+		}
+		for i, entryi := range t.Listing {
+			if !ExpectOutputs(entryi, t.Listing[i]) {
+				return false
+			}
+		}
+		return true
 	case cwl.File:
 		aFile, ok := actual.(cwl.File)
 		if !ok {
@@ -189,7 +214,7 @@ func ExpectOutputs(actual interface{}, expect interface{}) bool {
 			if !strings.HasSuffix(aFile.Location, t.Location) {
 				return false
 			}
-			return true
+			// return true
 		}
 		if len(t.SecondaryFiles) != len(aFile.SecondaryFiles) {
 			return false

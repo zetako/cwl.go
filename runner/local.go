@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"os/exec"
+	"path"
 
 	"github.com/lijiang2014/cwl.go"
 
@@ -128,6 +130,71 @@ func (l *Local) Info(loc string) (cwl.File, error) {
 	}, nil
 }
 
+func (l *Local) DirInfo(loc string, deepLen int) (cwl.Directory, error) {
+	var x cwl.Directory
+	if !filepath.IsAbs(loc) {
+		loc = filepath.Join(l.workdir, loc)
+	}
+
+	st, err := os.Stat(loc)
+	if os.IsNotExist(err) {
+		return x, os.ErrNotExist
+	}
+	if err != nil {
+		return x, err
+	}
+	abs, err := filepath.Abs(loc)
+	if err != nil {
+		return x, fmt.Errorf("getting absolute path for %s: %s", loc, err)
+	}
+	if !st.IsDir() {
+		return x, fmt.Errorf("can't call DirInfo() on not directory file: %s", loc)
+	}
+	return l.readAllFile(abs, deepLen)
+}
+
+func (l *Local) readAllFile(loc string, deepin int) (cwl.Directory, error) {
+	var x cwl.Directory
+	rd, err := ioutil.ReadDir(loc)
+	if err != nil {
+		return x, fmt.Errorf("read dir %s err: %s", loc, err)
+	}
+	listing := make([]cwl.FileDir, 0)
+	if deepin != 0 {
+		for _, fi := range rd {
+			fullDir := path.Join(loc, fi.Name())
+			if fi.IsDir() {
+				// 判断是否为符号链接， 符号链接不当作 Dir 处理
+				if fi.Mode()&os.ModeSymlink != 0 {
+					s, err := l.Info(fullDir)
+					if err != nil {
+						return x, err
+					}
+					listing = append(listing, cwl.NewFileDir(s))
+					continue
+				}
+				s, err := l.readAllFile(fullDir, deepin-1)
+				if err != nil {
+					return x, err
+				}
+				listing = append(listing, cwl.NewFileDir(s))
+			} else {
+				s, err := l.Info(fullDir)
+				if err != nil {
+					return x, err
+				}
+				listing = append(listing, cwl.NewFileDir(s))
+			}
+		}
+	}
+	return cwl.Directory{
+		ClassBase: cwl.ClassBase{"Directory"},
+		Location:  loc,
+		Path:      loc,
+		Listing:   listing,
+	}, nil
+}
+
 func (l *Local) Contents(loc string) (string, error) {
 	if !filepath.IsAbs(loc) {
 		loc = filepath.Join(l.workdir, loc)
@@ -170,4 +237,32 @@ func (l *Local) EnsureDir(dir string, mode os.FileMode) error {
 
 func (l *Local) Migrate(source, dest string) error {
 	return os.Symlink(source, dest)
+}
+
+func (l *Local) Copy(source, dest string) error {
+	ss, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+	if ss.IsDir() {
+		// just use cp -rf
+		cmd := exec.Command("cp", "-rf", source, dest)
+		outs, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("cp err: %s Err: %s", string(outs), err)
+		}
+		return nil
+	}
+	sfile, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer sfile.Close()
+	dfile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer dfile.Close()
+	_, err = io.Copy(dfile, sfile)
+	return err
 }

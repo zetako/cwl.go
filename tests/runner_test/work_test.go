@@ -1,6 +1,7 @@
 package runnertest
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"testing"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestCWLR2_workon(t *testing.T) {
-	e, err := newEngine("v1.0/imported-hint.cwl", "v1.0/empty.json")
+	e, err := newEngine("v1.0/imported-hint.cwl", "v1.0/empty.json") // 104 hits imports
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
@@ -85,10 +86,13 @@ func TestCWLR2_workon(t *testing.T) {
 	Expect(t, retCode).ToBe(0)
 	outputs, err := e.Outputs()
 	Expect(t, err).ToBe(nil)
-	t.Log(outputs)
+	t.Logf("%#v", outputs)
 	for key, outi := range outputs {
 		t.Logf("%s: %#v", key, outi)
 	}
+	raw, _ := json.Marshal(outputs)
+	t.Logf("%s", string(raw))
+
 }
 
 func TestCWLR2_workon_expression(t *testing.T) {

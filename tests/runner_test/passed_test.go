@@ -248,7 +248,7 @@ func TestCWLR2_run103(t *testing.T) {
 	testByID(t, 103)
 }
 
-// ✅ 3/15 hit imports
+// ✅ 3/15 hit imports 3/16 env hits
 func TestCWLR2_run104(t *testing.T) {
 	testByID(t, 104)
 }
@@ -261,7 +261,7 @@ func TestCWLR2_run106(t *testing.T) {
 	testByID(t, 105)
 }
 
-// ❌ input_dir_recurs_copy_writable v1.0/recursive-input-directory.cwl v1.0/recursive-input-directory.yml
+// ✅ 3/16 input_dir_recurs_copy_writable v1.0/recursive-input-directory.cwl v1.0/recursive-input-directory.yml
 func TestCWLR2_run107(t *testing.T) {
 	testByID(t, 107)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/lijiang2014/cwl.go"
 	"github.com/spf13/cast"
@@ -395,7 +396,7 @@ func (process *Process) initWorkDir(listing []cwl.FileDirExpDirent) error {
 			}
 		}
 		if dirent := v.Dirent; dirent != nil {
-			if err := process.initWorkDirDirent(*dirent); dirent != nil {
+			if err := process.initWorkDirDirent(*dirent); err != nil {
 				return err
 			}
 			continue
@@ -432,20 +433,29 @@ func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
 			return err
 		}
 	case map[string]interface{}:
+		if entryV["class"] == "File" {
+			var file cwl.File
+			raw, _ := json.Marshal(entryV)
+			err = json.Unmarshal(raw, &file)
+			if err != nil {
+				return err
+			}
+			file.Path = filenamestr
+			return process.initWorkDirFile(file)
+		} else if entryV["class"] == "Directory" {
+			var dir cwl.Directory
+			raw, _ := json.Marshal(entryV)
+			err = json.Unmarshal(raw, &dir)
+			if err != nil {
+				return err
+			}
+			dir.Path = filenamestr
+			return process.initWorkDirDirectory(dir)
+		}
 		if entryV["class"] != "File" {
 			return process.error("entry is not File, not ok yet!")
 		}
-		var file cwl.File
-		raw, _ := json.Marshal(entryV)
-		err = json.Unmarshal(raw, &file)
-		if err != nil {
-			return err
-		}
-		if file.Path != "" {
-			newpath := path.Join(process.runtime.RootHost, filenamestr)
-			return process.fs.Migrate(file.Location, newpath)
-		}
-		return process.error("bad file")
+
 	default:
 		return process.error("bad entry")
 	}
@@ -453,10 +463,34 @@ func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
 }
 
 func (process *Process) initWorkDirFile(file cwl.File) error {
-	filenamestr := file.Basename
-	if file.Path != "" {
-		newpath := path.Join(process.runtime.RootHost, filenamestr)
-		return process.fs.Migrate(file.Location, newpath)
+	// filenamestr := file.Basename
+	if filepath := file.Path; filepath != "" {
+		inputdir := path.Join(process.runtime.RootHost, "inputs")
+		if strings.HasPrefix(filepath, inputdir) {
+			file.Path = file.Path[len(inputdir)+1:]
+		}
+		if !path.IsAbs(file.Path) {
+			file.Path = path.Join(process.runtime.RootHost, file.Path)
+		}
+		// TODO 对于 initWorkDir， 大部分场景应该使用 copy 而非 link
+		return process.fs.Copy(file.Location, file.Path)
+		// return process.fs.Migrate(file.Location, file.Path)
+	}
+	return process.error("bad file")
+}
+
+func (process *Process) initWorkDirDirectory(dir cwl.Directory) error {
+	if filepath := dir.Path; filepath != "" {
+		inputdir := path.Join(process.runtime.RootHost, "inputs")
+		if strings.HasPrefix(filepath, inputdir) {
+			dir.Path = dir.Path[len(inputdir)+1:]
+		}
+		if !path.IsAbs(dir.Path) {
+			dir.Path = path.Join(process.runtime.RootHost, dir.Path)
+		}
+		// TODO 对于 initWorkDir， 大部分场景应该使用 copy 而非 link
+		return process.fs.Copy(dir.Location, dir.Path)
+		// return process.fs.Migrate(file.Location, file.Path)
 	}
 	return process.error("bad file")
 }

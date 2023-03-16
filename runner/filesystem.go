@@ -12,7 +12,8 @@ import (
 type Filesystem interface {
 	Create(path, contents string) (cwl.File, error)
 	Info(loc string) (cwl.File, error)
-	// DirInfo(loc string, list, deep bool) (cwl.Directory, error)
+	DirInfo(loc string, deepLen int) (cwl.Directory, error)
+	Copy(source, dest string) error
 	Contents(loc string) (string, error)
 	Glob(pattern string) ([]cwl.File, error)
 	EnsureDir(dir string, mode os.FileMode) error

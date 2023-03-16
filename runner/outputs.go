@@ -3,7 +3,6 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -117,7 +116,8 @@ func (process *Process) bindOutput(
 			if len(files) > 1 {
 				return nil, fmt.Errorf(`matched multiple stdout files "%s"`, process.stdout)
 			}
-			return *(files[0].Entery().(*cwl.File)), nil
+			return process.clearOutputFile(*(files[0].Entery().(*cwl.File)), process.runtime.RootHost), nil
+			// return *(files[0].Entery().(*cwl.File)), nil
 
 		case "stderr":
 			files, err := process.matchFiles(fs, []string{process.stderr}, false)
@@ -198,7 +198,7 @@ Loop:
 					}
 				}
 				// return *f, nil
-				return clearOutputFile(*f, process.runtime.RootHost), nil
+				return process.clearOutputFile(*f, process.runtime.RootHost), nil
 			case cwl.File:
 				return y, nil
 			case cwl.FileDir:
@@ -213,12 +213,29 @@ Loop:
 						return nil, fmt.Errorf("resolving secondary files: %s", err)
 					}
 				}
-				return clearOutputFile(*fi, process.runtime.RootHost), nil
+				return process.clearOutputFile(*fi, process.runtime.RootHost), nil
 			default:
 				continue Loop
 			}
 		case "Directory":
 			// TODO
+			var dir cwl.Directory
+			if fd, ok := val.([]cwl.FileDir); ok {
+				if len(fd) != 1 {
+					continue Loop
+				}
+				val = fd[0]
+			}
+			if fd, ok := val.(cwl.FileDir); ok {
+				dirPt, got := fd.Entery().(*cwl.Directory)
+				if !got {
+					continue Loop
+				}
+				dir = *dirPt
+			} else if dd, ok := val.(cwl.Directory); ok {
+				dir = dd
+			}
+			return process.clearOutputDir(dir, process.runtime.RootHost), nil
 		case "array":
 			typ := reflect.TypeOf(val)
 			if typ.Kind() != reflect.Slice {
@@ -265,6 +282,19 @@ func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents b
 
 		for _, m := range matches {
 			// TODO handle directories
+			if m.ClassName() == "Directory" {
+				v := cwl.Directory{
+					ClassBase: cwl.ClassBase{"Directory"},
+					Location:  m.Location,
+					Path:      m.Path,
+				}
+				d, err := process.resolveDir(v)
+				if err != nil {
+					return nil, err
+				}
+				files = append(files, cwl.NewFileDir(&d))
+				continue
+			}
 			v := cwl.File{
 				ClassBase: cwl.ClassBase{"File"},
 				//Class:    "File",
@@ -336,28 +366,28 @@ func (process *Process) evalGlobPatterns(patterns []cwl.Expression) ([]string, e
 	return out, nil
 }
 
-func clearOutputFileDir(in cwl.FileDir, root string) (out cwl.FileDir) {
-	out = in
-	if file, ok := out.Entery().(*cwl.File); ok {
-		location, _ := filepath.Rel(file.Location, root)
-		file.Location = location
-		file.Path, file.Basename, file.Dirname, file.Nameroot, file.Nameext = "", "", "", "", ""
-		for i, sfi := range file.SecondaryFiles {
-			file.SecondaryFiles[i] = clearOutputFileDir(sfi, root)
-		}
+func (process *Process) clearOutputFileDir(in cwl.FileDir, root string) (out cwl.FileDir) {
+	entry := in.Entery()
+	if file, ok := entry.(cwl.File); ok {
+		fileout := process.clearOutputFile(file, root)
+		return cwl.NewFileDir(&fileout)
 	}
-	if dict, ok := out.Entery().(*cwl.Directory); ok {
-		location, _ := filepath.Rel(dict.Location, root)
-		dict.Location = location
-		dict.Path, dict.Basename = "", ""
-		for i, li := range dict.Listing {
-			dict.Listing[i] = clearOutputFileDir(li, root)
-		}
+	if dict, ok := entry.(cwl.Directory); ok {
+		dirout := process.clearOutputDir(dict, root)
+		return cwl.NewFileDir(&dirout)
+	}
+	if file, ok := entry.(*cwl.File); ok {
+		fileout := process.clearOutputFile(*file, root)
+		return cwl.NewFileDir(&fileout)
+	}
+	if dict, ok := entry.(*cwl.Directory); ok {
+		dirout := process.clearOutputDir(*dict, root)
+		return cwl.NewFileDir(&dirout)
 	}
 	return out
 }
 
-func clearOutputFile(in cwl.File, root string) (file cwl.File) {
+func (process *Process) clearOutputFile(in cwl.File, root string) (file cwl.File) {
 	file = in
 	if strings.HasPrefix(file.Location, root) {
 		location := file.Location[len(root):]
@@ -368,7 +398,29 @@ func clearOutputFile(in cwl.File, root string) (file cwl.File) {
 	}
 	file.Path, file.Basename, file.Dirname, file.Nameroot, file.Nameext = "", "", "", "", ""
 	for i, sfi := range file.SecondaryFiles {
-		file.SecondaryFiles[i] = clearOutputFileDir(sfi, root)
+		file.SecondaryFiles[i] = process.clearOutputFileDir(sfi, root)
+	}
+	return file
+}
+
+func (process *Process) clearOutputDir(in cwl.Directory, root string) (file cwl.Directory) {
+	file = in
+	if len(file.Listing) == 0 {
+		// 尝试获取 Listing
+		d, _ := process.fs.DirInfo(file.Location, -1)
+		file.Listing = d.Listing
+	}
+	if strings.HasPrefix(file.Location, root) {
+		location := file.Location[len(root):]
+		if location != "" && location[0] == '/' {
+			location = location[1:]
+		}
+		file.Location = location
+	}
+	file.Path, file.Basename = "", ""
+
+	for i, sfi := range file.Listing {
+		file.Listing[i] = process.clearOutputFileDir(sfi, root)
 	}
 	return file
 }
