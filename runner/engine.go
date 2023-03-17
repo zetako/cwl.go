@@ -175,6 +175,7 @@ func (e *Engine) ResolveProcess(process *Process) error {
 		val := (*params)[in.ID]
 		k := sortKey{getPos(in.InputBinding)}
 		if val == nil {
+			process.bindings = append(process.bindings, &Binding{name: in.ID, Value: nil})
 			continue
 		}
 		b, err := process.bindInput(in.ID, in.Type.SaladType, in.InputBinding, in.SecondaryFiles, val, k)
