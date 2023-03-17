@@ -36,6 +36,15 @@ func (p *CommandLineTool) RequiresDocker() *DockerRequirement {
 	return nil
 }
 
+func (p *CommandLineTool) HitsDocker() *DockerRequirement {
+	for _, r := range p.Hints {
+		if r.ClassName() == "DockerRequirement" {
+			return r.(*DockerRequirement)
+		}
+	}
+	return nil
+}
+
 func (p *CommandLineTool) RequiresSoftware() *SoftwareRequirement {
 	for _, r := range p.Requirements {
 		if r.ClassName() == "SoftwareRequirement" {

@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path"
+
+	"github.com/lijiang2014/cwl.go"
 )
 
 // 用于运行 process 的环境
@@ -35,6 +37,45 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 
 	if err = process.MigrateInputs(); err != nil {
 		return "", nil, err
+	}
+	if os.Getenv("DOCKER") != "" {
+		// docker run
+		var dockerR *cwl.DockerRequirement
+		// handler docker
+		dockerR = process.tool.HitsDocker()
+		// 可以先检查是否支持 docker
+		if req := process.tool.RequiresDocker(); req != nil {
+			dockerR = req
+		}
+		if dockerR != nil {
+			// 挂载代替拷贝？
+			var dockerargs []string
+			image := dockerR.DockerPull
+			workdirInContainer := process.runtime.RootHost
+			if dockerR.DockerOutputDirectory != "" {
+				workdirInContainer = dockerR.DockerOutputDirectory
+			}
+			dockerargs = append(dockerargs, "run")
+			for k, v := range envs {
+				dockerargs = append(dockerargs, "-e", fmt.Sprintf(`%s="%s"`, k, v))
+			}
+			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, process.runtime.RootHost, workdirInContainer))
+			dockerargs = append(dockerargs, image)
+			cmds = append(dockerargs, cmds...)
+			r := exec.Command("docker", cmds...)
+			err = r.Start()
+			if err != nil {
+				return "", nil, err
+			}
+			pid := r.Process.Pid
+			rChan := make(chan int)
+			go func() {
+				r.Wait()
+				rChan <- r.ProcessState.ExitCode()
+				close(rChan)
+			}()
+			return fmt.Sprint(pid), rChan, nil
+		}
 	}
 	r := exec.Command(cmds[0], cmds[1:]...)
 	for k, v := range envs {

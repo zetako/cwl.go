@@ -266,7 +266,7 @@ func TestCWLR2_run107(t *testing.T) {
 	testByID(t, 107)
 }
 
-// ❌ null_missing_params v1.0/null-defined.cwl v1.0/empty.json
+// ✅ 3/16 null_missing_params v1.0/null-defined.cwl v1.0/empty.json
 func TestCWLR2_run108(t *testing.T) {
 	testByID(t, 108)
 }
@@ -283,12 +283,12 @@ func TestCWLR2_run115(t *testing.T) {
 	testByID(t, 115)
 }
 
-// ❌ shelldir_quoted v1.0/shellchar2.cwl v1.0/empty.json
+// ✅ 3/17 shelldir_quoted v1.0/shellchar2.cwl v1.0/empty.json
 func TestCWLR2_run116(t *testing.T) {
 	testByID(t, 116)
 }
 
-// ❌ initial_workdir_empty_writable v1.0/writable-dir.cwl v1.0/empty.json
+// ✅ 3/17 initial_workdir_empty_writable v1.0/writable-dir.cwl v1.0/empty.json
 func TestCWLR2_run117(t *testing.T) {
 	testByID(t, 117)
 }
@@ -311,7 +311,7 @@ func TestCWLR2_run127(t *testing.T) {
 	testByID(t, 127)
 }
 
+// ✅3/17 valuefrom const overides array inputs
 func TestCWLR2_run129(t *testing.T) {
-	t.Fail()
-	//testByID(t, 129)
+	testByID(t, 129)
 }

@@ -127,7 +127,6 @@ func (process *Process) Command() ([]string, error) {
 	if shellCommand {
 		cmd = []string{"/bin/sh", "-c", strings.Join(cmd, " ")}
 	}
-
 	//debug("COMMAND", cmd)
 	return cmd, nil
 }

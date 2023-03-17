@@ -12,7 +12,8 @@ import (
 )
 
 func TestCWLR2_workon(t *testing.T) {
-	e, err := newEngine("v1.0/imported-hint.cwl", "v1.0/empty.json") // 104 hits imports
+	e, err := newEngine("v1.0/valueFrom-constant.cwl", "v1.0/array-of-strings-job.yml") // 104 hits imports
+	// e, err := newEngine("v1.0/tmap-tool.cwl", "v1.0/tmap-job.json") // 104 hits imports
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
