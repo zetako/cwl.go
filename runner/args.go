@@ -98,7 +98,7 @@ func getPos(in *cwl.CommandLineBinding) int {
 }
 
 // args converts a binding into a list of formatted command line arguments.
-func bindArgs(b *Binding) []string {
+func bindArgs(b *Binding, shellCmd bool) []string {
 	bindTypeName := b.Type.TypeName()
 	switch bindTypeName {
 
@@ -120,37 +120,37 @@ func bindArgs(b *Binding) []string {
 			for _, nb := range b.nested {
 				nested = append(nested, nb.Value)
 			}
-			return formatArgs(b.clb, nested...)
+			return formatArgs(b.clb, shellCmd, nested...)
 
 			// cwl spec:
 			// "...otherwise first add prefix, then recursively process individual elements."
 		} else {
-			args := formatArgs(b.clb)
+			args := formatArgs(b.clb, shellCmd)
 
 			for _, nb := range b.nested {
-				args = append(args, bindArgs(nb)...)
+				args = append(args, bindArgs(nb, shellCmd)...)
 			}
 			return args
 		}
 
 	case "record":
-		args := formatArgs(b.clb)
+		args := formatArgs(b.clb, shellCmd)
 		sort.Stable(bySortKey(b.nested))
 		for _, nb := range b.nested {
-			args = append(args, bindArgs(nb)...)
+			args = append(args, bindArgs(nb, shellCmd)...)
 		}
 		return args
 	case "Any", "any", "string", "int", "long", "float", "double", "File", "Directory", argType, "enum":
 		//  case cwl.Any, cwl.String, cwl.Int, cwl.Long, cwl.Float, cwl.Double, cwl.FileType,
 		//cwl.DirectoryType, argType:
-		return formatArgs(b.clb, b.Value)
+		return formatArgs(b.clb, shellCmd, b.Value)
 
 	case "boolean":
 		// cwl spec:
 		// "boolean: If true, add prefix to the command line. If false, add nothing."
 		bv := b.Value.(bool)
 		if bv && b.clb != nil && b.clb.Prefix != "" {
-			return formatArgs(b.clb)
+			return formatArgs(b.clb, shellCmd)
 		}
 	}
 	return nil
@@ -159,16 +159,21 @@ func bindArgs(b *Binding) []string {
 // formatArgs applies some command line binding rules to a CLI argument,
 // such as prefix, separate, etc.
 // http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineBinding
-func formatArgs(clb *cwl.CommandLineBinding, args ...cwl.Value) []string {
+func formatArgs(clb *cwl.CommandLineBinding, shellCmd bool, args ...cwl.Value) []string {
 	var (
 		prefix, join string
 		sep          = true
 		strargs      []string
+		quote        = shellCmd
 	)
 	if clb != nil {
 		prefix = clb.Prefix
 		join = clb.ItemSeparator
 		sep = clb.Separate
+		// if clb.ShellQuote {}
+		if shellCmd {
+			quote = clb.ShellQuote
+		}
 	}
 
 	for _, arg := range args {
@@ -186,6 +191,11 @@ func formatArgs(clb *cwl.CommandLineBinding, args ...cwl.Value) []string {
 			strargs[0] = prefix + strargs[0]
 		} else {
 			strargs = []string{prefix}
+		}
+	}
+	if quote {
+		if len(strargs) == 1 {
+			strargs[0] = fmt.Sprintf(`"%s"`, strargs[0])
 		}
 	}
 	return strargs

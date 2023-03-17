@@ -114,11 +114,12 @@ func (process *Process) Command() ([]string, error) {
 	//
 	//// Now collect the input bindings into command line arguments
 	cmd := append([]string{}, tool.BaseCommands...)
+	shellCommand := tool.RequiresShellCommand()
 	for _, b := range args {
-		cmd = append(cmd, bindArgs(b)...)
+		cmd = append(cmd, bindArgs(b, shellCommand)...)
 	}
 	//
-	if tool.RequiresShellCommand() {
+	if shellCommand {
 		cmd = []string{"/bin/sh", "-c", strings.Join(cmd, " ")}
 	}
 
