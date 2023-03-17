@@ -59,7 +59,7 @@ Loop:
 			// The input array is allowed to be empty,
 			// so this must be a non-nil slice.
 			out := []*Binding{}
-			t := typein.MustArraySchema().(*cwl.CommandInputArraySchema)
+			t := ti.MustArraySchema().(*cwl.CommandInputArraySchema)
 
 			for i, itemVal := range vals {
 				subkey := append(key, sortKey{getPos(t.InputBinding), i}...)
@@ -488,8 +488,26 @@ func (process *Process) initWorkDirDirectory(dir cwl.Directory) error {
 		if !path.IsAbs(dir.Path) {
 			dir.Path = path.Join(process.runtime.RootHost, dir.Path)
 		}
-		// TODO 对于 initWorkDir， 大部分场景应该使用 copy 而非 link
-		return process.fs.Copy(dir.Location, dir.Path)
+		if dir.Location != "" {
+			return process.fs.Copy(dir.Location, dir.Path)
+		}
+		if err := process.fs.EnsureDir(dir.Path, 0750); err != nil {
+			return process.errorf("init workdir >> ensureDir err : %s", err)
+		}
+		for _, filediri := range dir.Listing {
+			if filediri.ClassName() == "File" {
+				file := filediri.Entery().(*cwl.File)
+				if err := process.initWorkDirFile(*file); err != nil {
+					return process.errorf("init workdir >> initFile %s %s err : %s", file.Path, file.Location, err)
+				}
+			} else if filediri.ClassName() == "Directory" {
+				directory := filediri.Entery().(*cwl.Directory)
+				if err := process.initWorkDirDirectory(*directory); err != nil {
+					return process.errorf("init workdir >> initDirectory %s %s err : %s", directory.Path, directory.Location, err)
+				}
+			}
+		}
+		return nil
 		// return process.fs.Migrate(file.Location, file.Path)
 	}
 	return process.error("bad file")

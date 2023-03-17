@@ -106,9 +106,19 @@ func bindArgs(b *Binding, shellCmd bool) []string {
 		// cwl conformance test:
 		// Test [67/68] Test that empty array input does not add anything to command line
 		// TODO unhandled panic here
-		arr := b.Value.([]cwl.Value)
-		if len(arr) == 0 {
-			return nil
+		// arr := b.Value.([]cwl.Value)
+		// if len(arr) == 0 {
+		// 	return nil
+		// }
+		switch bt := b.Value.(type) {
+		case []cwl.Value:
+			if len(bt) == 0 {
+				return nil
+			}
+		case []interface{}:
+			if len(bt) == 0 {
+				return nil
+			}
 		}
 
 		// cwl spec:
