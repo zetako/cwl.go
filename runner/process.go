@@ -103,8 +103,13 @@ func (process *Process) Command() ([]string, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to eval argument value: %s", err)
 			}
-			// 如果发生了文件赋值，可能会导致 migrateFile 失效，因此需要先备份
-			args[i] = &Binding{b.clb, b.Type, val, b.sortKey, b.nested, b.name}
+			// 如果发生了文件赋值，可能会导致 migrateFile 失效，因此需要先备份;
+			if b.Type.IsArray() {
+				nested := &Binding{b.clb, *b.Type.MustArraySchema().GetItems(), val, b.sortKey, nil, b.name}
+				args[i] = &Binding{b.clb, b.Type, val, b.sortKey, []*Binding{nested}, b.name}
+			} else {
+				args[i] = &Binding{b.clb, b.Type, val, b.sortKey, b.nested, b.name}
+			}
 			// b.Value = val
 		}
 	}
