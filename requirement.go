@@ -83,11 +83,21 @@ func (p *CommandLineTool) RequiresShellCommand() bool {
 			return true
 		}
 	}
+	for _, r := range p.Hints {
+		if r.ClassName() == "ShellCommandRequirement" {
+			return true
+		}
+	}
 	return false
 }
 
 func (p *CommandLineTool) RequiresResource() *ResourceRequirement {
 	for _, r := range p.Requirements {
+		if r.ClassName() == "ResourceRequirement" {
+			return r.(*ResourceRequirement)
+		}
+	}
+	for _, r := range p.Hints {
 		if r.ClassName() == "ResourceRequirement" {
 			return r.(*ResourceRequirement)
 		}

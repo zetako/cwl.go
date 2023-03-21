@@ -245,3 +245,53 @@ func (e *FileDirExpDirent) UnmarshalJSON(data []byte) error {
 	}
 	return fmt.Errorf("only Expression/File/Directory/Dirent is available")
 }
+
+func (list *FileDirExpDirentList) UnmarshalJSON(data []byte) error {
+	ss := make([]FileDirExpDirent, 0)
+	if len(data) == 0 {
+		return nil
+	}
+	if data[0] == '[' {
+		if err := json.Unmarshal(data, &ss); err != nil {
+			return err
+		}
+		*list = append(*list, ss...)
+		return nil
+	}
+	var filedir FileDirExpDirent
+	if err := json.Unmarshal(data, &filedir); err != nil {
+		return err
+	}
+	*list = append(*list, filedir)
+	return nil
+}
+
+func (e *SecondaryFileSchema) UnmarshalJSON(data []byte) error {
+	var bean interface{}
+	err := json.Unmarshal(data, &bean)
+	if err != nil {
+		return err
+	}
+	e.Required = true
+	switch v := bean.(type) {
+	case string:
+		e.Pattern = v
+		return nil
+	case map[string]interface{}:
+		if pattern, ok := v["pattern"].(string); ok {
+			e.Pattern = pattern
+		} else {
+			return fmt.Errorf("SecondaryFileSchema need pattern")
+		}
+		if req := v["required"]; req != nil {
+			if reqBool, ok := req.(bool); ok {
+				e.Required = reqBool
+			} else {
+				return fmt.Errorf("SecondaryFileSchema.required need be bool")
+			}
+		}
+	default:
+		return fmt.Errorf("SecondaryFileSchema type error")
+	}
+	return nil
+}

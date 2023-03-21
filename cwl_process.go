@@ -17,11 +17,11 @@ type FileDirI interface {
 }
 
 type FileDir struct {
-	ClassBase      `json:",inline"`
-	entry FileDirI
+	ClassBase `json:",inline"`
+	entry     FileDirI
 }
 
-func (e *FileDir)  UnmarshalJSON(b []byte) error {
+func (e *FileDir) UnmarshalJSON(b []byte) error {
 	err := json.Unmarshal(b, &e.ClassBase)
 	if err != nil {
 		return err
@@ -38,13 +38,13 @@ func (e *FileDir)  UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("class need to be File/Directory")
 }
 
-func (e *FileDir)  MarshalJSON()([]byte ,error) {
+func (e *FileDir) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.Entery())
 }
 
-func NewFileDir(entry FileDirI) FileDir  {
+func NewFileDir(entry FileDirI) FileDir {
 	return FileDir{
-		ClassBase{ entry.ClassName()},
+		ClassBase{entry.ClassName()},
 		entry,
 	}
 }
@@ -57,8 +57,8 @@ func (e *FileDir) Entery() FileDirI {
 // https://www.commonwl.org/v1.2/CommandLineTool.html#File
 type File struct {
 	ClassBase      `json:",inline"`
-	Location       string    `json:"location,omitempty"`	// file:// http://
-	Path           string    `json:"path,omitempty"`			// runtime local path
+	Location       string    `json:"location,omitempty"` // file:// http://
+	Path           string    `json:"path,omitempty"`     // runtime local path
 	Basename       string    `json:"basename,omitempty"`
 	Dirname        string    `json:"dirname,omitempty"`
 	Nameroot       string    `json:"nameroot,omitempty"`
@@ -84,6 +84,7 @@ type Directory struct {
 
 func (File) filedir()      {}
 func (Directory) filedir() {}
+
 type EntryListing []FileDir
 
 //func (l *EntryListing) UnmarshalJSON(b []byte) error {
@@ -207,11 +208,11 @@ type ProcessBase struct {
 	Requirements Requirements `json:"requirements,omitempty" salad:"mapSubject:class"`
 	Hints        Requirements `json:"hints,omitempty" salad:"mapSubject:class"`
 	//Inputs       []InputParameter  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
-	Inputs   Inputs  `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
-	Outputs  []OutputParameter `json:"outputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
+	Inputs  Inputs            `json:"inputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
+	Outputs []OutputParameter `json:"outputs,omitempty" salad:"mapSubject:id,mapPredicate:type"`
 }
 
-func (b *ProcessBase) Base()  *ProcessBase {
+func (b *ProcessBase) Base() *ProcessBase {
 	return b
 }
 
@@ -243,8 +244,8 @@ type SchemaDefRequirement struct {
 type SecondaryFileSchema struct {
 	Pattern string `json:"pattern,omitempty"`
 	// null ? bool? Expression
-	Required    string `json:"required,omitempty"` // Default true for input; false for output
-	RequiredVal *bool
+	Required bool `json:"required,omitempty"` // Default true for input; false for output
+	// RequiredVal *bool
 }
 
 type LoadListingRequirement struct {

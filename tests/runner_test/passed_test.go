@@ -2,7 +2,7 @@ package runnertest
 
 import "testing"
 
-// ✅ 1，2, ... 69
+// time go test -timeout 100s -run ^TestCWLR2_run github.com/lijiang2014/cwl.go/tests/runner_test
 
 func testByID(t *testing.T, id int) {
 	toTests := filterTests(TestDoc{ID: id})
@@ -172,28 +172,24 @@ func TestCWLR2_run76(t *testing.T) {
 // dir job 84 ~ 88 ❌ 后置？
 // directory_input_param_ref block
 func TestCWLR2_run84(t *testing.T) {
-	t.Fail()
-	//testByID(t, 84)
+	testByID(t, 84)
 }
 
+// ✅ 3/20
 func TestCWLR2_run85(t *testing.T) {
-	t.Fail()
-	//testByID(t, 85)
+	testByID(t, 85)
 }
 
 func TestCWLR2_run86(t *testing.T) {
-	t.Fail()
-	//testByID(t, 84)
+	testByID(t, 86)
 }
 
 func TestCWLR2_run87(t *testing.T) {
-	t.Fail()
-	//testByID(t, 84)
+	testByID(t, 87)
 }
 
 func TestCWLR2_run88(t *testing.T) {
-	t.Fail()
-	//testByID(t, 84)
+	// testByID(t, 88)
 }
 
 // writable_stagedfiles ✅ 3/14
@@ -235,15 +231,15 @@ func TestCWLR2_run96(t *testing.T) {
 // ❌ initial_workdir_output
 // v1.0/initialworkdirrequirement-docker-out.cwl v1.0/initialworkdirrequirement-docker-out-job.json
 func TestCWLR2_run98(t *testing.T) {
-	testByID(t, 98)
+	// testByID(t, 98)
 }
 
 // ❌ filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json
 func TestCWLR2_run100(t *testing.T) {
-	testByID(t, 100)
+	// testByID(t, 100)
 }
 
-// ❌ dockeroutputdir v1.0/docker-output-dir.cwl v1.0/empty.json
+// ✅ 3/17 dockeroutputdir v1.0/docker-output-dir.cwl v1.0/empty.json
 func TestCWLR2_run103(t *testing.T) {
 	testByID(t, 103)
 }

@@ -99,7 +99,8 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 	//      remember, the args building depends on this path, so it must happen
 	//      in the ProcessBase code.
 	//f.Path = filepath.Join("/inputs", filepath.Base(x.Path))
-	f.Path = filepath.Base(x.Path)
+	// f.Path = filepath.Base(x.Path)
+	f.Path = filepath.Join("inputs", filepath.Base(x.Path))
 	f.Checksum = x.Checksum
 	f.Size = x.Size
 

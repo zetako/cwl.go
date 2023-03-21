@@ -221,7 +221,7 @@ Loop:
 			}
 			// use process.runtime.RootHost as /
 			// TODO 这种命名方式可能导致同名文件冲突问题
-			f.Path = filepath.Join(process.runtime.RootHost, "/inputs/", f.Path)
+			f.Path = filepath.Join(process.runtime.RootHost, f.Path)
 
 			//f.Path = "/inputs/" + f.Path
 			for _, expr := range secondaryFiles {
@@ -333,6 +333,31 @@ func (process *Process) MigrateInputs() (err error) {
 	//}
 	if err = fs.EnsureDir(process.runtime.RootHost+"/inputs", 0750); err != nil {
 		return err
+	}
+	for _, filei := range files {
+		for _, sfj := range filei.SecondaryFiles {
+			if sfj.ClassName() == "Directory" {
+				dirj := sfj.Entery().(*cwl.Directory)
+				if dirj.Path == "" {
+					if dirj.Basename == "" {
+						dirj.Basename = dirj.Location
+					}
+					dirj.Path = path.Join(path.Dir(filei.Path), dirj.Basename)
+				}
+				dirj.Location = path.Join(path.Dir(filei.Location), dirj.Location)
+				dirs = append(dirs, *dirj)
+			} else {
+				filej := sfj.Entery().(*cwl.File)
+				if filej.Path == "" {
+					if filej.Basename == "" {
+						filej.Basename = filej.Location
+					}
+					filej.Path = path.Join(path.Dir(filei.Path), filej.Basename)
+				}
+				filej.Location = path.Join(path.Dir(filei.Location), filej.Location)
+				files = append(files, *filej)
+			}
+		}
 	}
 	for _, filei := range files {
 		if filei.Contents != "" && filei.Location == "" && filei.Path != "" {

@@ -110,8 +110,11 @@ type FileDirExpDirent struct {
 
 type InitialWorkDirRequirement struct {
 	BaseRequirement `json:",inline"`
-	Listing         []FileDirExpDirent `json:"listing"`
+	// Listing         []FileDirExpDirent `json:"listing"`
+	Listing FileDirExpDirentList `json:"listing"`
 }
+
+type FileDirExpDirentList []FileDirExpDirent
 
 type EnvVarRequirement struct {
 	BaseRequirement `json:",inline"`

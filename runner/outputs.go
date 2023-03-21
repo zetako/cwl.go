@@ -410,6 +410,20 @@ func (process *Process) clearOutputDir(in cwl.Directory, root string) (file cwl.
 		d, _ := process.fs.DirInfo(file.Location, -1)
 		file.Listing = d.Listing
 	}
+	// remove inputs
+	if in.Location == process.runtime.RootHost {
+		for i, filei := range file.Listing {
+			diri, ok := filei.Entery().(cwl.Directory)
+			if dirp, okp := filei.Entery().(*cwl.Directory); okp {
+				diri = *dirp
+				ok = true
+			}
+			if ok && diri.Location == process.runtime.RootHost+"/inputs" {
+				file.Listing = append(file.Listing[:i], file.Listing[i+1:]...)
+				break
+			}
+		}
+	}
 	if strings.HasPrefix(file.Location, root) {
 		location := file.Location[len(root):]
 		if location != "" && location[0] == '/' {

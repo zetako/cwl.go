@@ -38,7 +38,9 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 	if err = process.MigrateInputs(); err != nil {
 		return "", nil, err
 	}
-	if os.Getenv("DOCKER") != "" {
+	var r *exec.Cmd
+	if os.Getenv("DOCKER") != "off" {
+		// if os.Getenv("DOCKER") != "" {
 		// docker run
 		var dockerR *cwl.DockerRequirement
 		// handler docker
@@ -60,26 +62,36 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 				dockerargs = append(dockerargs, "-e", fmt.Sprintf(`%s="%s"`, k, v))
 			}
 			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, process.runtime.RootHost, workdirInContainer))
+			// 用户数据文件夹映射；否则可能会出现链接文件无法访问
+			userhome, _ := os.UserHomeDir()
+			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, userhome, userhome))
+			dockerargs = append(dockerargs, "-w", workdirInContainer)
+			if process.stdin != "" {
+				// dockerargs = append(dockerargs, "-a", "stdin", "-i")
+				dockerargs = append(dockerargs, "-i")
+			}
 			dockerargs = append(dockerargs, image)
 			cmds = append(dockerargs, cmds...)
-			r := exec.Command("docker", cmds...)
-			err = r.Start()
-			if err != nil {
-				return "", nil, err
-			}
-			pid := r.Process.Pid
-			rChan := make(chan int)
-			go func() {
-				r.Wait()
-				rChan <- r.ProcessState.ExitCode()
-				close(rChan)
-			}()
-			return fmt.Sprint(pid), rChan, nil
+			r = exec.Command("docker", cmds...)
+			// err = r.Start()
+			// if err != nil {
+			// 	return "", nil, err
+			// }
+			// pid := r.Process.Pid
+			// rChan := make(chan int)
+			// go func() {
+			// 	r.Wait()
+			// 	rChan <- r.ProcessState.ExitCode()
+			// 	close(rChan)
+			// }()
+			// return fmt.Sprint(pid), rChan, nil
 		}
 	}
-	r := exec.Command(cmds[0], cmds[1:]...)
-	for k, v := range envs {
-		r.Env = append(r.Env, fmt.Sprintf("%s=%s", k, v))
+	if r == nil {
+		r = exec.Command(cmds[0], cmds[1:]...)
+		for k, v := range envs {
+			r.Env = append(r.Env, fmt.Sprintf("%s=%s", k, v))
+		}
 	}
 	r.Dir = process.runtime.RootHost
 	// Set Std OUT ERR IN
