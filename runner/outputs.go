@@ -180,7 +180,7 @@ Loop:
 				}
 				f := y[0]
 				for _, expr := range secondaryFiles {
-					err := process.resolveSecondaryFiles(f, expr)
+					err := process.resolveSecondaryFiles(&f, expr)
 					if err != nil {
 						return nil, fmt.Errorf("resolving secondary files: %s", err)
 					}
@@ -192,7 +192,7 @@ Loop:
 				}
 				f := y[0].Entery().(*cwl.File)
 				for _, expr := range secondaryFiles {
-					err := process.resolveSecondaryFiles(*f, expr)
+					err := process.resolveSecondaryFiles(f, expr)
 					if err != nil {
 						return nil, fmt.Errorf("resolving secondary files: %s", err)
 					}
@@ -208,7 +208,7 @@ Loop:
 					return nil, fmt.Errorf("not File, not ok yet!: %s", yi.ClassName())
 				}
 				for _, expr := range secondaryFiles {
-					err := process.resolveSecondaryFiles(*fi, expr)
+					err := process.resolveSecondaryFiles(fi, expr)
 					if err != nil {
 						return nil, fmt.Errorf("resolving secondary files: %s", err)
 					}

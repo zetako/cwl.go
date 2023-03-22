@@ -232,7 +232,7 @@ Loop:
 
 			//f.Path = "/inputs/" + f.Path
 			for _, expr := range secondaryFiles {
-				process.resolveSecondaryFiles(f, expr)
+				process.resolveSecondaryFiles(&f, expr)
 			}
 
 			return []*Binding{
@@ -577,6 +577,7 @@ func (process *Process) initWorkDir(listing []cwl.FileDirExpDirent) error {
 			continue
 		}
 		if file := v.File; file != nil {
+			file.Path = path.Join(process.runtime.RootHost, file.Basename)
 			if err := process.initWorkDirFile(*file); err != nil {
 				return err
 			}
@@ -640,10 +641,6 @@ func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
 func (process *Process) initWorkDirFile(file cwl.File) error {
 	// filenamestr := file.Basename
 	if filepath := file.Path; filepath != "" {
-		inputdir := path.Join(process.runtime.RootHost, "inputs")
-		if strings.HasPrefix(filepath, inputdir) {
-			file.Path = file.Path[len(inputdir)+1:]
-		}
 		if !path.IsAbs(file.Path) {
 			file.Path = path.Join(process.runtime.RootHost, file.Path)
 		}

@@ -236,7 +236,7 @@ func TestCWLR2_run98(t *testing.T) {
 
 // ❌ filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json
 func TestCWLR2_run100(t *testing.T) {
-	// testByID(t, 100)
+	testByID(t, 100)
 }
 
 // ✅ 3/17 dockeroutputdir v1.0/docker-output-dir.cwl v1.0/empty.json

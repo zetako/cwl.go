@@ -224,7 +224,7 @@ func clearDirListingPath(listing []cwl.FileDir, basedir string) {
 	}
 }
 
-func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFileSchema) error {
+func (process *Process) resolveSecondaryFiles(file *cwl.File, x cwl.SecondaryFileSchema) error {
 
 	// cwl spec:
 	// "If the value is an expression, the value of self in the expression
