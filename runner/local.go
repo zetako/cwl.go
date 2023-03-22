@@ -56,7 +56,6 @@ func (l *Local) Create(path, contents string) (cwl.File, error) {
 
 	b := []byte(contents)
 	size := int64(len(b))
-	//if units.MetricBytes(size) > process.MaxContentsBytes {
 	if size > MaxContentsBytes {
 		return x, fmt.Errorf("contents is max allowed size (%d) ", MaxContentsBytes)
 	}
@@ -103,14 +102,12 @@ func (l *Local) Info(loc string) (cwl.File, error) {
 	if err != nil {
 		return x, fmt.Errorf("getting absolute path for %s: %s", loc, err)
 	}
-	// TODO make this work with directories
 	if st.IsDir() {
 		return cwl.File{
 			ClassBase: cwl.ClassBase{"Directory"},
 			Location:  abs,
 			Path:      abs,
 		}, nil
-		// return x, fmt.Errorf("can't call Info() on a directory: %s", loc)
 	}
 
 	checksum := ""

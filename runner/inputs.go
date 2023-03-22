@@ -64,7 +64,7 @@ Loop:
 
 			for i, itemVal := range vals {
 				subkey := append(key, sortKey{getPos(t.InputBinding), i}...)
-				var b, err = process.bindInput("", t.Items, t.InputBinding, nil, itemVal, subkey)
+				var b, err = process.bindInput("", t.Items, t.InputBinding, secondaryFiles, itemVal, subkey)
 				if err != nil {
 					return nil, err
 				}
@@ -77,7 +77,11 @@ Loop:
 
 			nested := make([]*Binding, len(out))
 			copy(nested, out)
-			b := &Binding{clb, ti, val, key, nested, name}
+			flatVal := make([]cwl.Value, len(out))
+			for i, outi := range out {
+				flatVal[i] = outi.Value
+			}
+			b := &Binding{clb, ti, flatVal, key, nested, name}
 			// TODO revisit whether creating a nested tree (instead of flat) is always better/ok
 			return []*Binding{b}, nil
 
@@ -279,8 +283,6 @@ Loop:
 			}, nil
 		default:
 			tiTypeName := ti.TypeName()
-			//if len(tiTypeName) > 0 && tiTypeName[0] == '#' {
-			// is Ref Types
 			if rsd := process.root.Process.Base().RequiresSchemaDef(); rsd != nil {
 				for _, rsdT := range rsd.Types {
 					var binding *cwl.CommandLineBinding
@@ -301,12 +303,7 @@ Loop:
 					log.Println(SName, rsdType.TypeName())
 
 					if SName == tiTypeName || (SName == tiTypeName[1:] && tiTypeName[0] == '#') {
-						//	//do something
-						//	// how to parse Value -> rsdT.Type ?
-						//	st := rsdT.Type
-						//	return []*Binding{
-						//		{clb, ti, st, key, nil, name},
-						//	}, nil
+
 						b, err := process.bindInput(name, rsdType.SaladType, binding, nil, val, key)
 						if err != nil {
 							continue Loop
@@ -319,7 +316,6 @@ Loop:
 					continue
 				}
 			}
-			// TODO with TypeRef
 			continue Loop
 		}
 	}
@@ -350,9 +346,7 @@ func (process *Process) MigrateInputs() (err error) {
 	}
 	// Do migrate
 	fs := process.fs
-	//if err = fs.EnsureDir(process.runtime.RootHost, 0750); err != nil {
-	//  return err
-	//}
+
 	if err = fs.EnsureDir(process.runtime.RootHost, 0750); err != nil {
 		return err
 	}
@@ -361,8 +355,11 @@ func (process *Process) MigrateInputs() (err error) {
 	}
 	for _, filei := range files {
 		for _, sfj := range filei.SecondaryFiles {
-			if sfj.ClassName() == "Directory" {
-				dirj := sfj.Entery().(*cwl.Directory)
+			filej, dirj, err := sfj.Value()
+			if err != nil {
+				return process.errorf("migrate SecondaryFiles FileEntry resolve Error %s", err)
+			}
+			if dirj != nil {
 				if dirj.Path == "" {
 					if dirj.Basename == "" {
 						dirj.Basename = dirj.Location
@@ -372,14 +369,13 @@ func (process *Process) MigrateInputs() (err error) {
 				dirj.Location = path.Join(path.Dir(filei.Location), dirj.Location)
 				dirs = append(dirs, *dirj)
 			} else {
-				filej := sfj.Entery().(*cwl.File)
-				if filej.Path == "" {
-					if filej.Basename == "" {
-						filej.Basename = filej.Location
-					}
+				if filej.Basename == "" {
+					filej.Basename = path.Base(filej.Location)
+				}
+				if !path.IsAbs(filej.Path) {
 					filej.Path = path.Join(path.Dir(filei.Path), filej.Basename)
 				}
-				filej.Location = path.Join(path.Dir(filei.Location), filej.Location)
+				// filej.Location = path.Join(path.Dir(filei.Location), filej.Location)
 				files = append(files, *filej)
 			}
 		}
@@ -452,10 +448,7 @@ func (process *Process) MigrateInputs() (err error) {
 			}
 			return nil
 		}
-		// if diri.Path == "" {
-		// 	diri.Path = path.Join(process.runtime.RootHost, "inputs", )
-		// }
-		// log.Println(diri.Location, diri.Path)
+
 		if err = fs.EnsureDir(path.Dir(diri.Path), 0750); err != nil {
 			return err
 		}
@@ -468,24 +461,8 @@ func (process *Process) MigrateInputs() (err error) {
 		if err = migrateDir(diri); err != nil {
 			return err
 		}
-		// // 没有 listing 的文件夹 直接迁移；有 listing 的文件夹 按 listing 创建
-		// // https://common-workflow-lab.github.io/CWLDotNet/reference/CWLDotNet.Directory.html
-		// if len(diri.Listing) != 0 {
-		// 	if err = fs.EnsureDir(diri.Path, 0750); err != nil {
-		// 		return err
-		// 	}
-		// 	for _, filej := range diri.Listing {
-
-		// 	}
-		// 	return process.error("dir listing stage not ok yet !")
-		// }
-		// // if diri.Path == "" {
-		// // 	diri.Path = path.Join(process.runtime.RootHost, "inputs", )
-		// // }
-		// // log.Println(diri.Location, diri.Path)
-		// if err = fs.Migrate(diri.Location, diri.Path); err != nil {
-		// 	return err
-		// }
+		// 没有 listing 的文件夹 直接迁移；有 listing 的文件夹 按 listing 创建
+		// https://common-workflow-lab.github.io/CWLDotNet/reference/CWLDotNet.Directory.html
 	}
 
 	if riwd := process.tool.RequiresInitialWorkDir(); riwd != nil {
@@ -538,23 +515,6 @@ func (process *Process) initWorkDir(listing []cwl.FileDirExpDirent) error {
 						}
 					}
 					return nil
-					// inName := e[len("$(inputs.") : len(e)-len(".listing)")]
-					// _ = inName
-					// inVale, got := (*process.inputs)[inName]
-					// if !got {
-					// 	return process.error(fmt.Sprintf("initWorkDir eval listing err: no such input %s", inName))
-					// }
-					// dirIn, got := inVale.(cwl.Directory)
-					// if !got {
-					// 	var dirPtr *cwl.Directory
-					// 	if dirPtr, got = inVale.(*cwl.Directory); got {
-					// 		dirIn = *dirPtr
-					// 	}
-					// }
-					// if !got {
-					// 	return process.error(fmt.Sprintf("initWorkDir eval listing err: input is not dir %s", inName))
-					// }
-					// if dirIn.Location !
 				}
 			}
 			filedir := cwl.FileDir{}
@@ -639,14 +599,12 @@ func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
 }
 
 func (process *Process) initWorkDirFile(file cwl.File) error {
-	// filenamestr := file.Basename
 	if filepath := file.Path; filepath != "" {
 		if !path.IsAbs(file.Path) {
 			file.Path = path.Join(process.runtime.RootHost, file.Path)
 		}
-		// TODO 对于 initWorkDir， 大部分场景应该使用 copy 而非 link
+		// 对于 initWorkDir, 会修改文件的访问性质， 大部分场景应该使用 copy 而非 link
 		return process.fs.Copy(file.Location, file.Path)
-		// return process.fs.Migrate(file.Location, file.Path)
 	}
 	return process.error("bad file")
 }
@@ -680,7 +638,6 @@ func (process *Process) initWorkDirDirectory(dir cwl.Directory) error {
 			}
 		}
 		return nil
-		// return process.fs.Migrate(file.Location, file.Path)
 	}
 	return process.error("bad file")
 }

@@ -180,7 +180,7 @@ func (p *Process) RunExpression() (cwl.Values, error) {
 
 	out, err := p.jsvm.Eval(tool.Expression, nil)
 	log.Printf("out %#v", out)
-	// TODO Convert out into values
+	// Convert out into values
 	valMap, ok := out.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("output format err")
@@ -232,7 +232,6 @@ func (process *Process) Env() map[string]string {
 func (process *Process) loadReqs() error {
 	tool := process.root.Process.(*cwl.CommandLineTool)
 	if req := tool.RequiresInlineJavascript(); req != nil {
-		// TODO Add Libs
 		if err := process.initJVM(); err != nil {
 			return err
 		}
@@ -254,28 +253,14 @@ func (process *Process) loadReqs() error {
 		process.loadRuntime()
 	}
 	if req := tool.RequiresSchemaDef(); req != nil {
-		// TODO init schemaDef
+		// 目前在 bindInput 中有用到时再进行的处理，可以考虑优化
 	}
-	// process.initWorkDir
-	// if req := tool.RequiresInitialWorkDir(); req != nil {
-	// 	// 创建初始文件
-	// 	process.initialWorkDir()
-	// }
 	return nil
 }
 
 func (process *Process) ResourcesLimites() (*ResourcesLimites, error) {
 	limits := GetDefaultResourcesLimits()
 	if req := process.tool.RequiresResource(); req != nil {
-		//CoresMin        LongFloatExpression `json:"coresMin,omitempty"`
-		//CoresMax        LongFloatExpression `json:"coresMax,omitempty"`
-		//RamMin          LongFloatExpression `json:"ramMin,omitempty"` // Minimum reserved RAM in mebibytes (2**20) (default is 256)
-		//RamMax          LongFloatExpression `json:"ramMax,omitempty"`
-		//TmpdirMin       LongFloatExpression `json:"tmpdirMin,omitempty"` // Minimum reserved filesystem based storage for the designated temporary directory, in mebibytes (2**20) (default is 1024)
-		//TmpdirMax       LongFloatExpression `json:"tmpdirMax,omitempty"`
-		//OutdirMin       LongFloatExpression `json:"outdirMin,omitempty"` // Minimum reserved filesystem based storage for the designated output directory, in mebibytes (2**20) (default is 1024)
-		//OutdirMax       LongFloatExpression `json:"outdirMax,omitempty"`
-
 		if !req.CoresMin.IsNull() {
 			err := req.CoresMin.Resolve(process.jsvm, nil)
 			if err != nil {

@@ -74,18 +74,6 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 			dockerargs = append(dockerargs, image)
 			cmds = append(dockerargs, cmds...)
 			r = exec.Command("docker", cmds...)
-			// err = r.Start()
-			// if err != nil {
-			// 	return "", nil, err
-			// }
-			// pid := r.Process.Pid
-			// rChan := make(chan int)
-			// go func() {
-			// 	r.Wait()
-			// 	rChan <- r.ProcessState.ExitCode()
-			// 	close(rChan)
-			// }()
-			// return fmt.Sprint(pid), rChan, nil
 		}
 	}
 	if r == nil {
@@ -123,22 +111,6 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 		}
 		r.Stdin = fin
 	}
-	//if process.tool.Stdout != "" {
-	//	stdout , err := process.jsvm.Eval(process.tool.Stdout, nil)
-	//	if err != nil {
-	//		return "", nil, err
-	//	}
-	//	outpath, ok := stdout.(string)
-	//	if !ok {
-	//		return "", nil, fmt.Errorf("stdout should be string")
-	//	}
-	//	outpath = path.Join(process.runtime.RootHost, outpath)
-	//	fout , err := os.Create(outpath)
-	//	if err != nil {
-	//		return "", nil, err
-	//	}
-	//	r.Stdout = fout
-	//}
 	err = r.Start()
 	if err != nil {
 		return "", nil, err
