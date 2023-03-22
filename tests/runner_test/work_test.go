@@ -13,9 +13,10 @@ import (
 
 func TestCWLR2_workon(t *testing.T) {
 	// // v1.0/initialworkdirrequirement-docker-out.cwl v1.0/initialworkdirrequirement-docker-out-job.json
-	// e, err := newEngine("v1.0/initialworkdirrequirement-docker-out.cwl", "v1.0/initialworkdirrequirement-docker-out-job.json") // 104 hits imports
+	// e, err := newEngine("v1.0/bwa-mem-tool.cwl", "v1.0/bwa-mem-job.json") // 1
+	e, err := newEngine("v1.0/dir4.cwl", "v1.0/dir4-job.yml") // 87
 	// e, err := newEngine("v1.0/tmap-tool.cwl", "v1.0/tmap-job.json") // 104 hits imports
-	e, err := newEngine("v1.0/dir5.cwl", "v1.0/dir-job.yml") // 88 dynamic_initial_workdir
+	// e, err := newEngine("v1.0/dir5.cwl", "v1.0/dir-job.yml") // 88 dynamic_initial_workdir
 	Expect(t, err).ToBe(nil)
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)

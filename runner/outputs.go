@@ -288,7 +288,11 @@ func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents b
 					Location:  m.Location,
 					Path:      m.Path,
 				}
-				d, err := process.resolveDir(v)
+				var loadListingType = cwl.NO_LISTING
+				if rll := process.tool.RequiresLoadListing(); rll != nil {
+					loadListingType = rll.LoadListing
+				}
+				d, err := process.resolveDir(v, loadListingType)
 				if err != nil {
 					return nil, err
 				}

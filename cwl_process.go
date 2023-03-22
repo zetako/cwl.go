@@ -53,6 +53,30 @@ func (e *FileDir) Entery() FileDirI {
 	return e.entry
 }
 
+func (e *FileDir) Value() (*File, *Directory, error) {
+	filei, isFile := e.Entery().(*File)
+	if !isFile {
+		var bean File
+		if bean, isFile = e.Entery().(File); isFile {
+			filei = &bean
+		}
+	}
+	if isFile {
+		return filei, nil, nil
+	}
+	diri, isDir := e.Entery().(*Directory)
+	if !isDir {
+		var bean Directory
+		if bean, isDir = e.Entery().(Directory); isDir {
+			diri = &bean
+		}
+	}
+	if isDir {
+		return nil, diri, nil
+	}
+	return nil, nil, fmt.Errorf("Bad FileDir Entry")
+}
+
 // File represents file entry.
 // https://www.commonwl.org/v1.2/CommandLineTool.html#File
 type File struct {

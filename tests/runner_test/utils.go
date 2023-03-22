@@ -38,11 +38,13 @@ func newEngine(tool, param string) (*irunner.Engine, error) {
 	wd, _ := os.Getwd()
 	wd = filepath.Join(wd, "../../cwl/v1.0/v1.0")
 	return irunner.NewEngine(irunner.EngineConfig{
-		RunID:    "testcwl",
-		RootHost: "/tmp/testcwl",
-		Process:  jd1,
-		Params:   jd2,
-		Workdir:  wd,
+		RunID:        "testcwl",
+		RootHost:     "/tmp/testcwl/",
+		InputsDir:    "inputs",
+		WorkDir:      "run",
+		Process:      jd1,
+		Params:       jd2,
+		DocImportDir: wd,
 	})
 }
 

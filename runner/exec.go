@@ -65,6 +65,7 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 			// 用户数据文件夹映射；否则可能会出现链接文件无法访问
 			userhome, _ := os.UserHomeDir()
 			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, userhome, userhome))
+			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, process.runtime.InputsHost, process.runtime.InputsHost))
 			dockerargs = append(dockerargs, "-w", workdirInContainer)
 			if process.stdin != "" {
 				// dockerargs = append(dockerargs, "-a", "stdin", "-i")

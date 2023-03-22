@@ -2,6 +2,7 @@ package runner
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -99,8 +100,8 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 	//      remember, the args building depends on this path, so it must happen
 	//      in the ProcessBase code.
 	//f.Path = filepath.Join("/inputs", filepath.Base(x.Path))
-	// f.Path = filepath.Base(x.Path)
-	f.Path = filepath.Join("inputs", filepath.Base(x.Path))
+	f.Path = filepath.Base(x.Path)
+	// f.Path = filepath.Join("inputs", filepath.Base(x.Path))
 	f.Checksum = x.Checksum
 	f.Size = x.Size
 
@@ -115,7 +116,7 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 	return f, nil
 }
 
-func (process *Process) resolveDir(d cwl.Directory) (cwl.Directory, error) {
+func (process *Process) resolveDir(d cwl.Directory, loadListingType cwl.LoadListingEnum) (cwl.Directory, error) {
 	// TODO revisit pointer to File
 	var x cwl.Directory
 	var err error
@@ -175,7 +176,52 @@ func (process *Process) resolveDir(d cwl.Directory) (cwl.Directory, error) {
 		d.Basename = filepath.Base(d.Path)
 	}
 	//f.Nameroot = process.runtime.RootHost
+	if len(d.Listing) == 0 && loadListingType != cwl.NO_LISTING {
+		// load listing
+		var dl = 1
+		if loadListingType == cwl.DEEP_LISTING {
+			dl = -1
+		}
+		di, err := process.fs.DirInfo(d.Location, dl)
+		if err != nil {
+			return d, err
+		}
+		d.Listing = di.Listing
+		clearDirListingPath(d.Listing, path.Clean(d.Location))
+	}
 	return d, nil
+}
+
+func clearDirListingPath(listing []cwl.FileDir, basedir string) {
+	basedir = path.Clean(basedir)
+	dirbase := path.Base(basedir)
+	for i, fdi := range listing {
+		filei, diri, err := fdi.Value()
+		if err != nil {
+			continue
+		}
+		if filei != nil {
+			if strings.HasPrefix(filei.Path, basedir) {
+				filei.Path = path.Join(dirbase, filei.Path[len(basedir)+1:])
+				if filei.Basename == "" {
+					filei.Basename = path.Base(filei.Path)
+				}
+				listing[i] = cwl.NewFileDir(filei)
+				continue
+			}
+		} else if diri != nil {
+			if strings.HasPrefix(diri.Path, basedir) {
+				diri.Path = path.Join(dirbase, diri.Path[len(basedir)+1:])
+				if diri.Basename == "" {
+					diri.Basename = path.Base(diri.Path)
+				}
+				clearDirListingPath(diri.Listing, basedir)
+				listing[i] = cwl.NewFileDir(diri)
+				continue
+			}
+		}
+
+	}
 }
 
 func (process *Process) resolveSecondaryFiles(file cwl.File, x cwl.SecondaryFileSchema) error {

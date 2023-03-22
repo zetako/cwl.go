@@ -189,7 +189,7 @@ func TestCWLR2_run87(t *testing.T) {
 }
 
 func TestCWLR2_run88(t *testing.T) {
-	// testByID(t, 88)
+	testByID(t, 88)
 }
 
 // writable_stagedfiles ✅ 3/14
@@ -231,7 +231,7 @@ func TestCWLR2_run96(t *testing.T) {
 // ❌ initial_workdir_output
 // v1.0/initialworkdirrequirement-docker-out.cwl v1.0/initialworkdirrequirement-docker-out-job.json
 func TestCWLR2_run98(t *testing.T) {
-	// testByID(t, 98)
+	testByID(t, 98)
 }
 
 // ❌ filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json

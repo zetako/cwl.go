@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path"
 	"sync"
 
 	"github.com/google/uuid"
@@ -24,11 +25,12 @@ type Engine struct {
 	root     *cwl.Root // root Documents.
 	params   *cwl.Values
 	//runtime Runtime
-	process  *Process // root process
-	UserID   string   // the userID for the user who requested the workflow run
-	RunID    string   // the workflow ID
-	RootHost string
-	Log      *MainLog //
+	process    *Process // root process
+	UserID     string   // the userID for the user who requested the workflow run
+	RunID      string   // the workflow ID
+	RootHost   string
+	InputsHost string
+	Log        *MainLog //
 	// executer
 }
 
@@ -41,8 +43,10 @@ type EngineConfig struct {
 	Process       []byte
 	Params        []byte
 	ExtendConfigs map[string]interface{}
-	Workdir       string
+	DocImportDir  string
 	RootHost      string
+	InputsDir     string
+	WorkDir       string
 }
 
 func initConfig(c *EngineConfig) {
@@ -57,21 +61,27 @@ func initConfig(c *EngineConfig) {
 			c.UserName = "unknown"
 		}
 	}
-	if c.Workdir == "" {
+	if c.DocImportDir == "" {
 		wd, _ := os.Getwd()
-		c.Workdir = wd
+		c.DocImportDir = wd
 	}
 	if c.Importer == nil {
-		c.Importer = &DefaultImporter{BaseDir: c.Workdir}
+		c.Importer = &DefaultImporter{BaseDir: c.DocImportDir}
 	}
 	if c.InputFS == nil {
-		c.InputFS = NewLocal(c.Workdir)
+		c.InputFS = NewLocal(c.DocImportDir)
 	}
 	if c.RootHost == "" || c.RootHost == "/" {
 		c.RootHost = "/tmp/" + c.RunID
 	}
+	if !path.IsAbs(c.WorkDir) {
+		c.WorkDir = path.Join(c.RootHost, c.WorkDir)
+	}
+	if !path.IsAbs(c.InputsDir) {
+		c.InputsDir = path.Join(c.RootHost, c.InputsDir)
+	}
 	if c.OutputFS == nil {
-		c.OutputFS = NewLocal(c.RootHost)
+		c.OutputFS = NewLocal(c.WorkDir)
 		c.OutputFS.(*Local).CalcChecksum = true
 	}
 
@@ -82,10 +92,11 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 	var err error
 	initConfig(&c)
 	e := &Engine{
-		params:   cwl.NewValues(),
-		RunID:    c.RunID,
-		UserID:   c.UserName,
-		RootHost: c.RootHost,
+		params:     cwl.NewValues(),
+		RunID:      c.RunID,
+		UserID:     c.UserName,
+		RootHost:   c.WorkDir,
+		InputsHost: c.InputsDir,
 		Log: &MainLog{
 			ProcessRequest: ProcessRequest{
 				Process: c.Process,
@@ -162,8 +173,9 @@ func (e *Engine) ResolveProcess(process *Process) error {
 	if err := process.initJVM(); err != nil {
 		return err
 	}
-	// TODO better
+	//
 	process.runtime.RootHost = e.RootHost
+	process.runtime.InputsHost = e.InputsHost
 	process.loadRuntime()
 	// Bind inputs to values.
 	//

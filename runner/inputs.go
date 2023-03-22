@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/spf13/cast"
 )
@@ -220,8 +221,14 @@ Loop:
 				return nil, err
 			}
 			// use process.runtime.RootHost as /
-			// TODO 这种命名方式可能导致同名文件冲突问题
-			f.Path = filepath.Join(process.runtime.RootHost, f.Path)
+			// 通过引入random id 消除可能的同名文件冲突
+			randomid, err := uuid.NewRandom()
+			if err != nil {
+				return nil, process.errorf("generating a random name for a file literal: %s", err)
+			}
+			prefixDir := filepath.Join(process.runtime.InputsHost, randomid.String())
+			f.Path = filepath.Join(prefixDir, f.Path)
+			f.Dirname = filepath.Join(prefixDir, f.Dirname)
 
 			//f.Path = "/inputs/" + f.Path
 			for _, expr := range secondaryFiles {
@@ -243,14 +250,29 @@ Loop:
 			if !ok {
 				continue Loop
 			}
-			f, err := process.resolveDir(v)
+			// var alwayLoadListing = true
+			var loadListingType = cwl.NO_LISTING
+			if rll := process.tool.RequiresLoadListing(); rll != nil {
+				loadListingType = rll.LoadListing
+			} else if riwd := process.tool.RequiresInitialWorkDir(); riwd != nil {
+				// v1.0 No RequiresLoadListing Setting， always deep listing
+				// loadListingType = cwl.SHALLOW_LISTING
+				loadListingType = cwl.DEEP_LISTING
+			}
+			f, err := process.resolveDir(v, loadListingType)
 			if err != nil {
 				return nil, err
 			}
 			// use process.runtime.RootHost as /
 			// TODO 这种命名方式可能导致同名文件冲突问题
-			f.Path = filepath.Join(process.runtime.RootHost, "/inputs/", f.Path)
-
+			randomid, err := uuid.NewRandom()
+			if err != nil {
+				return nil, process.errorf("generating a random path for a input dir literal: %s", err)
+			}
+			// prefixDir := filepath.Join(process.runtime.InputsHost, randomid.String())
+			// f.Path = filepath.Join(prefixDir, f.Path)
+			// f.Dirname = filepath.Join(prefixDir, f.Dirname)
+			f.Path = filepath.Join(process.runtime.InputsHost, randomid.String(), f.Path)
 			// TODO resolve directory
 			return []*Binding{
 				{clb, ti, f, key, nil, name},
@@ -331,7 +353,10 @@ func (process *Process) MigrateInputs() (err error) {
 	//if err = fs.EnsureDir(process.runtime.RootHost, 0750); err != nil {
 	//  return err
 	//}
-	if err = fs.EnsureDir(process.runtime.RootHost+"/inputs", 0750); err != nil {
+	if err = fs.EnsureDir(process.runtime.RootHost, 0750); err != nil {
+		return err
+	}
+	if err = fs.EnsureDir(process.runtime.InputsHost, 0750); err != nil {
 		return err
 	}
 	for _, filei := range files {
@@ -359,7 +384,13 @@ func (process *Process) MigrateInputs() (err error) {
 			}
 		}
 	}
-	for _, filei := range files {
+	var migrateFile = func(filei cwl.File) (err error) {
+		if !path.IsAbs(filei.Path) {
+			filei.Path = path.Join(process.runtime.InputsHost, filei.Path)
+		}
+		if err = fs.EnsureDir(path.Dir(filei.Path), 0750); err != nil {
+			return err
+		}
 		if filei.Contents != "" && filei.Location == "" && filei.Path != "" {
 			if _, err = fs.Create(filei.Path, filei.Contents); err != nil {
 				return err
@@ -367,21 +398,94 @@ func (process *Process) MigrateInputs() (err error) {
 		} else if err = fs.Migrate(filei.Location, filei.Path); err != nil {
 			return err
 		}
+		return nil
 	}
-	for _, diri := range dirs {
+	for _, filei := range files {
+		if err = migrateFile(filei); err != nil {
+			return err
+		}
+	}
+	var migrateDir func(cwl.Directory) error
+	migrateDir = func(diri cwl.Directory) (err error) {
+		if !path.IsAbs(diri.Path) {
+			diri.Path = path.Join(process.runtime.InputsHost, diri.Path)
+		}
 		// 没有 listing 的文件夹 直接迁移；有 listing 的文件夹 按 listing 创建
 		// https://common-workflow-lab.github.io/CWLDotNet/reference/CWLDotNet.Directory.html
 		if len(diri.Listing) != 0 {
-			// TODO 递归创建
-			return process.error("dir listing stage not ok yet !")
+			if err = fs.EnsureDir(diri.Path, 0750); err != nil {
+				return err
+			}
+			for _, entryj := range diri.Listing {
+				filej, dirj, err := entryj.Value()
+				if err != nil {
+					return err
+				}
+				if filej != nil {
+					if !path.IsAbs(filej.Path) {
+						parts := strings.Split(filej.Path, "/")
+						if parts[len(parts)-2] == diri.Basename {
+							parts[len(parts)-2] = diri.Path
+							filej.Path = path.Join(parts[len(parts)-1:]...)
+						} else {
+							return fmt.Errorf("Unknown dir path")
+						}
+					}
+					if err = migrateFile(*filej); err != nil {
+						return err
+					}
+				}
+				if dirj != nil {
+					if !path.IsAbs(dirj.Path) {
+						parts := strings.Split(dirj.Path, "/")
+						if parts[0] == diri.Basename {
+							parts[0] = diri.Path
+							dirj.Path = path.Join(parts...)
+						} else {
+							return fmt.Errorf("Unknown dir path")
+						}
+					}
+					if err = migrateDir(*dirj); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
 		}
 		// if diri.Path == "" {
 		// 	diri.Path = path.Join(process.runtime.RootHost, "inputs", )
 		// }
 		// log.Println(diri.Location, diri.Path)
+		if err = fs.EnsureDir(path.Dir(diri.Path), 0750); err != nil {
+			return err
+		}
 		if err = fs.Migrate(diri.Location, diri.Path); err != nil {
 			return err
 		}
+		return nil
+	}
+	for _, diri := range dirs {
+		if err = migrateDir(diri); err != nil {
+			return err
+		}
+		// // 没有 listing 的文件夹 直接迁移；有 listing 的文件夹 按 listing 创建
+		// // https://common-workflow-lab.github.io/CWLDotNet/reference/CWLDotNet.Directory.html
+		// if len(diri.Listing) != 0 {
+		// 	if err = fs.EnsureDir(diri.Path, 0750); err != nil {
+		// 		return err
+		// 	}
+		// 	for _, filej := range diri.Listing {
+
+		// 	}
+		// 	return process.error("dir listing stage not ok yet !")
+		// }
+		// // if diri.Path == "" {
+		// // 	diri.Path = path.Join(process.runtime.RootHost, "inputs", )
+		// // }
+		// // log.Println(diri.Location, diri.Path)
+		// if err = fs.Migrate(diri.Location, diri.Path); err != nil {
+		// 	return err
+		// }
 	}
 
 	if riwd := process.tool.RequiresInitialWorkDir(); riwd != nil {
@@ -403,11 +507,57 @@ func (process *Process) initWorkDir(listing []cwl.FileDirExpDirent) error {
 			if err != nil {
 				return process.error(fmt.Sprintf("initWorkDir eval expression err %s", err))
 			}
-			filedir := cwl.FileDir{}
 			raw, err := json.Marshal(out)
 			if err != nil {
 				return process.error(fmt.Sprintf("initWorkDir eval Marshal err %s", err))
 			}
+			if len(listing) == 1 {
+				if e := strings.TrimSpace(string(v.Expression)); strings.HasPrefix(e, "$(inputs.") && strings.HasSuffix(e, ".listing)") {
+					// listing is a expression ?
+					// 推测为特殊逻辑: Listing 表达式
+
+					newlisting := make([]cwl.FileDir, 0)
+					err = json.Unmarshal(raw, &newlisting)
+					if err != nil {
+						return process.error(fmt.Sprintf("initWorkDir eval Unmarshal listing err %s", err))
+					}
+					for _, filediri := range newlisting {
+						filei, diri, err := filediri.Value()
+						if err != nil {
+							return process.error(fmt.Sprintf("initWorkDir filedir value err: %s", err))
+						} else if filei != nil {
+							filei.Path = filei.Basename
+							if err := process.initWorkDirFile(*filei); err != nil {
+								return err
+							}
+						} else if diri != nil {
+							diri.Path = diri.Basename
+							if err := process.initWorkDirDirectory(*diri); err != nil {
+								return err
+							}
+						}
+					}
+					return nil
+					// inName := e[len("$(inputs.") : len(e)-len(".listing)")]
+					// _ = inName
+					// inVale, got := (*process.inputs)[inName]
+					// if !got {
+					// 	return process.error(fmt.Sprintf("initWorkDir eval listing err: no such input %s", inName))
+					// }
+					// dirIn, got := inVale.(cwl.Directory)
+					// if !got {
+					// 	var dirPtr *cwl.Directory
+					// 	if dirPtr, got = inVale.(*cwl.Directory); got {
+					// 		dirIn = *dirPtr
+					// 	}
+					// }
+					// if !got {
+					// 	return process.error(fmt.Sprintf("initWorkDir eval listing err: input is not dir %s", inName))
+					// }
+					// if dirIn.Location !
+				}
+			}
+			filedir := cwl.FileDir{}
 			err = json.Unmarshal(raw, &filedir)
 			if err != nil {
 				return process.error(fmt.Sprintf("initWorkDir eval Unmarshal err %s", err))
