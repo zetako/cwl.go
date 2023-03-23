@@ -131,13 +131,8 @@ func (e *Engine) SetDefaultExecutor(exec Executor) {
 	e.executor = exec
 }
 
-func (e *Engine) Run() (outs cwl.Values, err error) {
-	_, err = e.MainProcess()
-	if err != nil {
-		return nil, err
-	}
-	if _, isCLT := e.process.root.Process.(*cwl.CommandLineTool); isCLT {
-		p := e.process
+func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
+	if _, isCLT := p.root.Process.(*cwl.CommandLineTool); isCLT {
 		limits, err := p.ResourcesLimites()
 		runtime := e.executor.QueryRuntime(*limits)
 		p.SetRuntime(runtime)
@@ -154,12 +149,22 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 		p.SetRuntime(Runtime{ExitCode: &retCode})
 		outputs, err := p.Outputs(e.outputFS)
 		return outputs, err
-	} else if _, isExpTool := e.process.root.Process.(*cwl.ExpressionTool); isExpTool {
+	} else if _, isExpTool := p.root.Process.(*cwl.ExpressionTool); isExpTool {
 		outputs, err := e.process.RunExpression()
 		return outputs, err
+	} else if _, isWorkflow := p.root.Process.(*cwl.Workflow); isWorkflow {
+		outputs, err := e.process.RunWorflow()
+		return outputs, err
 	}
-	// TODO workflow run
-	return nil, fmt.Errorf("workflow is not ok yet ")
+	return nil, fmt.Errorf("unknown process class  ")
+}
+
+func (e *Engine) Run() (outs cwl.Values, err error) {
+	_, err = e.MainProcess()
+	if err != nil {
+		return nil, err
+	}
+	return e.RunProcess(e.process)
 }
 
 // 解析但不执行
