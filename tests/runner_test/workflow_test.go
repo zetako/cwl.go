@@ -14,10 +14,12 @@ func TestCWLR2Workflow_run20(t *testing.T) {
 }
 
 func TestCWLWorkflow_workon(t *testing.T) {
-	e, err := newEngine("v1.0/any-type-compat.cwl", "v1.0/any-type-job.json") // 1
+	e, err := newEngine("v1.0/count-lines1-wf.cwl", "v1.0/wc-job.json") // 1
 	Expect(t, err).ToBe(nil)
+	t.Log("Break Here")
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
+	t.Log("Break Here")
 	//t.Logf("%#v", p.Root().Process)
 	tool := p.Root().Process.(*cwl.Workflow)
 	_ = tool

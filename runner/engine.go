@@ -2,6 +2,7 @@ package runner
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/user"
@@ -150,10 +151,10 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		outputs, err := p.Outputs(e.outputFS)
 		return outputs, err
 	} else if _, isExpTool := p.root.Process.(*cwl.ExpressionTool); isExpTool {
-		outputs, err := e.process.RunExpression()
+		outputs, err := p.RunExpression()
 		return outputs, err
 	} else if _, isWorkflow := p.root.Process.(*cwl.Workflow); isWorkflow {
-		outputs, err := e.process.RunWorflow()
+		outputs, err := p.RunWorkflow(e)
 		return outputs, err
 	}
 	return nil, fmt.Errorf("unknown process class  ")
@@ -317,4 +318,9 @@ func (e *Engine) MainProcess() (*Process, error) {
 	process.loadRuntime()
 	e.process = process
 	return process, nil
+}
+
+func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, err error) {
+	// TODO
+	return nil, errors.New("NOT IMPLEMENTED")
 }
