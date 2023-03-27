@@ -16,7 +16,7 @@ func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
 		return nil, fmt.Errorf("not Workflow")
 	}
 
-	wfRunner, err := NewWorkflowRunner(e, wf)
+	wfRunner, err := NewWorkflowRunner(e, wf, p.inputs)
 	if err != nil {
 		return nil, err
 	}

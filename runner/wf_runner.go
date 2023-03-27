@@ -1,8 +1,8 @@
 package runner
 
 import (
-	"errors"
 	"github.com/lijiang2014/cwl.go"
+	"log"
 )
 
 type WorkflowRunner struct {
@@ -11,6 +11,7 @@ type WorkflowRunner struct {
 	neededConditions  []Condition
 	steps             []StepRunner
 	reachedConditions []Condition
+	parameter         *cwl.Values
 }
 
 func (r *WorkflowRunner) MeetConditions(now []Condition) bool {
@@ -31,27 +32,39 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		runningCounter   int = 0
 		conditionChannel chan Condition
 	)
+	conditionChannel = make(chan Condition)
 	for {
 		// 遍历一遍，全部尝试启动
+		var tmpSteps []StepRunner
 		for index := range r.steps {
 			if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel) {
 				runningCounter++
-				r.steps = append(r.steps[:index], r.steps[index+1:]...)
+			} else {
+				tmpSteps = append(tmpSteps, r.steps[index])
 			}
 		}
+		r.steps = tmpSteps
 
 		// 接收新完成的条件
 		tmpCondition = <-conditionChannel
 		moreCondition = true
-		if _, ok := tmpCondition.(StepDoneCondition); ok {
+		if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
+			mergeCwlValues(r.parameter, doneCond.out)
 			runningCounter--
+		}
+		if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
+			return errCond.err
 		}
 		r.reachedConditions = append(r.reachedConditions, tmpCondition)
 		for moreCondition {
 			select {
 			case tmpCondition = <-conditionChannel:
-				if _, ok := tmpCondition.(StepDoneCondition); ok {
+				if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
+					mergeCwlValues(r.parameter, doneCond.out)
 					runningCounter--
+				}
+				if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
+					return errCond.err
 				}
 				r.reachedConditions = append(r.reachedConditions, tmpCondition)
 				moreCondition = true
@@ -71,28 +84,51 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 func (r *WorkflowRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool) {
 	if r.MeetConditions(now) {
 		go func() {
-			_ = r.Run(channel)
+			err := r.Run(channel)
+			if err != nil {
+				log.Println(err)
+			}
 		}()
 		return true
 	}
 	return false
 }
 
-func NewWorkflowRunner(e *Engine, wf *cwl.Workflow) (*WorkflowRunner, error) {
+func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*WorkflowRunner, error) {
 	r := &WorkflowRunner{
 		engine:   e,
 		workflow: wf,
 	}
 	// 初始化需求的条件 TODO
 	// 初始化每一步的执行器
+	r.parameter = inputs
 	r.steps = []StepRunner{}
 	for _, step := range wf.Steps {
-		tmp, err := NewStepRunner(e, &step)
+		tmp, err := NewStepRunner(e, &step, r.parameter)
 		if err != nil {
 			return nil, err
 		}
 		r.steps = append(r.steps, tmp)
 	}
-	// 初始化当前条件 TODO
-	return nil, errors.New("NOT IMPLEMENTED")
+	// 初始化输入条件
+	r.reachedConditions = []Condition{}
+	for key, value := range *inputs {
+		r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
+			key:   key,
+			value: value,
+		})
+	}
+	return r, nil
+}
+
+func mergeCwlValues(base *cwl.Values, others ...*cwl.Values) *cwl.Values {
+	if base == nil {
+		base = &cwl.Values{}
+	}
+	for _, other := range others {
+		for key, value := range *other {
+			(*base)[key] = value
+		}
+	}
+	return base
 }

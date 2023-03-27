@@ -32,7 +32,7 @@ type Engine struct {
 	RootHost   string
 	InputsHost string
 	Log        *MainLog //
-	// executer
+	// executor
 }
 
 type EngineConfig struct {
@@ -321,6 +321,51 @@ func (e *Engine) MainProcess() (*Process, error) {
 }
 
 func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, err error) {
-	// TODO
-	return nil, errors.New("NOT IMPLEMENTED")
+	// 初始化
+	process = &Process{
+		fs:  e.inputFS,
+		env: map[string]string{},
+		Log: e.Log.Log,
+	}
+
+	// 基本判断
+	cwlFile := step.Run.ID
+	if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
+		return nil, errors.New("not a run cwl sub-process")
+	}
+	// 读文件
+	cwlFileReader, err := e.importer.Load(cwlFile)
+	if err != nil {
+		return nil, err
+	}
+	cwlFileJSON, err := cwl.Y2J(cwlFileReader)
+	if err != nil {
+		return nil, err
+	}
+	cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	// 生成
+	if err = json.Unmarshal(cwlFileJSON, &process.root); err != nil {
+		return nil, err
+	}
+
+	// 其他处理（来自MainProcess）
+	process.SetRuntime(defaultRuntime)
+	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
+		process.tool = tool
+	}
+	inputs := process.root.Process.Base().Inputs
+	process.inputs = &cwl.Values{}
+	setDefault(process.inputs, inputs)
+
+	if err := process.initJVM(); err != nil {
+		return nil, err
+	}
+
+	process.runtime.RootHost = e.RootHost
+	process.loadRuntime()
+	return
 }

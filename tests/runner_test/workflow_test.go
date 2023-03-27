@@ -20,6 +20,10 @@ func TestCWLWorkflow_workon(t *testing.T) {
 	p, err := e.MainProcess()
 	Expect(t, err).ToBe(nil)
 	t.Log("Break Here")
+	outs, err := e.Run()
+	Expect(t, err).ToBe(nil)
+	t.Log(outs)
+	t.Log("Break Here")
 	//t.Logf("%#v", p.Root().Process)
 	tool := p.Root().Process.(*cwl.Workflow)
 	_ = tool
