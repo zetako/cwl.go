@@ -16,7 +16,7 @@ type Condition interface {
 
 type InputParamCondition struct {
 	step  *cwl.WorkflowStep
-	input *cwl.WorkflowStepInput
+	input cwl.WorkflowStepInput
 }
 
 func (i InputParamCondition) Meet(condition []Condition) bool {
@@ -31,14 +31,15 @@ func (i InputParamCondition) Meet(condition []Condition) bool {
 	if strings.Contains(source, "/") {
 		// 需要匹配输出条件
 		for _, cond := range condition {
-			if outCond, ok := cond.(OutputParamCondition); ok {
-				tmp := outCond.step.ID + outCond.output.ID
+			if outCond, ok := cond.(*OutputParamCondition); ok {
+				tmp := outCond.step.ID + "/" + outCond.output.ID
 				if tmp == source {
 					return true
 				}
 			}
 		}
 	} else {
+		// 需匹配初始条件
 		for _, cond := range condition {
 			if initCond, ok := cond.(WorkflowInitCondition); ok {
 				if initCond.key == source {
@@ -68,8 +69,9 @@ func (o OutputParamCondition) Meet(condition []Condition) bool {
 }
 
 type StepDoneCondition struct {
-	step *cwl.WorkflowStep
-	out  *cwl.Values
+	step    *cwl.WorkflowStep
+	out     *cwl.Values
+	runtime Runtime
 }
 
 func (s StepDoneCondition) Meet(condition []Condition) bool {

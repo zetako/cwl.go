@@ -151,7 +151,6 @@ func (p *Process) loadRuntime() {
 	p.vm.Set("runtime", p.runtime)
 }
 
-//
 func (p *Process) RunExpression() (cwl.Values, error) {
 	tool, ok := p.root.Process.(*cwl.ExpressionTool)
 	if !ok {

@@ -46,8 +46,13 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		}
 		return err
 	}
-	// 2. 处理Input TODO
-	r.process.inputs = r.parameter
+	// 2. 处理Input
+	// TODO 必须根据每一步的需要单独绑定
+	//r.process.inputs = r.parameter
+	r.process.inputs = &cwl.Values{}
+	for _, in := range r.step.In {
+		(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
+	}
 
 	// 3. 然后使用 Engine.RunProcess()
 	outs, err := r.engine.RunProcess(r.process)
@@ -66,8 +71,9 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		}
 	}
 	conditions <- &StepDoneCondition{
-		step: r.step,
-		out:  &outs,
+		step:    r.step,
+		out:     &outs,
+		runtime: r.process.runtime,
 	}
 	// 4. 返回
 	return nil
@@ -75,6 +81,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 
 func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool) {
 	if r.MeetConditions(now) {
+		log.Println("Run Step: ", r.step.ID)
 		go func() {
 			err := r.Run(channel) // 暂时不管错误，最好把他输出到Log那里
 			if err != nil {
@@ -99,7 +106,7 @@ func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRu
 	for _, input := range step.In {
 		ret.neededCondition = append(ret.neededCondition, InputParamCondition{
 			step:  ret.step,
-			input: &input,
+			input: input,
 		})
 	}
 	// 返回

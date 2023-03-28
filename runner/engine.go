@@ -354,6 +354,8 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 
 	// 其他处理（来自MainProcess）
 	process.SetRuntime(defaultRuntime)
+	process.runtime.RootHost = e.RootHost
+	process.runtime.InputsHost = e.InputsHost
 	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
 		process.tool = tool
 	}
