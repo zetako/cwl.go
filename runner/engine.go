@@ -180,8 +180,15 @@ func (e *Engine) ResolveProcess(process *Process) error {
 		return err
 	}
 	//
+	//if process.runtime.RootHost == "" {
+	//	process.runtime.RootHost = e.RootHost
+	//}
+	//if process.runtime.InputsHost == "" {
+	//	process.runtime.InputsHost = e.InputsHost
+	//}
 	process.runtime.RootHost = e.RootHost
 	process.runtime.InputsHost = e.InputsHost
+
 	process.loadRuntime()
 	// Bind inputs to values.
 	//
@@ -354,8 +361,8 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 
 	// 其他处理（来自MainProcess）
 	process.SetRuntime(defaultRuntime)
-	process.runtime.RootHost = e.RootHost
-	process.runtime.InputsHost = e.InputsHost
+	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
+	process.runtime.InputsHost = path.Join(e.InputsHost, step.ID)
 	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
 		process.tool = tool
 	}
@@ -366,8 +373,6 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	if err := process.initJVM(); err != nil {
 		return nil, err
 	}
-
-	process.runtime.RootHost = e.RootHost
 	process.loadRuntime()
 	return
 }

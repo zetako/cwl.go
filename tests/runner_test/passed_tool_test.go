@@ -130,6 +130,10 @@ func TestCWLR2_run23(t *testing.T) {
 	testByID(t, 23)
 }
 
+func TestCWLR2_run24(t *testing.T) {
+	testByID(t, 24)
+}
+
 // ✅ 1020 envTool 3/14
 func TestCWLR2_run34(t *testing.T) {
 	testByID(t, 34)

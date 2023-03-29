@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"errors"
 	"github.com/lijiang2014/cwl.go"
 	"log"
 	"path"
@@ -89,6 +90,22 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 			break
 		}
 	}
+	// 生成输出
+	outputs := cwl.Values{}
+	for _, output := range r.workflow.Outputs {
+		if workflowOutput, ok := output.(*cwl.WorkflowOutputParameter); ok {
+			// 目前仅考虑单个输出 TODO
+			value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
+			if !ok {
+				return errors.New("输出不匹配")
+			}
+			key := workflowOutput.ID
+			outputs[key] = value
+		} else {
+			return errors.New("输出不匹配")
+		}
+	}
+	channel <- &WorkflowEndCondition{Out: outputs}
 	return nil
 }
 
@@ -125,6 +142,14 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	// 初始化输入条件
 	r.reachedConditions = []Condition{}
 	for key, value := range *inputs {
+		//// 文件转换为绝对路径 （不需要？）
+		//if file, ok := value.(cwl.File); ok {
+		//	if !path.IsAbs(file.Location) {
+		//		file.Location = path.Join(e.importer.(*DefaultImporter).BaseDir, file.Location)
+		//	}
+		//	value = file
+		//	(*inputs)[key] = value
+		//}
 		r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
 			key:   key,
 			value: value,

@@ -88,7 +88,7 @@ func (s StepErrorCondition) Meet(condition []Condition) bool {
 }
 
 type WorkflowEndCondition struct {
-	Out map[string]interface{}
+	Out cwl.Values
 }
 
 func (w WorkflowEndCondition) Meet(condition []Condition) bool {
