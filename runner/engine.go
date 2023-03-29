@@ -335,28 +335,35 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 		Log: e.Log.Log,
 	}
 
-	// 基本判断
-	cwlFile := step.Run.ID
-	if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
-		return nil, errors.New("not a run cwl sub-process")
-	}
-	// 读文件
-	cwlFileReader, err := e.importer.Load(cwlFile)
-	if err != nil {
-		return nil, err
-	}
-	cwlFileJSON, err := cwl.Y2J(cwlFileReader)
-	if err != nil {
-		return nil, err
-	}
-	cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
-	if err != nil {
-		return nil, err
-	}
+	if step.Run.Process != nil {
+		if process.root == nil {
+			process.root = &cwl.Root{}
+		}
+		process.root.Process = step.Run.Process
+	} else {
+		// 基本判断
+		cwlFile := step.Run.ID
+		if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
+			return nil, errors.New("not a run cwl sub-process")
+		}
+		// 读文件
+		cwlFileReader, err := e.importer.Load(cwlFile)
+		if err != nil {
+			return nil, err
+		}
+		cwlFileJSON, err := cwl.Y2J(cwlFileReader)
+		if err != nil {
+			return nil, err
+		}
+		cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
+		if err != nil {
+			return nil, err
+		}
 
-	// 生成
-	if err = json.Unmarshal(cwlFileJSON, &process.root); err != nil {
-		return nil, err
+		// 生成
+		if err = json.Unmarshal(cwlFileJSON, &process.root); err != nil {
+			return nil, err
+		}
 	}
 
 	// 其他处理（来自MainProcess）

@@ -32,7 +32,8 @@ const (
 )
 
 // PickValueMethod enum
-//     Picking non-null values among inbound data links, described in [WorkflowStepInput](#WorkflowStepInput).
+//
+//	Picking non-null values among inbound data links, described in [WorkflowStepInput](#WorkflowStepInput).
 type PickValueMethod string
 
 const (
@@ -46,7 +47,7 @@ type WorkflowOutputParameter struct {
 	OutputSource        ArrayString      `json:"outputSource,omitempty"`
 	LinkMerge           LinkMergeMethod  `json:"linkMerge,omitempty" salad:"default:merge_nested"`
 	PickValue           *PickValueMethod `json:"pickValue,omitempty"`
-	Type                SaladType         `json:"type" salad:"type"`
+	Type                SaladType        `json:"type" salad:"type"`
 }
 
 // Sink
@@ -104,10 +105,24 @@ type Run struct {
 }
 
 func (e *Run) UnmarshalJSON(data []byte) error {
-	var id string
+	var (
+		id          string
+		CmdLineTool CommandLineTool
+		ExpTool     ExpressionTool
+	)
 	err := json.Unmarshal(data, &id)
 	if err == nil {
 		e.ID = id
+		return nil
+	}
+	err = json.Unmarshal(data, &CmdLineTool)
+	if err == nil && CmdLineTool.Class == "CommandLineTool" {
+		e.Process = &CmdLineTool
+		return nil
+	}
+	err = json.Unmarshal(data, &ExpTool)
+	if err == nil && ExpTool.Class == "ExpressionTool" {
+		e.Process = &ExpTool
 		return nil
 	}
 	// TODO UnmarshalJSON Process
@@ -149,4 +164,3 @@ type MultipleInputFeatureRequirement struct {
 type StepInputExpressionRequirement struct {
 	BaseRequirement `json:",inline"`
 }
-
