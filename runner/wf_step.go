@@ -37,6 +37,10 @@ func (r *RegularRunner) MeetConditions(now []Condition) bool {
 }
 
 func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
+	// 0. 如果需要Scatter，任务交由RunScatter
+	if r.step.Scatter != nil && len(r.step.Scatter) > 0 {
+		return r.RunScatter(conditions)
+	}
 	// 1. 先创建对应的 Process
 	r.process, err = r.engine.GenerateSubProcess(r.step)
 	if err != nil {

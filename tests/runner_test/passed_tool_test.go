@@ -130,8 +130,19 @@ func TestCWLR2_run23(t *testing.T) {
 	testByID(t, 23)
 }
 
+// ✅ workflow with cwl file step
 func TestCWLR2_run24(t *testing.T) {
 	testByID(t, 24)
+}
+
+// ✅ workflow with embedded step
+func TestCWLR2_run25(t *testing.T) {
+	testByID(t, 25)
+}
+
+// ✅ workflow with scatter step
+func TestCWLR2_run26(t *testing.T) {
+	testByID(t, 26)
 }
 
 // ✅ 1020 envTool 3/14
