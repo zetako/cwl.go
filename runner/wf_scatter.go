@@ -9,14 +9,15 @@ import (
 func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	var (
 		totalTask    int
-		runningTask  int                    = 0
-		internalChan chan Condition         = make(chan Condition)
-		process      *Process               = nil
-		isSuccess    bool                   = true // 标记所有任务是否成功
-		allOutputs   []ScatterDoneCondition        // 用以存储每一步的输出
+		runningTask  int            = 0
+		internalChan chan Condition = make(chan Condition)
+		process      *Process       = nil
+		isSuccess    bool           = true // 标记所有任务是否成功
+		allInputs    []cwl.Values
+		allOutputs   []ScatterDoneCondition // 用以存储每一步的输出
 		output       cwl.Values
 	)
-	totalTask = len((*r.parameter)[r.step.Scatter[0]].([]cwl.Value))
+	totalTask, allInputs, err = r.getAllScatterInputs()
 	for i := 0; i < totalTask; i++ {
 		// 1. Scatter的每个任务都需要创建Process
 		process, err = r.engine.GenerateSubProcess(r.step)
@@ -24,16 +25,8 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			isSuccess = false
 			break
 		}
-		// 2. 分别绑定输入
-		process.inputs = &cwl.Values{}
-		for _, in := range r.step.In {
-			if r.needScatter(in.ID) { // 是需要分发的变量
-				(*process.inputs)[in.ID] = (*r.parameter)[in.Source[0]].([]cwl.Value)[i]
-			} else { // 不需要分发的变量直接拷贝就行了
-				// 相似的，目前只考虑只需要一个值的情况
-				(*process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
-			}
-		}
+		// 2. 绑定输入
+		process.inputs = &allInputs[i]
 
 		// 3. 并行执行（?）
 		go r.scatterTaskWrapper(process, internalChan, i)
@@ -122,8 +115,8 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 
 // needScatter 判断对应ID的变量是否需要分发
 func (r *RegularRunner) needScatter(key string) bool {
-	for _, entry := range r.step.Scatter {
-		if entry == key {
+	for _, entity := range r.step.Scatter {
+		if entity == key {
 			return true
 		}
 	}
@@ -150,4 +143,93 @@ type ScatterDoneCondition struct {
 // Meet 无意义的判断，始终满足
 func (ScatterDoneCondition) Meet(condition []Condition) bool {
 	return true
+}
+
+// getTotalScatterTask 获取Scatter任务的总数
+func (r *RegularRunner) getTotalScatterTask() int {
+	var (
+		scatterTarget string
+		scatterSource []string
+		ret           int
+	)
+	scatterTarget = r.step.Scatter[0]
+	for _, inEntity := range r.step.In {
+		if inEntity.ID == scatterTarget {
+			scatterSource = inEntity.Source
+		}
+	}
+	ret = 0
+	for _, src := range scatterSource {
+		bindSrc := (*r.parameter)[src]
+		if bindSrcAsArray, ok := bindSrc.([]cwl.Value); ok {
+			ret += len(bindSrcAsArray)
+		} else {
+			ret++
+		}
+	}
+	return ret
+}
+
+func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
+	var (
+		scatterCount   int
+		scatterTargets []string
+		scatterSources = map[string]cwl.ArrayString{}
+		scatterValues  = map[string][]cwl.Value{}
+		scatterInputs  []cwl.Values
+	)
+	// ==================== 参考 ==================== //
+	// 1. 计算scatter总数
+	// 1.1 获取需要scatter的key的所有的source
+	scatterTargets = r.step.Scatter
+	for _, target := range scatterTargets {
+		scatterSources[target] = nil
+	}
+	for _, inEntity := range r.step.In {
+		if _, ok := scatterSources[inEntity.ID]; ok {
+			scatterSources[inEntity.ID] = inEntity.Source
+		}
+	}
+	// 1.2 查找参数，根据这些source创造一个values映射
+	for key, sources := range scatterSources {
+		scatterValues[key] = []cwl.Value{}
+		for _, source := range sources {
+			tmp, ok := (*r.parameter)[source]
+			if !ok {
+				return -1, nil, errors.New("输入不匹配")
+			}
+			if tmpList, ok := tmp.([]cwl.Value); ok {
+				scatterValues[key] = append(scatterValues[key], tmpList...)
+			} else {
+				scatterValues[key] = append(scatterValues[key], tmp)
+			}
+		}
+	}
+	// 1.3 计算出总scatter量
+	scatterCount = -1
+	for _, values := range scatterValues {
+		if scatterCount == -1 {
+			scatterCount = len(values)
+		} else if scatterCount != len(values) {
+			return -1, nil, errors.New("不一致的Scatter数量")
+		}
+	}
+	// 2. 产生各scatter任务需要的inputs
+	scatterInputs = make([]cwl.Values, scatterCount)
+	for idx := range scatterInputs {
+		scatterInputs[idx] = cwl.Values{}
+	}
+	for _, in := range r.step.In {
+		if r.needScatter(in.ID) { // 是需要分发的变量
+			for index, input := range scatterInputs {
+				input[in.ID] = scatterValues[in.ID][index]
+			}
+		} else { // 不需要分发的变量直接拷贝就行了
+			// 相似的，目前只考虑只需要一个值的情况
+			for _, input := range scatterInputs {
+				input[in.ID] = (*r.parameter)[in.Source[0]]
+			}
+		}
+	}
+	return scatterCount, scatterInputs, nil
 }
