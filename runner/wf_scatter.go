@@ -94,8 +94,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		for key, value := range *doneCond.out {
 			if _, ok := output[key]; !ok {
 				output[key] = []cwl.Value{}
+				output[key] = make([]cwl.Value, totalTask)
 			}
-			output[key] = append(output[key].([]cwl.Value), value)
+			output[key].([]cwl.Value)[doneCond.scatterID] = value
 		}
 	}
 	condition <- &StepDoneCondition{
