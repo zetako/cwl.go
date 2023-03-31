@@ -178,7 +178,6 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 		scatterValues  = map[string][]cwl.Value{}
 		scatterInputs  []cwl.Values
 	)
-	// ==================== 参考 ==================== //
 	// 1. 计算scatter总数
 	// 1.1 获取需要scatter的key的所有的source
 	scatterTargets = r.step.Scatter
@@ -191,16 +190,43 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 		}
 	}
 	// 1.2 查找参数，根据这些source创造一个values映射
+	//    - scatter规则目前不确定
+	//    - 目前的行为为：若有多个sources，直接分发sources；若只有单个sources，拆分sources数组
+	//    - 上述行为很可能不是正确实现
 	for key, sources := range scatterSources {
 		scatterValues[key] = []cwl.Value{}
-		for _, source := range sources {
+		/* ==================== Archive ==================== */
+		// 老版本，会拆分所有sources的所有数组
+		//for _, source := range sources {
+		//	tmp, ok := (*r.parameter)[source]
+		//	if !ok {
+		//		return -1, nil, errors.New("输入不匹配")
+		//	}
+		//	if tmpList, ok := tmp.([]cwl.Value); ok {
+		//		scatterValues[key] = append(scatterValues[key], tmpList...)
+		//	} else {
+		//		scatterValues[key] = append(scatterValues[key], tmp)
+		//	}
+		//}
+		/* ==================== Archive ==================== */
+
+		if len(sources) == 1 { // 仅有单一source
+			source := sources[0]
 			tmp, ok := (*r.parameter)[source]
 			if !ok {
-				return -1, nil, errors.New("输入不匹配")
+				return -1, nil, errors.New("没有匹配的输入")
 			}
 			if tmpList, ok := tmp.([]cwl.Value); ok {
 				scatterValues[key] = append(scatterValues[key], tmpList...)
-			} else {
+			} else { // 仅有一个source，source又不是数组，就没法分发了
+				return -1, nil, errors.New("没有需要分发的输入")
+			}
+		} else { // 有多个source，不用拆分数组
+			for _, source := range sources {
+				tmp, ok := (*r.parameter)[source]
+				if !ok {
+					return -1, nil, errors.New("没有匹配的输入")
+				}
 				scatterValues[key] = append(scatterValues[key], tmp)
 			}
 		}

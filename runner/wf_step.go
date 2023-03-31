@@ -42,14 +42,15 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		return r.RunScatter(conditions)
 	}
 	// 1. 先创建对应的 Process
-	r.process, err = r.engine.GenerateSubProcess(r.step)
-	if err != nil {
-		conditions <- &StepErrorCondition{
-			step: r.step,
-			err:  err,
-		}
-		return err
-	}
+	// 已经在创建 RegularRunner 时处理，不再需要
+	//r.process, err = r.engine.GenerateSubProcess(r.step)
+	//if err != nil {
+	//	conditions <- &StepErrorCondition{
+	//		step: r.step,
+	//		err:  err,
+	//	}
+	//	return err
+	//}
 	// 2. 处理Input
 	// TODO 必须根据每一步的需要单独绑定
 	//r.process.inputs = r.parameter
@@ -98,6 +99,9 @@ func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Cond
 }
 
 func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRunner, error) {
+	var (
+		err error
+	)
 	// 目前返回的均为RegularRunner，未来可能考虑返回WorkflowRunner
 	ret := RegularRunner{
 		neededCondition: []Condition{},
@@ -112,6 +116,11 @@ func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRu
 			step:  ret.step,
 			input: input,
 		})
+	}
+	// 创建process
+	ret.process, err = ret.engine.GenerateSubProcess(ret.step)
+	if err != nil {
+		return nil, err
 	}
 	// 返回
 	return &ret, nil
