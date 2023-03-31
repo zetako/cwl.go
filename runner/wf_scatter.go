@@ -201,6 +201,7 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 	//    - scatter规则目前不确定
 	//    - 目前的行为为：若有多个sources，直接分发sources；若只有单个sources，拆分sources数组
 	//    - 上述行为很可能不是正确实现
+	//    - 该行为可能需要参考 linkMerge 的取值
 	for key, sources := range scatterSources {
 		scatterValues[key] = []cwl.Value{}
 		/* ==================== Archive ==================== */

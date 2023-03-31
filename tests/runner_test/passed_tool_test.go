@@ -150,6 +150,11 @@ func TestCWLR2_run27(t *testing.T) {
 	testByID(t, 27)
 }
 
+// ✅ workflow with scatter step; multiple sources in array type
+func TestCWLR2_run28(t *testing.T) {
+	testByID(t, 28)
+}
+
 // ✅ 1020 envTool 3/14
 func TestCWLR2_run34(t *testing.T) {
 	testByID(t, 34)
