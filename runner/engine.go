@@ -148,7 +148,10 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		p.JobID = pid
 		retCode, _ := <-ret
 		p.SetRuntime(Runtime{ExitCode: &retCode})
-		outputs, err := p.Outputs(e.outputFS)
+		if p.outputFS == nil {
+			p.outputFS = e.outputFS
+		}
+		outputs, err := p.Outputs(p.outputFS)
 		return outputs, err
 	} else if _, isExpTool := p.root.Process.(*cwl.ExpressionTool); isExpTool {
 		outputs, err := p.RunExpression()
@@ -180,14 +183,14 @@ func (e *Engine) ResolveProcess(process *Process) error {
 		return err
 	}
 	//
-	//if process.runtime.RootHost == "" {
-	//	process.runtime.RootHost = e.RootHost
-	//}
-	//if process.runtime.InputsHost == "" {
-	//	process.runtime.InputsHost = e.InputsHost
-	//}
-	process.runtime.RootHost = e.RootHost
-	process.runtime.InputsHost = e.InputsHost
+	if process.runtime.RootHost == "" {
+		process.runtime.RootHost = e.RootHost
+	}
+	if process.runtime.InputsHost == "" {
+		process.runtime.InputsHost = e.InputsHost
+	}
+	//process.runtime.RootHost = e.RootHost
+	//process.runtime.InputsHost = e.InputsHost
 
 	process.loadRuntime()
 	// Bind inputs to values.
@@ -369,7 +372,15 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	// 其他处理（来自MainProcess）
 	process.SetRuntime(defaultRuntime)
 	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
+	process.outputFS = &Local{
+		workdir:      process.runtime.RootHost,
+		CalcChecksum: false,
+	}
 	process.runtime.InputsHost = path.Join(e.InputsHost, step.ID)
+	process.inputFS = &Local{
+		workdir:      process.runtime.InputsHost,
+		CalcChecksum: true,
+	}
 	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
 		process.tool = tool
 	}

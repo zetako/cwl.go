@@ -11,20 +11,21 @@ import (
 )
 
 type Process struct {
-	root           *cwl.Root
-	tool           *cwl.CommandLineTool
-	inputs         *cwl.Values
-	runtime        Runtime
-	fs             Filesystem
-	bindings       []*Binding
-	expressionLibs []string
-	env            map[string]string
-	filesToCreate  []cwl.FileDir
-	shell          bool
-	resources      ResourcesLimites
-	stdout         string
-	stderr         string
-	stdin          string
+	root              *cwl.Root
+	tool              *cwl.CommandLineTool
+	inputs            *cwl.Values
+	runtime           Runtime
+	fs                Filesystem
+	inputFS, outputFS Filesystem
+	bindings          []*Binding
+	expressionLibs    []string
+	env               map[string]string
+	filesToCreate     []cwl.FileDir
+	shell             bool
+	resources         ResourcesLimites
+	stdout            string
+	stderr            string
+	stdin             string
 	*Log
 	*jsvm
 }

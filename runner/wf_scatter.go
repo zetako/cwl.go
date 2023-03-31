@@ -2,7 +2,9 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"path"
 )
 
 // RunScatter 运行需要分发任务的步骤
@@ -25,7 +27,13 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			isSuccess = false
 			break
 		}
-		// 2. 绑定输入
+		// 2. 设置输出 & 绑定输入
+		process.runtime.RootHost = path.Join(process.runtime.RootHost, fmt.Sprintf("scatter%d", i))
+		process.outputFS = &Local{
+			workdir:      process.runtime.RootHost,
+			CalcChecksum: false,
+		}
+		process.loadRuntime()
 		process.inputs = &allInputs[i]
 
 		// 3. 并行执行（?）
