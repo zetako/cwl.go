@@ -155,6 +155,11 @@ func TestCWLR2_run28(t *testing.T) {
 	testByID(t, 28)
 }
 
+// ✅ workflow with linkMerge param
+func TestCWLR2_run29(t *testing.T) {
+	testByID(t, 29)
+}
+
 // ✅ 1020 envTool 3/14
 func TestCWLR2_run34(t *testing.T) {
 	testByID(t, 34)

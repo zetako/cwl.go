@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"errors"
 	"github.com/lijiang2014/cwl.go"
 	"log"
 )
@@ -56,7 +57,32 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	//r.process.inputs = r.parameter
 	r.process.inputs = &cwl.Values{}
 	for _, in := range r.step.In {
-		(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
+		if len(in.Source) == 1 {
+			(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
+		} else {
+			switch in.LinkMerge {
+			case "merge_flattened":
+				var tmpInput []cwl.Value
+				for _, src := range in.Source {
+					tmp, ok := (*r.parameter)[src]
+					if !ok {
+						return errors.New("没有匹配的输入")
+					}
+					if tmpList, ok := tmp.([]cwl.Value); ok {
+						tmpInput = append(tmpInput, tmpList...)
+					} else { // 也有可能是单个元素
+						tmpInput = append(tmpInput, tmp)
+					}
+				}
+				(*r.process.inputs)[in.ID] = tmpInput
+				break
+			case "merge_nested":
+				fallthrough
+			default:
+				(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
+				break
+			}
+		}
 	}
 
 	// 3. 然后使用 Engine.RunProcess()

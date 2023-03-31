@@ -183,6 +183,7 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 	var (
 		scatterCount   int
 		scatterTargets []string
+		scatterSinks   = map[string]cwl.Sink{}
 		scatterSources = map[string]cwl.ArrayString{}
 		scatterValues  = map[string][]cwl.Value{}
 		scatterInputs  []cwl.Values
@@ -195,6 +196,7 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 	}
 	for _, inEntity := range r.step.In {
 		if _, ok := scatterSources[inEntity.ID]; ok {
+			scatterSinks[inEntity.ID] = inEntity.Sink
 			scatterSources[inEntity.ID] = inEntity.Source
 		}
 	}
@@ -220,6 +222,30 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 		//}
 		/* ==================== Archive ==================== */
 
+		/* ==================== Archive v2 ==================== */
+		// 这个版本仅考虑了单一输入和复数输入的差别
+		//if len(sources) == 1 { // 仅有单一source
+		//	source := sources[0]
+		//	tmp, ok := (*r.parameter)[source]
+		//	if !ok {
+		//		return -1, nil, errors.New("没有匹配的输入")
+		//	}
+		//	if tmpList, ok := tmp.([]cwl.Value); ok {
+		//		scatterValues[key] = append(scatterValues[key], tmpList...)
+		//	} else { // 仅有一个source，source又不是数组，就没法分发了
+		//		return -1, nil, errors.New("没有需要分发的输入")
+		//	}
+		//} else { // 有多个source，不用拆分数组
+		//	for _, source := range sources {
+		//		tmp, ok := (*r.parameter)[source]
+		//		if !ok {
+		//			return -1, nil, errors.New("没有匹配的输入")
+		//		}
+		//		scatterValues[key] = append(scatterValues[key], tmp)
+		//	}
+		//}
+		/* ==================== Archive v2 ==================== */
+
 		if len(sources) == 1 { // 仅有单一source
 			source := sources[0]
 			tmp, ok := (*r.parameter)[source]
@@ -231,13 +257,26 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 			} else { // 仅有一个source，source又不是数组，就没法分发了
 				return -1, nil, errors.New("没有需要分发的输入")
 			}
-		} else { // 有多个source，不用拆分数组
+		} else { // 有多个source，查看linkMerge方法
 			for _, source := range sources {
 				tmp, ok := (*r.parameter)[source]
 				if !ok {
 					return -1, nil, errors.New("没有匹配的输入")
 				}
-				scatterValues[key] = append(scatterValues[key], tmp)
+				switch scatterSinks[key].LinkMerge {
+				case "merge_flattened": // 需要拆分数组
+					if tmpList, ok := tmp.([]cwl.Value); ok {
+						scatterValues[key] = append(scatterValues[key], tmpList...)
+					} else { // 也有可能是单个元素
+						scatterValues[key] = append(scatterValues[key], tmp)
+					}
+					break
+				case "merge_nested": // 不需要拆分数组
+					fallthrough
+				default:
+					scatterValues[key] = append(scatterValues[key], tmp)
+					break
+				}
 			}
 		}
 	}
