@@ -20,18 +20,36 @@ type StepRunner interface {
 //   - 用来执行CommandLineTool和Expression
 //   - 原理上，应该也可以作为Workflow的执行器
 type RegularRunner struct {
-	neededCondition []Condition
-	engine          *Engine
-	step            *cwl.WorkflowStep
-	process         *Process
-	parameter       *cwl.Values
+	neededCondition    []Condition
+	engine             *Engine
+	step               *cwl.WorkflowStep
+	process            *Process
+	parameter          *cwl.Values
+	useWorkflowDefault map[string]bool
 }
 
 func (r *RegularRunner) MeetConditions(now []Condition) bool {
 	// 比较条件集
+	// 老的不考虑默认值的版本
+	//for _, need := range r.neededCondition {
+	//	if !need.Meet(now) {
+	//		return false
+	//	}
+	//}
 	for _, need := range r.neededCondition {
-		if !need.Meet(now) {
-			return false
+		inputCond, ok := need.(InputParamCondition)
+		if !ok {
+			if !need.Meet(now) {
+				return false
+			}
+		} else {
+			meet, useDefault := inputCond.MeetOrDefault(now)
+			if !meet {
+				return false
+			}
+			if useDefault {
+				r.useWorkflowDefault[inputCond.input.ID] = true
+			}
 		}
 	}
 	return true
@@ -57,7 +75,9 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	//r.process.inputs = r.parameter
 	r.process.inputs = &cwl.Values{}
 	for _, in := range r.step.In {
-		if len(in.Source) == 1 {
+		if _, ok := r.useWorkflowDefault[in.ID]; ok {
+			(*r.process.inputs)[in.ID] = in.Default
+		} else if len(in.Source) == 1 {
 			(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
 		} else {
 			switch in.LinkMerge {
@@ -130,11 +150,12 @@ func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRu
 	)
 	// 目前返回的均为RegularRunner，未来可能考虑返回WorkflowRunner
 	ret := RegularRunner{
-		neededCondition: []Condition{},
-		engine:          e,
-		step:            step,
-		process:         nil,
-		parameter:       param,
+		neededCondition:    []Condition{},
+		engine:             e,
+		step:               step,
+		process:            nil,
+		parameter:          param,
+		useWorkflowDefault: map[string]bool{},
 	}
 	// 生成条件集
 	for _, input := range step.In {

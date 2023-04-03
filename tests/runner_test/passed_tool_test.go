@@ -160,6 +160,26 @@ func TestCWLR2_run29(t *testing.T) {
 	testByID(t, 29)
 }
 
+// ✅ workflow no multipleInputFeatureRequirement
+func TestCWLR2_run30(t *testing.T) {
+	testByID(t, 30)
+}
+
+// ✅ workflow empty input
+func TestCWLR2_run31(t *testing.T) {
+	testByID(t, 31)
+}
+
+// ✅ workflow default + has input
+func TestCWLR2_run32(t *testing.T) {
+	testByID(t, 32)
+}
+
+// ✅ workflow default + use default
+func TestCWLR2_run33(t *testing.T) {
+	testByID(t, 33)
+}
+
 // ✅ 1020 envTool 3/14
 func TestCWLR2_run34(t *testing.T) {
 	testByID(t, 34)

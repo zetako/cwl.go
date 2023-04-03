@@ -23,6 +23,7 @@ type InputParamCondition struct {
 
 // Meet 在参数指定的条件列表下，本条件已经满足
 //   - 有对应的初始条件 WorkflowInitCondition 或者之前步骤的输出条件 OutputParamCondition
+//   - 如果有Default, 也是满足的
 func (i InputParamCondition) Meet(condition []Condition) bool {
 	// 暂时只进行最简单的判断，即：
 	//   1. 暂时只判断i.input.Source[0]
@@ -53,6 +54,16 @@ func (i InputParamCondition) Meet(condition []Condition) bool {
 		}
 	}
 	return false
+}
+
+func (i InputParamCondition) MeetOrDefault(condition []Condition) (meet, useDefault bool) {
+	if i.Meet(condition) {
+		return true, false
+	}
+	if i.input.Default != nil {
+		return true, true
+	}
+	return false, false
 }
 
 // OutputParamCondition 完成步骤后的输出

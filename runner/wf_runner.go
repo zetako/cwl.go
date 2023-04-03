@@ -45,7 +45,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		}
 	}
 	r.steps = tmpSteps
-	for {
+	for runningCounter > 0 {
 		// 接收新完成的条件
 		tmpCondition = <-conditionChannel
 		moreCondition = true
@@ -84,11 +84,6 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 			}
 		}
 		r.steps = tmpSteps
-
-		// 检查是否还有任务运行
-		if runningCounter <= 0 {
-			break
-		}
 	}
 	// 生成输出
 	outputs := cwl.Values{}

@@ -63,8 +63,9 @@ type WorkflowStepInput struct {
 	Sink         `json:",inline"`
 	LoadContents `json:",inline"`
 	Labeled      `json:",inline"`
-	Default      interface{} `json:"default,omitempty"`
-	ValueFrom    Expression  `json:"valueFrom,omitempty"`
+	//Default      interface{} `json:"default,omitempty"`
+	Default   Value      `json:"default,omitempty" salad:"value"`
+	ValueFrom Expression `json:"valueFrom,omitempty"`
 }
 
 type WorkflowStepOutput struct {
