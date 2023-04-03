@@ -105,11 +105,11 @@ func TestCWLR2_run19(t *testing.T) {
 	testByID(t, 19)
 }
 
-//// workflow
-//// ❌ any-type-compat.cwl v1.0/any-type-job.json
-//func TestCWLR2_run20(t *testing.T) {
-//  testByID(t, 20)
-//}
+// // workflow
+// ✅ workflow any type in
+func TestCWLR2_run20(t *testing.T) {
+	testByID(t, 20)
+}
 
 // ✅ 3/14
 func TestCWLR2_run21(t *testing.T) {
