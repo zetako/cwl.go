@@ -81,7 +81,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
 		} else {
 			switch in.LinkMerge {
-			case "merge_flattened":
+			case cwl.MERGE_FLATTENED:
 				var tmpInput []cwl.Value
 				for _, src := range in.Source {
 					tmp, ok := (*r.parameter)[src]
@@ -96,7 +96,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				}
 				(*r.process.inputs)[in.ID] = tmpInput
 				break
-			case "merge_nested":
+			case cwl.MERGE_NESTED:
 				fallthrough
 			default:
 				(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]

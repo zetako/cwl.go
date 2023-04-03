@@ -201,51 +201,11 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 		}
 	}
 	// 1.2 查找参数，根据这些source创造一个values映射
-	//    - scatter规则目前不确定
-	//    - 目前的行为为：若有多个sources，直接分发sources；若只有单个sources，拆分sources数组
-	//    - 上述行为很可能不是正确实现
-	//    - 该行为可能需要参考 linkMerge 的取值
+	//    - 根据 LinkMerge 的取值来确定是否需要展开数组
 	for key, sources := range scatterSources {
+		// 先为每个key分配对应的空间
 		scatterValues[key] = []cwl.Value{}
-		/* ==================== Archive ==================== */
-		// 老版本，会拆分所有sources的所有数组
-		//for _, source := range sources {
-		//	tmp, ok := (*r.parameter)[source]
-		//	if !ok {
-		//		return -1, nil, errors.New("输入不匹配")
-		//	}
-		//	if tmpList, ok := tmp.([]cwl.Value); ok {
-		//		scatterValues[key] = append(scatterValues[key], tmpList...)
-		//	} else {
-		//		scatterValues[key] = append(scatterValues[key], tmp)
-		//	}
-		//}
-		/* ==================== Archive ==================== */
-
-		/* ==================== Archive v2 ==================== */
-		// 这个版本仅考虑了单一输入和复数输入的差别
-		//if len(sources) == 1 { // 仅有单一source
-		//	source := sources[0]
-		//	tmp, ok := (*r.parameter)[source]
-		//	if !ok {
-		//		return -1, nil, errors.New("没有匹配的输入")
-		//	}
-		//	if tmpList, ok := tmp.([]cwl.Value); ok {
-		//		scatterValues[key] = append(scatterValues[key], tmpList...)
-		//	} else { // 仅有一个source，source又不是数组，就没法分发了
-		//		return -1, nil, errors.New("没有需要分发的输入")
-		//	}
-		//} else { // 有多个source，不用拆分数组
-		//	for _, source := range sources {
-		//		tmp, ok := (*r.parameter)[source]
-		//		if !ok {
-		//			return -1, nil, errors.New("没有匹配的输入")
-		//		}
-		//		scatterValues[key] = append(scatterValues[key], tmp)
-		//	}
-		//}
-		/* ==================== Archive v2 ==================== */
-
+		// 然后根据source数量判断行为
 		if len(sources) == 1 { // 仅有单一source
 			source := sources[0]
 			tmp, ok := (*r.parameter)[source]
@@ -264,14 +224,14 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 					return -1, nil, errors.New("没有匹配的输入")
 				}
 				switch scatterSinks[key].LinkMerge {
-				case "merge_flattened": // 需要拆分数组
+				case cwl.MERGE_FLATTENED: // 需要拆分数组
 					if tmpList, ok := tmp.([]cwl.Value); ok {
 						scatterValues[key] = append(scatterValues[key], tmpList...)
 					} else { // 也有可能是单个元素
 						scatterValues[key] = append(scatterValues[key], tmp)
 					}
 					break
-				case "merge_nested": // 不需要拆分数组
+				case cwl.MERGE_NESTED: // 不需要拆分数组
 					fallthrough
 				default:
 					scatterValues[key] = append(scatterValues[key], tmp)
@@ -281,6 +241,7 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 		}
 	}
 	// 1.3 计算出总scatter量
+	//   - 需要根据ScatterMethod方法来实现
 	scatterCount = -1
 	for _, values := range scatterValues {
 		if scatterCount == -1 {
