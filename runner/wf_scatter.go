@@ -91,20 +91,26 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	}
 	// 5. 整理结果
 	output = cwl.Values{}
-	for _, doneCond := range allOutputs {
-		for key, value := range *doneCond.out {
-			if _, ok := output[key]; !ok {
-				//output[key] = []cwl.Value{}
-				output[key] = make([]cwl.Value, totalTask)
+	if totalTask == 0 {
+		// 空，需要产生空的输出
+		output = constructZeroOutput(layout, r.step.Out)
+	} else {
+		// 非空，整理
+		for _, doneCond := range allOutputs {
+			for key, value := range *doneCond.out {
+				if _, ok := output[key]; !ok {
+					//output[key] = []cwl.Value{}
+					output[key] = make([]cwl.Value, totalTask)
+				}
+				output[key].([]cwl.Value)[doneCond.scatterID] = value
 			}
-			output[key].([]cwl.Value)[doneCond.scatterID] = value
 		}
-	}
-	output, err = reconstructOutput(output, layout)
-	if err != nil {
-		condition <- &StepErrorCondition{
-			step: r.step,
-			err:  errors.New("输出格式化失败"),
+		output, err = reconstructOutput(output, layout)
+		if err != nil {
+			condition <- &StepErrorCondition{
+				step: r.step,
+				err:  errors.New("输出格式化失败"),
+			}
 		}
 	}
 	condition <- &StepDoneCondition{
@@ -385,6 +391,28 @@ func reshapeRecursive(layout []int, flatArr []cwl.Value) []cwl.Value {
 	// 然后逐一递归
 	for i := 0; i < thisLayer; i++ {
 		ret[i] = reshapeRecursive(layout[1:], flatArr[i*nextLayerLen:(i+1)*nextLayerLen])
+	}
+	return ret
+}
+
+// constructZeroOutput 产生符合layout的零输出
+func constructZeroOutput(layout []int, outputs []cwl.WorkflowStepOutput) cwl.Values {
+	ret := cwl.Values{}
+	zeroArr := constructZeroValueRecursive(layout)
+	for _, out := range outputs {
+		ret[out.ID] = zeroArr
+	}
+	return ret
+}
+
+// constructZeroValueRecursive 递归产生需要的零输出数组
+func constructZeroValueRecursive(layout []int) []cwl.Value {
+	if layout[0] == 0 {
+		return []cwl.Value{}
+	}
+	ret := make([]cwl.Value, layout[0])
+	for i := 0; i < layout[0]; i++ {
+		ret[i] = constructZeroValueRecursive(layout[1:])
 	}
 	return ret
 }

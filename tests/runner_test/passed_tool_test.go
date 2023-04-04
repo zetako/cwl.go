@@ -205,6 +205,31 @@ func TestCWLR2_run38(t *testing.T) {
 	testByID(t, 38)
 }
 
+// ✅ empty @ single scatter
+func TestCWLR2_run39(t *testing.T) {
+	testByID(t, 39)
+}
+
+// ✅ empty 2nd param @ nest cross product
+func TestCWLR2_run40(t *testing.T) {
+	testByID(t, 40)
+}
+
+// ✅ empty 1nd param @ nest cross product
+func TestCWLR2_run41(t *testing.T) {
+	testByID(t, 41)
+}
+
+// ✅ empty any param @ flat cross product
+func TestCWLR2_run42(t *testing.T) {
+	testByID(t, 42)
+}
+
+// ✅ empty both param @ dot product
+func TestCWLR2_run43(t *testing.T) {
+	testByID(t, 43)
+}
+
 // ✅ 1020 inputTypeAny
 func TestCWLR2_run44(t *testing.T) {
 	testByID(t, 44)
