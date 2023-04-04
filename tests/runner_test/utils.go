@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -27,6 +28,16 @@ func load(name string) *os.File {
 }
 
 func newEngine(tool, param string) (*irunner.Engine, error) {
+	var (
+		documentID string
+	)
+	baseTool := path.Base(tool)
+	if strings.Contains(baseTool, "#") {
+		tmpIdx := strings.IndexByte(baseTool, '#')
+		toolName := baseTool[:tmpIdx]
+		documentID = baseTool[tmpIdx+1:]
+		tool = path.Join(path.Dir(tool), toolName)
+	}
 	f := load(tool)
 	data1, _ := ioutil.ReadAll(f)
 	jd1, _ := cwl.Y2J(data1)
@@ -38,6 +49,7 @@ func newEngine(tool, param string) (*irunner.Engine, error) {
 	wd, _ := os.Getwd()
 	wd = filepath.Join(wd, "../../cwl/v1.0/v1.0")
 	return irunner.NewEngine(irunner.EngineConfig{
+		DocumentID:   documentID,
 		RunID:        "testcwl",
 		RootHost:     "/tmp/testcwl/",
 		InputsDir:    "inputs",

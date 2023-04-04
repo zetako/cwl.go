@@ -18,8 +18,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		allInputs    []cwl.Values
 		allOutputs   []ScatterDoneCondition // 用以存储每一步的输出
 		output       cwl.Values
+		layout       []int
 	)
-	totalTask, allInputs, err = r.getAllScatterInputs()
+	totalTask, allInputs, layout, err = r.getAllScatterInputs()
 	for i := 0; i < totalTask; i++ {
 		// 1. Scatter的每个任务都需要创建Process
 		process, err = r.engine.GenerateSubProcess(r.step)
@@ -93,10 +94,17 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	for _, doneCond := range allOutputs {
 		for key, value := range *doneCond.out {
 			if _, ok := output[key]; !ok {
-				output[key] = []cwl.Value{}
+				//output[key] = []cwl.Value{}
 				output[key] = make([]cwl.Value, totalTask)
 			}
 			output[key].([]cwl.Value)[doneCond.scatterID] = value
+		}
+	}
+	output, err = reconstructOutput(output, layout)
+	if err != nil {
+		condition <- &StepErrorCondition{
+			step: r.step,
+			err:  errors.New("输出格式化失败"),
 		}
 	}
 	condition <- &StepDoneCondition{
@@ -179,7 +187,7 @@ func (r *RegularRunner) getTotalScatterTask() int {
 	return ret
 }
 
-func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
+func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, layout []int, err error) {
 	var (
 		scatterCount   int
 		scatterTargets []string
@@ -187,6 +195,7 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 		scatterSources = map[string]cwl.ArrayString{}
 		scatterValues  = map[string][]cwl.Value{}
 		scatterInputs  []cwl.Values
+		scatterLayout  []int
 	)
 	// 1. 计算scatter总数
 	// 1.1 获取需要scatter的key的所有的source
@@ -210,18 +219,18 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 			source := sources[0]
 			tmp, ok := (*r.parameter)[source]
 			if !ok {
-				return -1, nil, errors.New("没有匹配的输入")
+				return -1, nil, nil, errors.New("没有匹配的输入")
 			}
 			if tmpList, ok := tmp.([]cwl.Value); ok {
 				scatterValues[key] = append(scatterValues[key], tmpList...)
 			} else { // 仅有一个source，source又不是数组，就没法分发了
-				return -1, nil, errors.New("没有需要分发的输入")
+				return -1, nil, nil, errors.New("没有需要分发的输入")
 			}
 		} else { // 有多个source，查看linkMerge方法
 			for _, source := range sources {
 				tmp, ok := (*r.parameter)[source]
 				if !ok {
-					return -1, nil, errors.New("没有匹配的输入")
+					return -1, nil, nil, errors.New("没有匹配的输入")
 				}
 				switch scatterSinks[key].LinkMerge {
 				case cwl.MERGE_FLATTENED: // 需要拆分数组
@@ -240,32 +249,142 @@ func (r *RegularRunner) getAllScatterInputs() (int, []cwl.Values, error) {
 			}
 		}
 	}
-	// 1.3 计算出总scatter量
+	// 1.3 计算出总scatter量和layout
 	//   - 需要根据ScatterMethod方法来实现
-	scatterCount = -1
-	for _, values := range scatterValues {
-		if scatterCount == -1 {
-			scatterCount = len(values)
-		} else if scatterCount != len(values) {
-			return -1, nil, errors.New("不一致的Scatter数量")
+	switch r.step.ScatterMethod {
+	case cwl.NESTED_CROSSPRODUCT:
+		scatterCount = 1
+		scatterLayout = []int{}
+		for _, target := range r.step.Scatter {
+			length := len(scatterValues[target])
+			scatterCount *= length
+			scatterLayout = append(scatterLayout, length)
 		}
+		scatterInputs = r.generateCrossProductInputs(scatterCount, scatterValues)
+		break
+	case cwl.FLAT_CROSSPRODUCT:
+		scatterCount = 1
+		for _, target := range r.step.Scatter {
+			length := len(scatterValues[target])
+			scatterCount *= length
+		}
+		scatterLayout = []int{scatterCount}
+		scatterInputs = r.generateCrossProductInputs(scatterCount, scatterValues)
+		break
+	case cwl.DOTPRODUCT:
+		fallthrough
+	default:
+		// 标准中似乎没有指定默认行为，这里我们使用点乘作为默认行为
+		// 这是原有的代码，它恰好符合点乘的行为
+		scatterCount = -1
+		for _, values := range scatterValues {
+			if scatterCount == -1 {
+				scatterCount = len(values)
+			} else if scatterCount != len(values) {
+				return -1, nil, nil, errors.New("不一致的Scatter数量")
+			}
+		}
+		scatterLayout = []int{scatterCount}
+		scatterInputs = r.generateDotProductInputs(scatterCount, scatterValues)
 	}
-	// 2. 产生各scatter任务需要的inputs
-	scatterInputs = make([]cwl.Values, scatterCount)
-	for idx := range scatterInputs {
-		scatterInputs[idx] = cwl.Values{}
+	return scatterCount, scatterInputs, scatterLayout, nil
+}
+
+// generateCrossProductInputs 产生点乘的分发输入
+func (r *RegularRunner) generateCrossProductInputs(total int, sources map[string][]cwl.Value) []cwl.Values {
+	// 0. 防止为0
+	if total == 0 {
+		return []cwl.Values{}
 	}
+	// 1. 产生一个基础，具有所有不需要分发的量
+	var initInput = cwl.Values{}
 	for _, in := range r.step.In {
-		if r.needScatter(in.ID) { // 是需要分发的变量
-			for index, input := range scatterInputs {
-				input[in.ID] = scatterValues[in.ID][index]
+		initInput[in.ID] = (*r.parameter)[in.Source[0]]
+	}
+	// 2. 由这个量初始化一个数组
+	var inputs = []cwl.Values{initInput}
+	// 3. 遍历所有需要Scatter的量，每次都修改数组
+	for _, target := range r.step.Scatter {
+		var newInputs []cwl.Values
+		for _, input := range inputs {
+			for _, src := range sources[target] {
+				input[target] = src
+				copyInput := cwl.Values{}
+				for k, v := range input {
+					copyInput[k] = v
+				}
+				newInputs = append(newInputs, copyInput)
 			}
-		} else { // 不需要分发的变量直接拷贝就行了
-			// 相似的，目前只考虑只需要一个值的情况
-			for _, input := range scatterInputs {
-				input[in.ID] = (*r.parameter)[in.Source[0]]
+		}
+		inputs = newInputs
+	}
+	// 可以返回
+	return inputs
+}
+
+// generateDotProduceInputs 产生点乘的分发输入
+func (r *RegularRunner) generateDotProductInputs(total int, sources map[string][]cwl.Value) []cwl.Values {
+	// 0. 防止为0
+	if total == 0 {
+		return []cwl.Values{}
+	}
+	// 1. 初始化空间
+	retInputs := make([]cwl.Values, total)
+	// 2. 针对每一个产生的输入的每一个In
+	for i := 0; i < total; i++ {
+		// 2.0 先初始化这个map
+		retInputs[i] = cwl.Values{}
+		for _, in := range r.step.In {
+			if valueArr, ok := sources[in.ID]; ok {
+				// 2.1 如果在sources里能找到，分发
+				retInputs[i][in.ID] = valueArr[i]
+			} else {
+				// 2.2 否则原样加入
+				retInputs[i][in.ID] = (*r.parameter)[in.Source[0]]
 			}
 		}
 	}
-	return scatterCount, scatterInputs, nil
+	// 返回
+	return retInputs
+}
+
+// reconstructOutput 重新结构化输出
+func reconstructOutput(values cwl.Values, layout []int) (cwl.Values, error) {
+	if len(layout) <= 0 {
+		return nil, errors.New("无效的输出布局")
+	}
+	if len(layout) == 1 { //不需要整理
+		return values, nil
+	}
+	for key, value := range values {
+		if valueArr, ok := value.([]cwl.Value); ok { // 如果不是数组的话就不用整理了
+			// 需要先验证大小符合
+			tmp := 1
+			for _, layoutI := range layout {
+				tmp *= layoutI
+			}
+			if tmp != len(valueArr) {
+				return nil, fmt.Errorf("输出布局与实际输出不匹配")
+			}
+			values[key] = reshapeRecursive(layout, valueArr)
+		}
+	}
+	return values, nil
+}
+
+// reshapeRecursive 结构化输出的递归函数
+func reshapeRecursive(layout []int, flatArr []cwl.Value) []cwl.Value {
+	// 最后一层，返回
+	if len(layout) == 1 {
+		return flatArr
+	}
+	// 否则，分配空间
+	thisLayer := layout[0]
+	ret := make([]cwl.Value, thisLayer)
+	nextLayerLen := len(flatArr) / thisLayer
+	// 然后逐一递归
+	for i := 0; i < thisLayer; i++ {
+		ret[i] = reshapeRecursive(layout[1:], flatArr[i*nextLayerLen:(i+1)*nextLayerLen])
+	}
+	return ret
 }

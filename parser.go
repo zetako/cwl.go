@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	
 	"reflect"
 	"strings"
 )
@@ -35,8 +34,6 @@ func GenerateTypesFormInterface(iType reflect.Type, db map[string]*RecordFieldGr
 	}
 	return reflect.TypeOf(nil), fmt.Errorf("Cannot Generate Type %s", iType.Name())
 }
-
-
 
 // parseObject
 // 根据 salad 扩展 json 结构体的解析
@@ -143,7 +140,6 @@ func GenerateTypesFormInterface(iType reflect.Type, db map[string]*RecordFieldGr
 //	}
 //	return nil
 //}
-
 
 // setField 解析
 //func setField(fieldType reflect.Type, fieldValue reflect.Value, bean []byte,
@@ -280,7 +276,6 @@ func GenerateTypesFormInterface(iType reflect.Type, db map[string]*RecordFieldGr
 //	return nil
 //}
 
-
 func ParseCWLProcess(data []byte) (Process, error) {
 	var err error
 	trimed := strings.TrimSpace(string(data))
@@ -378,14 +373,13 @@ func (p *ProcessBase) UnmarshalJSON_man(data []byte) error {
 	return json.Unmarshal(data2, palias)
 }
 
-func NewBean(db map[string]*RecordFieldGraph, name string) ( interface{}, error) {
+func NewBean(db map[string]*RecordFieldGraph, name string) (interface{}, error) {
 	record, got := db[name]
 	if got {
-		return reflect.New(reflect.TypeOf(record.Example)).Interface() , nil
+		return reflect.New(reflect.TypeOf(record.Example)).Interface(), nil
 	}
 	return nil, fmt.Errorf("Cannot Generate Type %s", name)
 }
-
 
 //func setType(fieldType reflect.Type, fieldValue reflect.Value, data []byte, salad saladTags,
 //	 db map[string]*RecordFieldGraph) (err error) {

@@ -185,6 +185,26 @@ func TestCWLR2_run34(t *testing.T) {
 	testByID(t, 34)
 }
 
+// ✅ simple scatter
+func TestCWLR2_run35(t *testing.T) {
+	testByID(t, 35)
+}
+
+// ✅ nest cross product
+func TestCWLR2_run36(t *testing.T) {
+	testByID(t, 36)
+}
+
+// ✅ flat cross product
+func TestCWLR2_run37(t *testing.T) {
+	testByID(t, 37)
+}
+
+// ✅ dot product
+func TestCWLR2_run38(t *testing.T) {
+	testByID(t, 38)
+}
+
 // ✅ 1020 inputTypeAny
 func TestCWLR2_run44(t *testing.T) {
 	testByID(t, 44)
