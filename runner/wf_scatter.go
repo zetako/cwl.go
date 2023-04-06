@@ -32,7 +32,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		process.runtime.RootHost = path.Join(process.runtime.RootHost, fmt.Sprintf("scatter%d", i))
 		process.outputFS = &Local{
 			workdir:      process.runtime.RootHost,
-			CalcChecksum: false,
+			CalcChecksum: true,
 		}
 		process.loadRuntime()
 		process.inputs = &allInputs[i]

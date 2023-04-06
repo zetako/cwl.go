@@ -137,7 +137,7 @@ type WorkflowStep struct {
 	In            []WorkflowStepInput  `json:"in" salad:"mapSubject:id,mapPredicate:source"`
 	Out           []WorkflowStepOutput `json:"out"`
 	Requirements  Requirements         `json:"requirements,omitempty" salad:"mapSubject:class"`
-	Hits          Requirements         `json:"requirements,omitempty" salad:"mapSubject:class"`
+	Hints         Requirements         `json:"hints,omitempty" salad:"mapSubject:class"`
 	Run           Run                  `json:"run"`
 	When          Expression           `json:"when,omitempty"`
 	Scatter       ArrayString          `json:"scatter,omitempty"`

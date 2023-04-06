@@ -413,7 +413,7 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
 	process.outputFS = &Local{
 		workdir:      process.runtime.RootHost,
-		CalcChecksum: false,
+		CalcChecksum: true,
 	}
 	process.runtime.InputsHost = path.Join(e.InputsHost, step.ID)
 	process.inputFS = &Local{

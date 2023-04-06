@@ -169,6 +169,13 @@ func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRu
 	if err != nil {
 		return nil, err
 	}
+	// 继承父运行时
+	ret.process.parentRuntime = e.process.runtime
+	// 从engine处继承requirement和hints
+	// 准确的说，应该从他的父步骤继承
+	// engine < step < Process
+	ret.process.root.Process.Base().InheritRequirement(step.Requirements, step.Hints)
+	ret.process.root.Process.Base().InheritRequirement(e.root.Process.Base().Requirements, e.root.Process.Base().Hints)
 	// 返回
 	return &ret, nil
 }

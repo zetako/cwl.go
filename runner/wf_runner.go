@@ -137,14 +137,9 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	// 初始化输入条件
 	r.reachedConditions = []Condition{}
 	for key, value := range *inputs {
-		//// 文件转换为绝对路径 （不需要？）
-		//if file, ok := value.(cwl.File); ok {
-		//	if !path.IsAbs(file.Location) {
-		//		file.Location = path.Join(e.importer.(*DefaultImporter).BaseDir, file.Location)
-		//	}
-		//	value = file
-		//	(*inputs)[key] = value
-		//}
+		if value == nil {
+			continue
+		}
 		r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
 			key:   key,
 			value: value,

@@ -176,3 +176,32 @@ func (p *Workflow) RequiresStepInputExpression() bool {
 	}
 	return false
 }
+
+func (p *ProcessBase) InheritRequirement(parentRequirements, parentHints Requirements) {
+	// 目前我们只根据ClassName确定是否继承
+	// 若已有该Class，则不继承
+	myRequirements := map[string]bool{}
+	if p.Requirements == nil {
+		p.Requirements = Requirements{}
+	}
+	for _, r := range p.Requirements {
+		myRequirements[r.ClassName()] = true
+	}
+	for _, r := range parentRequirements {
+		if _, ok := myRequirements[r.ClassName()]; !ok {
+			p.Requirements = append(p.Requirements, r)
+		}
+	}
+	myHints := map[string]bool{}
+	if p.Hints == nil {
+		p.Hints = Requirements{}
+	}
+	for _, r := range p.Hints {
+		myHints[r.ClassName()] = true
+	}
+	for _, r := range parentHints {
+		if _, ok := myHints[r.ClassName()]; !ok {
+			p.Hints = append(p.Hints, r)
+		}
+	}
+}

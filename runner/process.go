@@ -15,6 +15,7 @@ type Process struct {
 	tool              *cwl.CommandLineTool
 	inputs            *cwl.Values
 	runtime           Runtime
+	parentRuntime     Runtime
 	fs                Filesystem
 	inputFS, outputFS Filesystem
 	bindings          []*Binding

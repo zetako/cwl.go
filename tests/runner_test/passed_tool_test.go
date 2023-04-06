@@ -235,6 +235,51 @@ func TestCWLR2_run44(t *testing.T) {
 	testByID(t, 44)
 }
 
+// ✅ nested workflow
+func TestCWLR2_run45(t *testing.T) {
+	testByID(t, 45)
+}
+
+// ✅ requirement + priority
+func TestCWLR2_run46(t *testing.T) {
+	testByID(t, 46)
+}
+
+// ✅ requirement + override
+func TestCWLR2_run47(t *testing.T) {
+	testByID(t, 47)
+}
+
+// ✅ requirement @ workflow step
+func TestCWLR2_run48(t *testing.T) {
+	testByID(t, 48)
+}
+
+// ✅ default input @ step
+func TestCWLR2_run49(t *testing.T) {
+	testByID(t, 49)
+}
+
+// ✅ default input @ step + empty
+func TestCWLR2_run50(t *testing.T) {
+	testByID(t, 50)
+}
+
+// ✅ default input @ step + null
+func TestCWLR2_run51(t *testing.T) {
+	testByID(t, 51)
+}
+
+// ✅ default input @ step + provided
+func TestCWLR2_run52(t *testing.T) {
+	testByID(t, 52)
+}
+
+// ✅ simple 2 steps workflow; both output
+func TestCWLR2_run53(t *testing.T) {
+	testByID(t, 53)
+}
+
 // ✅ 1020 outputEval
 func TestCWLR2_run58(t *testing.T) {
 	testByID(t, 58)
