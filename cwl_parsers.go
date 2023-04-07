@@ -10,7 +10,6 @@ func (p *ProcessBase) UnmarshalJSON(data []byte) error {
 	return parser.Unmarshal(data, p)
 }
 
-//
 func (p *CommandLineTool) UnmarshalJSON(data []byte) error {
 	graph := &RecordFieldGraph{Example: CommandLineTool{}, Fields: make(map[string]*RecordFieldGraph)}
 	db := graph.Fields
@@ -73,13 +72,17 @@ func (p *Workflow) UnmarshalJSON(data []byte) error {
 	db["InputParameter"] = &RecordFieldGraph{Example: WorkflowInputParameter{}}
 	db["OutputParameter"] = &RecordFieldGraph{Example: WorkflowOutputParameter{}}
 
-	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
-		Fields: map[string]*RecordFieldGraph{
-			"ArrayType":  &RecordFieldGraph{Example: ArraySchema{}},
-			"EnumType":   &RecordFieldGraph{Example: EnumSchema{}},
-			"RecordType": &RecordFieldGraph{Example: RecordSchema{}},
-		},
+	inputFields := map[string]*RecordFieldGraph{
+		"ArrayType":  &RecordFieldGraph{Example: ArraySchema{}},
+		"EnumType":   &RecordFieldGraph{Example: EnumSchema{}},
+		"RecordType": &RecordFieldGraph{Example: RecordSchema{}},
+		"FieldType":  &RecordFieldGraph{Example: RecordField{}},
 	}
+	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
+		Fields: inputFields,
+	}
+
+	db["CommandInputSchema"] = &RecordFieldGraph{Example: CommandInputType{}, Fields: inputFields}
 
 	parser := NewParser(graph, classMap)
 	return parser.Unmarshal(data, p)

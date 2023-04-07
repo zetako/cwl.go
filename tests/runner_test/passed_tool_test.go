@@ -309,6 +309,11 @@ func TestCWLR2_run76(t *testing.T) {
 	testByID(t, 76)
 }
 
+// ✅ workflow + conflict
+func TestCWLR2_run83(t *testing.T) {
+	testByID(t, 83)
+}
+
 // dir job 84 ~ 88 ❌ 后置？
 // directory_input_param_ref block
 func TestCWLR2_run84(t *testing.T) {

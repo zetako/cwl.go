@@ -283,21 +283,29 @@ Loop:
 			}, nil
 		default:
 			tiTypeName := ti.TypeName()
+			// 暂时先不管前面的文件定位符，直接把前面的文件定位符去掉
+			// 可能未来会遇到两个不同的文件声明同一个类型的情况，届时需要重新考虑
+			if strings.Contains(tiTypeName, "#") {
+				tiTypeName = tiTypeName[strings.IndexByte(tiTypeName, '#'):]
+			}
 			if rsd := process.root.Process.Base().RequiresSchemaDef(); rsd != nil {
 				for _, rsdT := range rsd.Types {
-					var binding *cwl.CommandLineBinding
+					var binding *cwl.CommandLineBinding = clb
 					rsdType := rsdT.(*cwl.CommandInputType)
 					SName := rsdType.SchemaTypename()
 					if SName == "" {
 						if record := rsdType.MustRecord(); record != nil {
 							cmdRecord := record.(*cwl.CommandInputRecordSchema)
 							SName = cmdRecord.Name
-							binding = cmdRecord.InputBinding
+							if binding == nil {
+								binding = cmdRecord.InputBinding
+							}
 						} else if enum := rsdType.MustEnum(); enum != nil {
 							cmdEnum := enum.(*cwl.CommandInputEnumSchema)
 							SName = cmdEnum.Name
-							binding = cmdEnum.InputBinding
-
+							if binding == nil {
+								binding = cmdEnum.InputBinding
+							}
 						}
 					}
 					log.Println(SName, rsdType.TypeName())

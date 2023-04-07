@@ -378,9 +378,9 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 					process.root = graph
 					break
 				}
-				if process.root == nil {
-					return nil, fmt.Errorf("specify a packed doc but not found")
-				}
+			}
+			if process.root == nil {
+				return nil, fmt.Errorf("specify a packed doc but not found")
 			}
 		} else { // 否则就应该去读cwl
 			if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
