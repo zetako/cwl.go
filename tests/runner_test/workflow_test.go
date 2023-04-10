@@ -1,54 +1,76 @@
 package runnertest
 
 import (
-	irunner "github.com/lijiang2014/cwl.go/runner"
+	"log"
+	"strconv"
 	"testing"
-
-	. "github.com/otiai10/mint"
 )
 
-// workflow
-// ❌ any-type-compat.cwl v1.0/any-type-job.json
-func TestCWLR2Workflow_run20(t *testing.T) {
-	testByID(t, 20)
+func TestCountCWLR2_workflow_tag(t *testing.T) {
+	allWorkflowTest := filterTests(TestDoc{Tags: []string{"workflow"}})
+	log.Printf("All workflow count: %d\n", len(allWorkflowTest))
+	allWfTestIDStr := ""
+	count := 0
+	for _, test := range allWorkflowTest {
+		count++
+		allWfTestIDStr = allWfTestIDStr + strconv.Itoa(test.ID) + ", "
+		if count == 10 {
+			allWfTestIDStr += "\n"
+			count = 0
+		}
+	}
+	log.Printf("All workflow:\n%s\n", allWfTestIDStr)
 }
 
-func TestCWLWorkflow_workon(t *testing.T) {
-	e, err := newEngine("v1.0/count-lines1-wf.cwl", "v1.0/wc-job.json") // 1
-	Expect(t, err).ToBe(nil)
-	t.Log("Break Here")
-	e.SetDefaultExecutor(&irunner.LocalExecutor{})
-	_, err = e.MainProcess()
-	Expect(t, err).ToBe(nil)
-	t.Log("Break Here")
-	outs, err := e.Run()
-	Expect(t, err).ToBe(nil)
-	t.Log(outs)
-	t.Log("Break Here")
-	//t.Logf("%#v", p.Root().Process)
-	//tool := p.Root().Process.(*cwl.Workflow)
-	//_ = tool
-	//for i, ini := range tool.Inputs {
-	//	in := ini.(*cwl.WorkflowInputParameter)
-	//	t.Logf("%d %s %s", i, in.ID, in.Type.TypeName())
-	//	//if in.Type.IsArray() {
-	//	//  t.Logf("%#v", in.Type.MustArraySchema())
-	//	//}
-	//}
-	//t.Logf("%#v", tool.Outputs)
-	//for i, vali := range tool.Outputs {
-	//	t.Logf("%d %#v", i, vali)
-	//	val := vali.(*cwl.WorkflowOutputParameter)
-	//	if val.Type.IsArray() {
-	//		t.Logf("%#v", val.Type.MustArraySchema())
-	//	}
-	//	if val.OutputSource != nil {
-	//		t.Logf("%#v", val.OutputSource)
-	//	}
-	//}
-	//t.Logf("%#v", tool.Requirements)
-	//for i, vali := range tool.Requirements {
-	//	t.Logf("%d %#v", i, vali)
-	//}
-	// err = os.RemoveAll("/tmp/testcwl")
+//	var workflowRelatedTest = [...]int{
+//		20, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+//		33, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+//		45, 46, 47, 48, 49, 50, 51, 52, 53, 60,
+//		70, 71, 72, 77, 78, 79, 80, 81, 82, 83,
+//		97, 99, 110, 111, 113, 114, 122, 126, 128, 131,
+//		132,
+//	}
+
+func TestCWLR2_run70(t *testing.T) {
+	testByID(t, 70)
+}
+func TestCWLR2_run71(t *testing.T) {
+	testByID(t, 71)
+}
+func TestCWLR2_run72(t *testing.T) {
+	testByID(t, 72)
+}
+func TestCWLR2_run80(t *testing.T) {
+	testByID(t, 80)
+}
+func TestCWLR2_run81(t *testing.T) {
+	testByID(t, 81)
+}
+func TestCWLR2_run82(t *testing.T) {
+	testByID(t, 82)
+}
+
+// sub-workflow
+func TestCWLR2_run99(t *testing.T) {
+	testByID(t, 99)
+}
+
+// $Graph
+func TestCWLR2_run110(t *testing.T) {
+	testByID(t, 110)
+}
+
+// generate nameroot & nameext
+func TestCWLR2_run111(t *testing.T) {
+	testByID(t, 111)
+}
+
+// Multiple source w/ multiple type
+func TestCWLR2_run114(t *testing.T) {
+	testByID(t, 114)
+}
+
+// InitialWorkDirRequirement base on other step
+func TestCWLR2_run122(t *testing.T) {
+	testByID(t, 122)
 }

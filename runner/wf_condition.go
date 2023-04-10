@@ -60,6 +60,9 @@ func (i InputParamCondition) MeetOrDefault(condition []Condition) (meet, useDefa
 	if i.Meet(condition) {
 		return true, false
 	}
+	if i.input.ValueFrom != "" && i.input.Source == nil {
+		return true, false
+	}
 	if i.input.Default != nil {
 		return true, true
 	}

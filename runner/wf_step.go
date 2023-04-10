@@ -2,7 +2,9 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/robertkrimen/otto"
 	"log"
 )
 
@@ -20,6 +22,7 @@ type StepRunner interface {
 //   - 用来执行CommandLineTool和Expression
 //   - 原理上，应该也可以作为Workflow的执行器
 type RegularRunner struct {
+	parent             *WorkflowRunner
 	neededCondition    []Condition
 	engine             *Engine
 	step               *cwl.WorkflowStep
@@ -56,25 +59,23 @@ func (r *RegularRunner) MeetConditions(now []Condition) bool {
 }
 
 func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
-	// 0. 如果需要Scatter，任务交由RunScatter
+	defer func() { // 负责处理运行结束的情况
+		if err != nil {
+			conditions <- &StepErrorCondition{
+				step: r.step,
+				err:  err,
+			}
+		}
+	}()
+	// 1. 如果需要Scatter，任务交由RunScatter
 	if r.step.Scatter != nil && len(r.step.Scatter) > 0 {
 		return r.RunScatter(conditions)
 	}
-	// 1. 先创建对应的 Process
-	// 已经在创建 RegularRunner 时处理，不再需要
-	//r.process, err = r.engine.GenerateSubProcess(r.step)
-	//if err != nil {
-	//	conditions <- &StepErrorCondition{
-	//		step: r.step,
-	//		err:  err,
-	//	}
-	//	return err
-	//}
-	// 2. 处理Input
-	// TODO 必须根据每一步的需要单独绑定
-	//r.process.inputs = r.parameter
-	r.process.inputs = &cwl.Values{}
+	// 2. 处理输入
 	for _, in := range r.step.In {
+		if in.ValueFrom != "" {
+			continue
+		}
 		if _, ok := r.useWorkflowDefault[in.ID]; ok {
 			(*r.process.inputs)[in.ID] = in.Default
 		} else if len(in.Source) == 1 {
@@ -105,13 +106,72 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		}
 	}
 
+	// 处理ValueFrom
+	plainInputs, err := toJSONMap(r.process.inputs)
+	if err != nil {
+		return err
+	}
+	err = r.process.vm.Set("inputs", plainInputs)
+	if err != nil {
+		return err
+	}
+	for _, in := range r.step.In {
+		if in.ValueFrom == "" {
+			continue
+		}
+		if len(in.Source) == 1 {
+			rawValue, err := r.process.jsvm.Eval(in.ValueFrom, (*r.parameter)[in.Source[0]])
+			if err != nil {
+				return fmt.Errorf("ValueFrom计算失败: %v", err)
+			}
+			(*r.process.inputs)[in.ID], err = cwl.ConvertToValue(rawValue)
+			if err != nil {
+				return fmt.Errorf("转换ValueFrom结果失败: %v", err)
+			}
+		} else if r.parent.workflow.RequiresMultipleInputFeature() {
+			// 这部分可能依旧需要参考LinkMerge方法
+			var tmpPlainArr []interface{}
+			for _, src := range in.Source {
+				tmpValue := (*r.parameter)[src]
+				plainValue, err := toJSONMap(tmpValue)
+				if err != nil {
+					return err
+				}
+				if plainValue == nil {
+					plainValue = otto.NullValue()
+				}
+				tmpPlainArr = append(tmpPlainArr, plainValue)
+			}
+			// 计算
+			result, err := r.process.jsvm.Eval(in.ValueFrom, tmpPlainArr)
+			if err != nil {
+				return err
+			}
+			// 转换输出
+			resultValue, err := cwl.ConvertToValue(result)
+			if err != nil {
+				return err
+			}
+			// 保存结果
+			(*r.process.inputs)[in.ID] = resultValue
+		} else { // 要不然就是根据已有值计算
+			// 计算
+			result, err := r.process.jsvm.Eval(in.ValueFrom, nil)
+			if err != nil {
+				return err
+			}
+			// 转换输出
+			resultValue, err := cwl.ConvertToValue(result)
+			if err != nil {
+				return err
+			}
+			// 保存结果
+			(*r.process.inputs)[in.ID] = resultValue
+		}
+	}
 	// 3. 然后使用 Engine.RunProcess()
 	outs, err := r.engine.RunProcess(r.process)
 	if err != nil {
-		conditions <- &StepErrorCondition{
-			step: r.step,
-			err:  err,
-		}
 		return err
 	}
 	// 4. 最后，根据Step的输出，释放Condition
@@ -126,17 +186,19 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		out:     &outs,
 		runtime: r.process.runtime,
 	}
-	// 4. 返回
+	// 5. 返回
 	return nil
 }
 
 func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool) {
 	if r.MeetConditions(now) {
-		log.Println("Run Step: ", r.step.ID)
+		log.Println("Step Run :", r.step.ID)
 		go func() {
-			err := r.Run(channel) // 暂时不管错误，最好把他输出到Log那里
+			err := r.Run(channel)
 			if err != nil {
-				log.Println(err)
+				log.Printf("Step Err : %s\n%v", r.step.ID, err)
+			} else {
+				log.Println("Step Done:", r.step.ID)
 			}
 		}()
 		return true
@@ -144,7 +206,7 @@ func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Cond
 	return false
 }
 
-func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRunner, error) {
+func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (StepRunner, error) {
 	var (
 		err error
 	)
@@ -154,8 +216,9 @@ func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRu
 		engine:             e,
 		step:               step,
 		process:            nil,
-		parameter:          param,
+		parameter:          parent.parameter,
 		useWorkflowDefault: map[string]bool{},
+		parent:             parent,
 	}
 	// 生成条件集
 	for _, input := range step.In {
@@ -175,7 +238,8 @@ func NewStepRunner(e *Engine, step *cwl.WorkflowStep, param *cwl.Values) (StepRu
 	// 准确的说，应该从他的父步骤继承
 	// engine < step < Process
 	ret.process.root.Process.Base().InheritRequirement(step.Requirements, step.Hints)
-	ret.process.root.Process.Base().InheritRequirement(e.root.Process.Base().Requirements, e.root.Process.Base().Hints)
+	ret.process.root.Process.Base().InheritRequirement(parent.workflow.Requirements, parent.workflow.Hints)
+	// 继承ValueFrom
 	// 返回
 	return &ret, nil
 }

@@ -128,7 +128,7 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	r.steps = []StepRunner{}
 	for _, step := range wf.Steps {
 		tmpStep := step
-		tmp, err := NewStepRunner(e, &tmpStep, r.parameter)
+		tmp, err := NewStepRunner(e, r, &tmpStep)
 		if err != nil {
 			return nil, err
 		}
@@ -148,17 +148,17 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	return r, nil
 }
 
-func mergeCwlValues(base *cwl.Values, others ...*cwl.Values) *cwl.Values {
-	if base == nil {
-		base = &cwl.Values{}
-	}
-	for _, other := range others {
-		for key, value := range *other {
-			(*base)[key] = value
-		}
-	}
-	return base
-}
+//func mergeCwlValues(base *cwl.Values, others ...*cwl.Values) *cwl.Values {
+//	if base == nil {
+//		base = &cwl.Values{}
+//	}
+//	for _, other := range others {
+//		for key, value := range *other {
+//			(*base)[key] = value
+//		}
+//	}
+//	return base
+//}
 
 func mergeStepOutputs(parameter *cwl.Values, stepDone StepDoneCondition) *cwl.Values {
 	if parameter == nil {
