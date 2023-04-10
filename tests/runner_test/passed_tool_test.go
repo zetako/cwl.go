@@ -285,6 +285,16 @@ func TestCWLR2_run58(t *testing.T) {
 	testByID(t, 58)
 }
 
+// ✅ simple ValueFrom
+func TestCWLR2_run59(t *testing.T) {
+	testByID(t, 59)
+}
+
+// ✅ workflow ValueFrom
+func TestCWLR2_run60(t *testing.T) {
+	testByID(t, 60)
+}
+
 // ✅ 1020 null input
 func TestCWLR2_run68(t *testing.T) {
 	testByID(t, 68)
@@ -373,6 +383,11 @@ func TestCWLR2_run96(t *testing.T) {
 	testByID(t, 96)
 }
 
+// ✅ inlineJavaScript + expressionLib
+func TestCWLR2_run97(t *testing.T) {
+	testByID(t, 97)
+}
+
 // ✅ initial_workdir_output
 // v1.0/initialworkdirrequirement-docker-out.cwl v1.0/initialworkdirrequirement-docker-out-job.json
 func TestCWLR2_run98(t *testing.T) {
@@ -418,6 +433,11 @@ func TestCWLR2_run109(t *testing.T) {
 
 func TestCWLR2_run112(t *testing.T) {
 	testByID(t, 112)
+}
+
+// ✅ workflow scatter + use same source
+func TestCWLR2_run113(t *testing.T) {
+	testByID(t, 113)
 }
 
 func TestCWLR2_run115(t *testing.T) {

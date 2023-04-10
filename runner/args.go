@@ -144,6 +144,9 @@ func bindArgs(b *Binding, shellCmd bool) []string {
 		}
 
 	case "record":
+		if b.clb != nil && b.clb.ValueFrom != "" { // 有ValueFrom证明已经计算过了
+			return formatArgs(b.clb, shellCmd, b.Value)
+		}
 		args := formatArgs(b.clb, shellCmd)
 		sort.Stable(bySortKey(b.nested))
 		for _, nb := range b.nested {
