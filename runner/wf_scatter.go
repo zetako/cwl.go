@@ -46,6 +46,10 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		process.loadRuntime()
 		process.inputs = &allInputs[i]
 		// 2.2 ValueFrom输入
+		err = preprocessInputs(r.process.inputs)
+		if err != nil {
+			return fmt.Errorf("预处理inputs失败: %v\n", err)
+		}
 		err = setInputs(process.jsvm, *process.inputs)
 		if err != nil {
 			return fmt.Errorf("设置inputs失败: %v\n", err)

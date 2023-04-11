@@ -107,11 +107,11 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	}
 
 	// 处理ValueFrom
-	plainInputs, err := toJSONMap(r.process.inputs)
+	err = preprocessInputs(r.process.inputs)
 	if err != nil {
-		return err
+		return fmt.Errorf("预处理inputs失败: %v\n", err)
 	}
-	err = r.process.vm.Set("inputs", plainInputs)
+	err = setInputs(r.process.jsvm, *r.process.inputs)
 	if err != nil {
 		return err
 	}
