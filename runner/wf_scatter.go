@@ -51,18 +51,14 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			return fmt.Errorf("设置inputs失败: %v\n", err)
 		}
 		for _, in := range r.step.In {
-			if in.ValueFrom != "" && !r.needScatter(in.ID) {
+			//if in.ValueFrom != "" && !r.needScatter(in.ID) {
+			if in.ValueFrom != "" {
 				tmp := (*process.inputs)[in.ID]
 				tmp, err = evalValueFrom(process.jsvm, in.ValueFrom, tmp)
 				if err != nil {
 					return fmt.Errorf("ValueFrom计算失败: %v\n", err)
 				}
 				(*process.inputs)[in.ID] = tmp
-				//if tmp == nil {
-				//	return fmt.Errorf("ValueFrom计算失败: 无结果\n")
-				//} else {
-				//	(*process.inputs)[in.ID] = tmp
-				//}
 			}
 		}
 
@@ -220,14 +216,13 @@ func (r *RegularRunner) getTotalScatterTask() int {
 
 func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, layout []int, err error) {
 	var (
-		scatterCount      int
-		scatterTargets    []string
-		scatterSinks      = map[string]cwl.Sink{}
-		scatterSources    = map[string]cwl.ArrayString{}
-		scatterValues     = map[string][]cwl.Value{}
-		scatterValueFroms = map[string]cwl.Expression{}
-		scatterInputs     []cwl.Values
-		scatterLayout     []int
+		scatterCount   int
+		scatterTargets []string
+		scatterSinks   = map[string]cwl.Sink{}
+		scatterSources = map[string]cwl.ArrayString{}
+		scatterValues  = map[string][]cwl.Value{}
+		scatterInputs  []cwl.Values
+		scatterLayout  []int
 	)
 	// 1. 计算scatter总数
 	// 1.1 获取需要scatter的key的所有的source
@@ -239,13 +234,11 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 		if _, ok := scatterSources[inEntity.ID]; ok {
 			scatterSinks[inEntity.ID] = inEntity.Sink
 			scatterSources[inEntity.ID] = inEntity.Source
-			scatterValueFroms[inEntity.ID] = inEntity.ValueFrom
 		}
 	}
 	// 1.2 查找参数，根据这些source创造一个values映射
 	//    - 根据 LinkMerge 的取值来确定是否需要展开数组
 	for key, sources := range scatterSources {
-		valueFrom := scatterValueFroms[key]
 		// 先为每个key分配对应的空间
 		scatterValues[key] = []cwl.Value{}
 		// 然后根据source数量判断行为
@@ -257,12 +250,6 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 			}
 			if tmpList, ok := tmp.([]cwl.Value); ok {
 				for _, entity := range tmpList {
-					if valueFrom != "" {
-						entity, err = evalValueFrom(r.process.jsvm, valueFrom, entity)
-						if err != nil {
-							return -1, nil, nil, err
-						}
-					}
 					scatterValues[key] = append(scatterValues[key], entity)
 				}
 			} else { // 仅有一个source，source又不是数组，就没法分发了
@@ -278,34 +265,14 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 				switch scatterSinks[key].LinkMerge {
 				case cwl.MERGE_FLATTENED: // 需要拆分数组
 					if tmpList, ok := tmp.([]cwl.Value); ok {
-						for _, entity := range tmpList {
-							if valueFrom != "" {
-								entity, err = evalValueFrom(r.process.jsvm, valueFrom, entity)
-								if err != nil {
-									return -1, nil, nil, err
-								}
-							}
-							scatterValues[key] = append(scatterValues[key], entity)
-						}
+						scatterValues[key] = append(scatterValues[key], tmpList...)
 					} else { // 也有可能是单个元素
-						if valueFrom != "" {
-							tmp, err = evalValueFrom(r.process.jsvm, valueFrom, tmp)
-							if err != nil {
-								return -1, nil, nil, err
-							}
-						}
 						scatterValues[key] = append(scatterValues[key], tmp)
 					}
 					break
 				case cwl.MERGE_NESTED: // 不需要拆分数组
 					fallthrough
 				default:
-					if valueFrom != "" {
-						tmp, err = evalValueFrom(r.process.jsvm, valueFrom, tmp)
-						if err != nil {
-							return -1, nil, nil, err
-						}
-					}
 					scatterValues[key] = append(scatterValues[key], tmp)
 					break
 				}
@@ -362,12 +329,11 @@ func (r *RegularRunner) generateCrossProductInputs(total int, sources map[string
 	// 1. 产生一个基础，具有所有不需要分发的量
 	var initInput = cwl.Values{}
 	for _, in := range r.step.In {
-		initInput[in.ID] = (*r.parameter)[in.Source[0]]
-		//if in.ValueFrom != "" { // 已经计算了取值
-		//	initInput[in.ID] = (*r.process.inputs)[in.ID]
-		//} else {
-		//	initInput[in.ID] = (*r.parameter)[in.Source[0]]
-		//}
+		if in.Source == nil || len(in.Source) == 0 { // 需要考虑取值由之后的ValueFrom计算出来的情况
+			initInput[in.ID] = nil
+		} else {
+			initInput[in.ID] = (*r.parameter)[in.Source[0]]
+		}
 	}
 	// 2. 由这个量初始化一个数组
 	var inputs = []cwl.Values{initInput}
@@ -408,12 +374,11 @@ func (r *RegularRunner) generateDotProductInputs(total int, sources map[string][
 				retInputs[i][in.ID] = valueArr[i]
 			} else {
 				// 2.2 否则原样加入
-				retInputs[i][in.ID] = (*r.parameter)[in.Source[0]]
-				//if in.ValueFrom != "" { // 已经计算了取值
-				//	retInputs[i][in.ID] = (*r.process.inputs)[in.ID]
-				//} else {
-				//	retInputs[i][in.ID] = (*r.parameter)[in.Source[0]]
-				//}
+				if in.Source == nil || len(in.Source) == 0 { // 需要考虑取值由之后的ValueFrom计算出来的情况
+					retInputs[i][in.ID] = nil
+				} else {
+					retInputs[i][in.ID] = (*r.parameter)[in.Source[0]]
+				}
 			}
 		}
 	}

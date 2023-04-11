@@ -110,6 +110,7 @@ func (e *Run) UnmarshalJSON(data []byte) error {
 		id          string
 		CmdLineTool CommandLineTool
 		ExpTool     ExpressionTool
+		SubWorkflow Workflow
 	)
 	err := json.Unmarshal(data, &id)
 	if err == nil {
@@ -124,6 +125,11 @@ func (e *Run) UnmarshalJSON(data []byte) error {
 	err = json.Unmarshal(data, &ExpTool)
 	if err == nil && ExpTool.Class == "ExpressionTool" {
 		e.Process = &ExpTool
+		return nil
+	}
+	err = json.Unmarshal(data, &SubWorkflow)
+	if err == nil && SubWorkflow.Class == "Workflow" {
+		e.Process = &SubWorkflow
 		return nil
 	}
 	// TODO UnmarshalJSON Process

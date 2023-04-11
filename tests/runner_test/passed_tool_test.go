@@ -308,6 +308,21 @@ func TestCWLR2_run69(t *testing.T) {
 // 73,76,84-96,98,100
 // 103-109,112,115-118,120,123,127,129
 
+// ✅ simple ValueForm @ workflow step
+func TestCWLR2_run70(t *testing.T) {
+	testByID(t, 70)
+}
+
+// ✅ ValueForm + MultipleInputs
+func TestCWLR2_run71(t *testing.T) {
+	testByID(t, 71)
+}
+
+// ✅ ValueFrom + ref to other
+func TestCWLR2_run72(t *testing.T) {
+	testByID(t, 72)
+}
+
 // record_output_binding v1.0/record-output.cwl v1.0/record-output-job.json
 func TestCWLR2_run73(t *testing.T) {
 	testByID(t, 73)
@@ -317,6 +332,36 @@ func TestCWLR2_run73(t *testing.T) {
 // ✅ 3/14
 func TestCWLR2_run76(t *testing.T) {
 	testByID(t, 76)
+}
+
+// ✅ ValueFrom + Scatter
+func TestCWLR2_run77(t *testing.T) {
+	testByID(t, 77)
+}
+
+// ✅ ValueFrom + Scatter + nest_cross
+func TestCWLR2_run78(t *testing.T) {
+	testByID(t, 78)
+}
+
+// ✅ ValueFrom + Scatter + flat_cross
+func TestCWLR2_run79(t *testing.T) {
+	testByID(t, 79)
+}
+
+// ✅ ValueFrom + Scatter + dot_product
+func TestCWLR2_run80(t *testing.T) {
+	testByID(t, 80)
+}
+
+// ✅ ValueFrom @ step input
+func TestCWLR2_run81(t *testing.T) {
+	testByID(t, 81)
+}
+
+// ✅ ValueFrom @ Scatter parameter
+func TestCWLR2_run82(t *testing.T) {
+	testByID(t, 82)
 }
 
 // ✅ workflow + conflict

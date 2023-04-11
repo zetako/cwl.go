@@ -31,25 +31,6 @@ func TestCountCWLR2_workflow_tag(t *testing.T) {
 //		132,
 //	}
 
-func TestCWLR2_run70(t *testing.T) {
-	testByID(t, 70)
-}
-func TestCWLR2_run71(t *testing.T) {
-	testByID(t, 71)
-}
-func TestCWLR2_run72(t *testing.T) {
-	testByID(t, 72)
-}
-func TestCWLR2_run80(t *testing.T) {
-	testByID(t, 80)
-}
-func TestCWLR2_run81(t *testing.T) {
-	testByID(t, 81)
-}
-func TestCWLR2_run82(t *testing.T) {
-	testByID(t, 82)
-}
-
 // sub-workflow
 func TestCWLR2_run99(t *testing.T) {
 	testByID(t, 99)
