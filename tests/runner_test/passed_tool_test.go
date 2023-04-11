@@ -439,6 +439,11 @@ func TestCWLR2_run98(t *testing.T) {
 	testByID(t, 98)
 }
 
+// ✅ sub-workflow
+func TestCWLR2_run99(t *testing.T) {
+	testByID(t, 99)
+}
+
 // ❌ filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json
 func TestCWLR2_run100(t *testing.T) {
 	testByID(t, 100)
@@ -476,6 +481,11 @@ func TestCWLR2_run109(t *testing.T) {
 	testByID(t, 109)
 }
 
+// ✅ generate nameroot & nameext
+func TestCWLR2_run111(t *testing.T) {
+	testByID(t, 111)
+}
+
 func TestCWLR2_run112(t *testing.T) {
 	testByID(t, 112)
 }
@@ -483,6 +493,11 @@ func TestCWLR2_run112(t *testing.T) {
 // ✅ workflow scatter + use same source
 func TestCWLR2_run113(t *testing.T) {
 	testByID(t, 113)
+}
+
+// ✅ Multiple source w/ multiple type
+func TestCWLR2_run114(t *testing.T) {
+	testByID(t, 114)
 }
 
 func TestCWLR2_run115(t *testing.T) {
@@ -517,7 +532,22 @@ func TestCWLR2_run127(t *testing.T) {
 	testByID(t, 127)
 }
 
+// ✅ ResourceRequirement @ workflow step
+func TestCWLR2_run128(t *testing.T) {
+	testByID(t, 128)
+}
+
 // ✅3/17 valuefrom const overides array inputs
 func TestCWLR2_run129(t *testing.T) {
 	testByID(t, 129)
+}
+
+// ✅ skip input
+func TestCWLR2_run131(t *testing.T) {
+	testByID(t, 131)
+}
+
+// ✅ report error @ input no meet
+func TestCWLR2_run132(t *testing.T) {
+	testByID(t, 132)
 }

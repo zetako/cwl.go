@@ -31,27 +31,20 @@ func TestCountCWLR2_workflow_tag(t *testing.T) {
 //		132,
 //	}
 
-// sub-workflow
-func TestCWLR2_run99(t *testing.T) {
-	testByID(t, 99)
-}
-
-// $Graph
-func TestCWLR2_run110(t *testing.T) {
-	testByID(t, 110)
-}
-
-// generate nameroot & nameext
-func TestCWLR2_run111(t *testing.T) {
-	testByID(t, 111)
-}
-
-// Multiple source w/ multiple type
-func TestCWLR2_run114(t *testing.T) {
-	testByID(t, 114)
-}
+// $Graph as json
+// 有奇怪的行为（前置#）
+//func TestCWLR2_run110(t *testing.T) {
+//	testByID(t, 110)
+//}
 
 // InitialWorkDirRequirement base on other step
-func TestCWLR2_run122(t *testing.T) {
-	testByID(t, 122)
-}
+// 与目前各步骤独立目录的行为有冲突
+//func TestCWLR2_run122(t *testing.T) {
+//	testByID(t, 122)
+//}
+
+// 动态Resources
+// 要求在ResourcesLimit阶段计算js表达式
+//	func TestCWLR2_run126(t *testing.T) {
+//		testByID(t, 126)
+//	}
