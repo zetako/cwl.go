@@ -65,8 +65,8 @@ type ExpPart struct {
 }
 
 // See https://www.commonwl.org/v1.2/CommandLineTool.html#Expressions_(Optional)
-//var rx = regexp.MustCompile(`\$\((.*)\)`)
-//Parameter references
+// var rx = regexp.MustCompile(`\$\((.*)\)`)
+// Parameter references
 var rx = regexp.MustCompile(`\$\([\pL\pN]+(\.[\pL\pN]+|\['[^'| ]+'\]|\["[^"| ]+"\]|\[\d+\])*\)`)
 
 func parseExp(expr cwl.Expression) []*ExpPart {
@@ -232,10 +232,18 @@ func CwlExprSacner(in string) [][3]string {
 				if in[i+1] == '(' {
 					pass = 1
 					inExp = true
+					if str != "" {
+						ret = append(ret, [3]string{str, "", ""})
+						str = ""
+					}
 					continue
 				} else if in[i+1] == '{' {
 					pass = 1
 					inFun = true
+					if str != "" {
+						ret = append(ret, [3]string{str, "", ""})
+						str = ""
+					}
 					continue
 				}
 			}

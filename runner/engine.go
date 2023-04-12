@@ -2,6 +2,7 @@ package runner
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/user"
@@ -31,12 +32,13 @@ type Engine struct {
 	RootHost   string
 	InputsHost string
 	Log        *MainLog //
-	// executer
+	// executor
 }
 
 type EngineConfig struct {
-	RunID    string
-	UserName string
+	DocumentID string
+	RunID      string
+	UserName   string
 	Importer
 	InputFS       Filesystem
 	OutputFS      Filesystem
@@ -116,6 +118,25 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 		return nil, err
 	}
 	if err = json.Unmarshal(c.Process, &e.root); err != nil {
+		if err.Error() == "no Process name" {
+			// parse $graph
+			if c.DocumentID == "" {
+				return nil, errors.New("no Process name and Document name not specified")
+			}
+			graphs := cwl.SaladRootDoc{}
+			err = json.Unmarshal(c.Process, &graphs)
+			if err != nil {
+				return nil, err
+			}
+			for _, graph := range graphs.Graph {
+				if graph.Process.Base().ID == c.DocumentID {
+					e.root = graph
+					e.root.SaladRootDoc = graphs // 这一行用来保存其他已解析的文件
+					return e, nil
+				}
+			}
+			return nil, errors.New("no matched document found")
+		}
 		return nil, err
 	}
 	return e, nil
@@ -131,13 +152,8 @@ func (e *Engine) SetDefaultExecutor(exec Executor) {
 	e.executor = exec
 }
 
-func (e *Engine) Run() (outs cwl.Values, err error) {
-	_, err = e.MainProcess()
-	if err != nil {
-		return nil, err
-	}
-	if _, isCLT := e.process.root.Process.(*cwl.CommandLineTool); isCLT {
-		p := e.process
+func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
+	if _, isCLT := p.root.Process.(*cwl.CommandLineTool); isCLT {
 		limits, err := p.ResourcesLimites()
 		runtime := e.executor.QueryRuntime(*limits)
 		p.SetRuntime(runtime)
@@ -152,14 +168,27 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 		p.JobID = pid
 		retCode, _ := <-ret
 		p.SetRuntime(Runtime{ExitCode: &retCode})
-		outputs, err := p.Outputs(e.outputFS)
+		if p.outputFS == nil {
+			p.outputFS = e.outputFS
+		}
+		outputs, err := p.Outputs(p.outputFS)
 		return outputs, err
-	} else if _, isExpTool := e.process.root.Process.(*cwl.ExpressionTool); isExpTool {
-		outputs, err := e.process.RunExpression()
+	} else if _, isExpTool := p.root.Process.(*cwl.ExpressionTool); isExpTool {
+		outputs, err := p.RunExpression()
+		return outputs, err
+	} else if _, isWorkflow := p.root.Process.(*cwl.Workflow); isWorkflow {
+		outputs, err := p.RunWorkflow(e)
 		return outputs, err
 	}
-	// TODO workflow run
-	return nil, fmt.Errorf("workflow is not ok yet ")
+	return nil, fmt.Errorf("unknown process class  ")
+}
+
+func (e *Engine) Run() (outs cwl.Values, err error) {
+	_, err = e.MainProcess()
+	if err != nil {
+		return nil, err
+	}
+	return e.RunProcess(e.process)
 }
 
 // 解析但不执行
@@ -174,8 +203,15 @@ func (e *Engine) ResolveProcess(process *Process) error {
 		return err
 	}
 	//
-	process.runtime.RootHost = e.RootHost
-	process.runtime.InputsHost = e.InputsHost
+	if process.runtime.RootHost == "" {
+		process.runtime.RootHost = e.RootHost
+	}
+	if process.runtime.InputsHost == "" {
+		process.runtime.InputsHost = e.InputsHost
+	}
+	//process.runtime.RootHost = e.RootHost
+	//process.runtime.InputsHost = e.InputsHost
+
 	process.loadRuntime()
 	// Bind inputs to values.
 	//
@@ -312,4 +348,88 @@ func (e *Engine) MainProcess() (*Process, error) {
 	process.loadRuntime()
 	e.process = process
 	return process, nil
+}
+
+func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, err error) {
+	// 初始化
+	process = &Process{
+		fs:  e.inputFS,
+		env: map[string]string{},
+		Log: e.Log.Log,
+	}
+
+	if step.Run.Process != nil {
+		if process.root == nil {
+			process.root = &cwl.Root{}
+		}
+		process.root.Process = step.Run.Process
+	} else { // 没有已序列化的进程，此时需要读文件
+		if len(step.Run.ID) <= 0 {
+			return nil, fmt.Errorf("no Process or Run.ID to use")
+		}
+		cwlFile := step.Run.ID
+		if cwlFile[0] == '#' { // 先判断是否#开头，此时是graph模式
+			if e.root.SaladRootDoc.Graph == nil {
+				return nil, fmt.Errorf("specify a packed doc but not found")
+			}
+			cwlFile = cwlFile[1:]
+			for _, graph := range e.root.SaladRootDoc.Graph {
+				if graph.Process.Base().ID == cwlFile {
+					process.root = graph
+					break
+				}
+			}
+			if process.root == nil {
+				return nil, fmt.Errorf("specify a packed doc but not found")
+			}
+		} else { // 否则就应该去读cwl
+			if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
+				return nil, errors.New("Run.ID not a cwl file")
+				// TODO 可能还需要考虑带#的情况
+			}
+			// 读文件
+			cwlFileReader, err := e.importer.Load(cwlFile)
+			if err != nil {
+				return nil, err
+			}
+			cwlFileJSON, err := cwl.Y2J(cwlFileReader)
+			if err != nil {
+				return nil, err
+			}
+			cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
+			if err != nil {
+				return nil, err
+			}
+
+			// 生成
+			if err = json.Unmarshal(cwlFileJSON, &process.root); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// 其他处理（来自MainProcess）
+	process.SetRuntime(defaultRuntime)
+	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
+	process.outputFS = &Local{
+		workdir:      process.runtime.RootHost,
+		CalcChecksum: true,
+	}
+	process.runtime.InputsHost = path.Join(e.InputsHost, step.ID)
+	process.inputFS = &Local{
+		workdir:      process.runtime.InputsHost,
+		CalcChecksum: true,
+	}
+	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
+		process.tool = tool
+	}
+	inputs := process.root.Process.Base().Inputs
+	process.inputs = &cwl.Values{}
+	setDefault(process.inputs, inputs)
+
+	if err := process.initJVM(); err != nil {
+		return nil, err
+	}
+	process.loadRuntime()
+	return
 }

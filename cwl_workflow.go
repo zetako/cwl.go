@@ -32,7 +32,8 @@ const (
 )
 
 // PickValueMethod enum
-//     Picking non-null values among inbound data links, described in [WorkflowStepInput](#WorkflowStepInput).
+//
+//	Picking non-null values among inbound data links, described in [WorkflowStepInput](#WorkflowStepInput).
 type PickValueMethod string
 
 const (
@@ -46,7 +47,7 @@ type WorkflowOutputParameter struct {
 	OutputSource        ArrayString      `json:"outputSource,omitempty"`
 	LinkMerge           LinkMergeMethod  `json:"linkMerge,omitempty" salad:"default:merge_nested"`
 	PickValue           *PickValueMethod `json:"pickValue,omitempty"`
-	Type                SaladType         `json:"type" salad:"type"`
+	Type                SaladType        `json:"type" salad:"type"`
 }
 
 // Sink
@@ -62,8 +63,9 @@ type WorkflowStepInput struct {
 	Sink         `json:",inline"`
 	LoadContents `json:",inline"`
 	Labeled      `json:",inline"`
-	Default      interface{} `json:"default,omitempty"`
-	ValueFrom    Expression  `json:"valueFrom,omitempty"`
+	//Default      interface{} `json:"default,omitempty"`
+	Default   Value      `json:"default,omitempty" salad:"value"`
+	ValueFrom Expression `json:"valueFrom,omitempty"`
 }
 
 type WorkflowStepOutput struct {
@@ -104,10 +106,30 @@ type Run struct {
 }
 
 func (e *Run) UnmarshalJSON(data []byte) error {
-	var id string
+	var (
+		id          string
+		CmdLineTool CommandLineTool
+		ExpTool     ExpressionTool
+		SubWorkflow Workflow
+	)
 	err := json.Unmarshal(data, &id)
 	if err == nil {
 		e.ID = id
+		return nil
+	}
+	err = json.Unmarshal(data, &CmdLineTool)
+	if err == nil && CmdLineTool.Class == "CommandLineTool" {
+		e.Process = &CmdLineTool
+		return nil
+	}
+	err = json.Unmarshal(data, &ExpTool)
+	if err == nil && ExpTool.Class == "ExpressionTool" {
+		e.Process = &ExpTool
+		return nil
+	}
+	err = json.Unmarshal(data, &SubWorkflow)
+	if err == nil && SubWorkflow.Class == "Workflow" {
+		e.Process = &SubWorkflow
 		return nil
 	}
 	// TODO UnmarshalJSON Process
@@ -121,7 +143,7 @@ type WorkflowStep struct {
 	In            []WorkflowStepInput  `json:"in" salad:"mapSubject:id,mapPredicate:source"`
 	Out           []WorkflowStepOutput `json:"out"`
 	Requirements  Requirements         `json:"requirements,omitempty" salad:"mapSubject:class"`
-	Hits          Requirements         `json:"requirements,omitempty" salad:"mapSubject:class"`
+	Hints         Requirements         `json:"hints,omitempty" salad:"mapSubject:class"`
 	Run           Run                  `json:"run"`
 	When          Expression           `json:"when,omitempty"`
 	Scatter       ArrayString          `json:"scatter,omitempty"`
@@ -149,4 +171,3 @@ type MultipleInputFeatureRequirement struct {
 type StepInputExpressionRequirement struct {
 	BaseRequirement `json:",inline"`
 }
-

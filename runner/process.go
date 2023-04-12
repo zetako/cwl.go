@@ -11,20 +11,22 @@ import (
 )
 
 type Process struct {
-	root           *cwl.Root
-	tool           *cwl.CommandLineTool
-	inputs         *cwl.Values
-	runtime        Runtime
-	fs             Filesystem
-	bindings       []*Binding
-	expressionLibs []string
-	env            map[string]string
-	filesToCreate  []cwl.FileDir
-	shell          bool
-	resources      ResourcesLimites
-	stdout         string
-	stderr         string
-	stdin          string
+	root              *cwl.Root
+	tool              *cwl.CommandLineTool
+	inputs            *cwl.Values
+	runtime           Runtime
+	parentRuntime     Runtime
+	fs                Filesystem
+	inputFS, outputFS Filesystem
+	bindings          []*Binding
+	expressionLibs    []string
+	env               map[string]string
+	filesToCreate     []cwl.FileDir
+	shell             bool
+	resources         ResourcesLimites
+	stdout            string
+	stderr            string
+	stdin             string
 	*Log
 	*jsvm
 }
@@ -151,7 +153,6 @@ func (p *Process) loadRuntime() {
 	p.vm.Set("runtime", p.runtime)
 }
 
-//
 func (p *Process) RunExpression() (cwl.Values, error) {
 	tool, ok := p.root.Process.(*cwl.ExpressionTool)
 	if !ok {
@@ -271,4 +272,8 @@ func (process *Process) ResourcesLimites() (*ResourcesLimites, error) {
 		// TODO Set more Resources
 	}
 	return &limits, nil
+}
+
+func (process *Process) RefreshVMInputs() error {
+	return setInputs(process.jsvm, *process.inputs)
 }

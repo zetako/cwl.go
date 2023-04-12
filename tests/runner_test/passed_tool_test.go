@@ -105,11 +105,11 @@ func TestCWLR2_run19(t *testing.T) {
 	testByID(t, 19)
 }
 
-//// workflow
-//// ❌ any-type-compat.cwl v1.0/any-type-job.json
-//func TestCWLR2_run20(t *testing.T) {
-//  testByID(t, 20)
-//}
+// // workflow
+// ✅ workflow any type in
+func TestCWLR2_run20(t *testing.T) {
+	testByID(t, 20)
+}
 
 // ✅ 3/14
 func TestCWLR2_run21(t *testing.T) {
@@ -130,9 +130,104 @@ func TestCWLR2_run23(t *testing.T) {
 	testByID(t, 23)
 }
 
+// ✅ workflow with cwl file step
+func TestCWLR2_run24(t *testing.T) {
+	testByID(t, 24)
+}
+
+// ✅ workflow with embedded step
+func TestCWLR2_run25(t *testing.T) {
+	testByID(t, 25)
+}
+
+// ✅ workflow with scatter step; multiple parameters
+func TestCWLR2_run26(t *testing.T) {
+	testByID(t, 26)
+}
+
+// ✅ workflow with scatter step; multiple sources
+func TestCWLR2_run27(t *testing.T) {
+	testByID(t, 27)
+}
+
+// ✅ workflow with scatter step; multiple sources in array type
+func TestCWLR2_run28(t *testing.T) {
+	testByID(t, 28)
+}
+
+// ✅ workflow with linkMerge param
+func TestCWLR2_run29(t *testing.T) {
+	testByID(t, 29)
+}
+
+// ✅ workflow no multipleInputFeatureRequirement
+func TestCWLR2_run30(t *testing.T) {
+	testByID(t, 30)
+}
+
+// ✅ workflow empty input
+func TestCWLR2_run31(t *testing.T) {
+	testByID(t, 31)
+}
+
+// ✅ workflow default + has input
+func TestCWLR2_run32(t *testing.T) {
+	testByID(t, 32)
+}
+
+// ✅ workflow default + use default
+func TestCWLR2_run33(t *testing.T) {
+	testByID(t, 33)
+}
+
 // ✅ 1020 envTool 3/14
 func TestCWLR2_run34(t *testing.T) {
 	testByID(t, 34)
+}
+
+// ✅ simple scatter
+func TestCWLR2_run35(t *testing.T) {
+	testByID(t, 35)
+}
+
+// ✅ nest cross product
+func TestCWLR2_run36(t *testing.T) {
+	testByID(t, 36)
+}
+
+// ✅ flat cross product
+func TestCWLR2_run37(t *testing.T) {
+	testByID(t, 37)
+}
+
+// ✅ dot product
+func TestCWLR2_run38(t *testing.T) {
+	testByID(t, 38)
+}
+
+// ✅ empty @ single scatter
+func TestCWLR2_run39(t *testing.T) {
+	testByID(t, 39)
+}
+
+// ✅ empty 2nd param @ nest cross product
+func TestCWLR2_run40(t *testing.T) {
+	testByID(t, 40)
+}
+
+// ✅ empty 1nd param @ nest cross product
+func TestCWLR2_run41(t *testing.T) {
+	testByID(t, 41)
+}
+
+// ✅ empty any param @ flat cross product
+func TestCWLR2_run42(t *testing.T) {
+	testByID(t, 42)
+}
+
+// ✅ empty both param @ dot product
+func TestCWLR2_run43(t *testing.T) {
+	testByID(t, 43)
 }
 
 // ✅ 1020 inputTypeAny
@@ -140,9 +235,64 @@ func TestCWLR2_run44(t *testing.T) {
 	testByID(t, 44)
 }
 
+// ✅ nested workflow
+func TestCWLR2_run45(t *testing.T) {
+	testByID(t, 45)
+}
+
+// ✅ requirement + priority
+func TestCWLR2_run46(t *testing.T) {
+	testByID(t, 46)
+}
+
+// ✅ requirement + override
+func TestCWLR2_run47(t *testing.T) {
+	testByID(t, 47)
+}
+
+// ✅ requirement @ workflow step
+func TestCWLR2_run48(t *testing.T) {
+	testByID(t, 48)
+}
+
+// ✅ default input @ step
+func TestCWLR2_run49(t *testing.T) {
+	testByID(t, 49)
+}
+
+// ✅ default input @ step + empty
+func TestCWLR2_run50(t *testing.T) {
+	testByID(t, 50)
+}
+
+// ✅ default input @ step + null
+func TestCWLR2_run51(t *testing.T) {
+	testByID(t, 51)
+}
+
+// ✅ default input @ step + provided
+func TestCWLR2_run52(t *testing.T) {
+	testByID(t, 52)
+}
+
+// ✅ simple 2 steps workflow; both output
+func TestCWLR2_run53(t *testing.T) {
+	testByID(t, 53)
+}
+
 // ✅ 1020 outputEval
 func TestCWLR2_run58(t *testing.T) {
 	testByID(t, 58)
+}
+
+// ✅ simple ValueFrom
+func TestCWLR2_run59(t *testing.T) {
+	testByID(t, 59)
+}
+
+// ✅ workflow ValueFrom
+func TestCWLR2_run60(t *testing.T) {
+	testByID(t, 60)
 }
 
 // ✅ 1020 null input
@@ -158,6 +308,21 @@ func TestCWLR2_run69(t *testing.T) {
 // 73,76,84-96,98,100
 // 103-109,112,115-118,120,123,127,129
 
+// ✅ simple ValueForm @ workflow step
+func TestCWLR2_run70(t *testing.T) {
+	testByID(t, 70)
+}
+
+// ✅ ValueForm + MultipleInputs
+func TestCWLR2_run71(t *testing.T) {
+	testByID(t, 71)
+}
+
+// ✅ ValueFrom + ref to other
+func TestCWLR2_run72(t *testing.T) {
+	testByID(t, 72)
+}
+
 // record_output_binding v1.0/record-output.cwl v1.0/record-output-job.json
 func TestCWLR2_run73(t *testing.T) {
 	testByID(t, 73)
@@ -167,6 +332,41 @@ func TestCWLR2_run73(t *testing.T) {
 // ✅ 3/14
 func TestCWLR2_run76(t *testing.T) {
 	testByID(t, 76)
+}
+
+// ✅ ValueFrom + Scatter
+func TestCWLR2_run77(t *testing.T) {
+	testByID(t, 77)
+}
+
+// ✅ ValueFrom + Scatter + nest_cross
+func TestCWLR2_run78(t *testing.T) {
+	testByID(t, 78)
+}
+
+// ✅ ValueFrom + Scatter + flat_cross
+func TestCWLR2_run79(t *testing.T) {
+	testByID(t, 79)
+}
+
+// ✅ ValueFrom + Scatter + dot_product
+func TestCWLR2_run80(t *testing.T) {
+	testByID(t, 80)
+}
+
+// ✅ ValueFrom @ step input
+func TestCWLR2_run81(t *testing.T) {
+	testByID(t, 81)
+}
+
+// ✅ ValueFrom @ Scatter parameter
+func TestCWLR2_run82(t *testing.T) {
+	testByID(t, 82)
+}
+
+// ✅ workflow + conflict
+func TestCWLR2_run83(t *testing.T) {
+	testByID(t, 83)
 }
 
 // dir job 84 ~ 88 ❌ 后置？
@@ -228,10 +428,20 @@ func TestCWLR2_run96(t *testing.T) {
 	testByID(t, 96)
 }
 
+// ✅ inlineJavaScript + expressionLib
+func TestCWLR2_run97(t *testing.T) {
+	testByID(t, 97)
+}
+
 // ✅ initial_workdir_output
 // v1.0/initialworkdirrequirement-docker-out.cwl v1.0/initialworkdirrequirement-docker-out-job.json
 func TestCWLR2_run98(t *testing.T) {
 	testByID(t, 98)
+}
+
+// ✅ sub-workflow
+func TestCWLR2_run99(t *testing.T) {
+	testByID(t, 99)
 }
 
 // ❌ filesarray_secondaryfiles v1.0/docker-array-secondaryfiles.cwl v1.0/docker-array-secondaryfiles-job.json
@@ -271,8 +481,23 @@ func TestCWLR2_run109(t *testing.T) {
 	testByID(t, 109)
 }
 
+// ✅ generate nameroot & nameext
+func TestCWLR2_run111(t *testing.T) {
+	testByID(t, 111)
+}
+
 func TestCWLR2_run112(t *testing.T) {
 	testByID(t, 112)
+}
+
+// ✅ workflow scatter + use same source
+func TestCWLR2_run113(t *testing.T) {
+	testByID(t, 113)
+}
+
+// ✅ Multiple source w/ multiple type
+func TestCWLR2_run114(t *testing.T) {
+	testByID(t, 114)
 }
 
 func TestCWLR2_run115(t *testing.T) {
@@ -299,6 +524,11 @@ func TestCWLR2_run120(t *testing.T) {
 	testByID(t, 120)
 }
 
+// ✅ InitialWorkDirRequirement base on other step
+func TestCWLR2_run122(t *testing.T) {
+	testByID(t, 122)
+}
+
 func TestCWLR2_run123(t *testing.T) {
 	testByID(t, 123)
 }
@@ -307,7 +537,22 @@ func TestCWLR2_run127(t *testing.T) {
 	testByID(t, 127)
 }
 
+// ✅ ResourceRequirement @ workflow step
+func TestCWLR2_run128(t *testing.T) {
+	testByID(t, 128)
+}
+
 // ✅3/17 valuefrom const overides array inputs
 func TestCWLR2_run129(t *testing.T) {
 	testByID(t, 129)
+}
+
+// ✅ skip input
+func TestCWLR2_run131(t *testing.T) {
+	testByID(t, 131)
+}
+
+// ✅ report error @ input no meet
+func TestCWLR2_run132(t *testing.T) {
+	testByID(t, 132)
 }

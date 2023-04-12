@@ -3,12 +3,12 @@ package cwl
 import (
 	"encoding/json"
 	"fmt"
-	
+
 	//"gopkg.in/yaml.v2"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
-	
+
 	"github.com/robertkrimen/otto"
 )
 
@@ -19,16 +19,15 @@ func NewCWL() *Root {
 }
 
 type SaladRootDoc struct {
-	Graphs       Graphs `json:"$graphs"`
-	
+	Graph Graphs `json:"$graph"`
 }
 
 // Root ...
 type Root struct {
 	SaladRootDoc `json:",inline"`
-	Process Process
+	Process      Process
 	// Use $graphs 组合
-	Class        string       `json:"class"`
+	Class string `json:"class"`
 	// Path
 	Path string `json:"-"`
 	// InputsVM
@@ -37,7 +36,7 @@ type Root struct {
 
 // UnmarshalJSON ...
 func (root *Root) UnmarshalJSON(b []byte) error {
-	p, err :=ParseCWLProcess(b)
+	p, err := ParseCWLProcess(b)
 	if err != nil {
 		return err
 	}

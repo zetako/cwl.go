@@ -66,6 +66,10 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 			userhome, _ := os.UserHomeDir()
 			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, userhome, userhome))
 			dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, process.runtime.InputsHost, process.runtime.InputsHost))
+			// 如果有父运行时，挂载
+			if process.parentRuntime.RootHost != "" {
+				dockerargs = append(dockerargs, "-v", fmt.Sprintf(`%s:%s`, process.parentRuntime.RootHost, process.parentRuntime.RootHost))
+			}
 			dockerargs = append(dockerargs, "-w", workdirInContainer)
 			if process.stdin != "" {
 				// dockerargs = append(dockerargs, "-a", "stdin", "-i")
