@@ -524,6 +524,11 @@ func TestCWLR2_run120(t *testing.T) {
 	testByID(t, 120)
 }
 
+// ✅ InitialWorkDirRequirement base on other step
+func TestCWLR2_run122(t *testing.T) {
+	testByID(t, 122)
+}
+
 func TestCWLR2_run123(t *testing.T) {
 	testByID(t, 123)
 }

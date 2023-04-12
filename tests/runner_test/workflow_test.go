@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestCountCWLR2_workflow_tag(t *testing.T) {
+func TestCountCWLR2_workflow_by_tag(t *testing.T) {
 	allWorkflowTest := filterTests(TestDoc{Tags: []string{"workflow"}})
 	log.Printf("All workflow count: %d\n", len(allWorkflowTest))
 	allWfTestIDStr := ""
@@ -33,18 +33,12 @@ func TestCountCWLR2_workflow_tag(t *testing.T) {
 
 // $Graph as json
 // 有奇怪的行为（前置#）
-//func TestCWLR2_run110(t *testing.T) {
-//	testByID(t, 110)
-//}
-
-// InitialWorkDirRequirement base on other step
-// 与目前各步骤独立目录的行为有冲突
-//func TestCWLR2_run122(t *testing.T) {
-//	testByID(t, 122)
-//}
+func TestCWLR2_nopass110(t *testing.T) {
+	testByID(t, 110)
+}
 
 // 动态Resources
 // 要求在ResourcesLimit阶段计算js表达式
-//	func TestCWLR2_run126(t *testing.T) {
-//		testByID(t, 126)
-//	}
+func TestCWLR2_nopass126(t *testing.T) {
+	testByID(t, 126)
+}

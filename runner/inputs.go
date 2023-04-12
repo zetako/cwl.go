@@ -440,14 +440,36 @@ func (process *Process) MigrateInputs() (err error) {
 					}
 				}
 				if dirj != nil {
+					//if !path.IsAbs(dirj.Path) {
+					//	parts := strings.Split(dirj.Path, "/")
+					//	if parts[0] == diri.Basename {
+					//		parts[0] = diri.Path
+					//		dirj.Path = path.Join(parts...)
+					//	} else {
+					//		return fmt.Errorf("Unknown dir path")
+					//	}
+					//}
+
 					if !path.IsAbs(dirj.Path) {
+						// a. 迭代，找到parts[i] == diri.Basename
+						i := 0
 						parts := strings.Split(dirj.Path, "/")
-						if parts[0] == diri.Basename {
-							parts[0] = diri.Path
-							dirj.Path = path.Join(parts...)
-						} else {
+						for i < len(parts) {
+							if parts[i] == diri.Basename {
+								break
+							}
+							i++
+						}
+						if i >= len(parts) {
 							return fmt.Errorf("Unknown dir path")
 						}
+						// b. 确认part[:i]是diri.Location的结尾
+						parentPart := path.Join(parts[:i+1]...)
+						if !strings.HasSuffix(diri.Path, parentPart) {
+							return fmt.Errorf("Unknown dir path")
+						}
+						// c. 拼接diri.Path和part[i:]
+						dirj.Path = path.Join(diri.Path, path.Join(parts[i+1:]...))
 					}
 					if err = migrateDir(*dirj); err != nil {
 						return err
@@ -559,6 +581,10 @@ func (process *Process) initWorkDir(listing []cwl.FileDirExpDirent) error {
 }
 
 func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
+	//err := process.RefreshVMInputs()
+	//if err != nil {
+	//	return err
+	//}
 	filename, err := process.Eval(dirent.EntryName, nil)
 	if err != nil {
 		return err
@@ -569,7 +595,19 @@ func (process *Process) initWorkDirDirent(dirent cwl.Dirent) error {
 	}
 	filenamestr, ok := filename.(string)
 	if !ok {
-		return process.error("entryName need be string")
+		if entry != nil {
+			if valueMap, ok := entry.(map[string]interface{}); ok {
+				if pathValue, ok := valueMap["path"]; ok {
+					pathStr, ok := pathValue.(string)
+					if ok {
+						filenamestr = path.Base(pathStr)
+					}
+				}
+			}
+		}
+		if filenamestr == "" {
+			return process.error("entryName need be string")
+		}
 	}
 	switch entryV := entry.(type) {
 	case string:

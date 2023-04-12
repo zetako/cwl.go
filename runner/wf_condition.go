@@ -2,6 +2,7 @@ package runner
 
 import (
 	"github.com/lijiang2014/cwl.go"
+	"path"
 	"strings"
 )
 
@@ -99,6 +100,29 @@ type StepDoneCondition struct {
 // Meet 无意义的判断，始终满足
 func (s StepDoneCondition) Meet(condition []Condition) bool {
 	return true
+}
+
+// AddStepInfoFor 为不同类型的Value添加步骤信息
+func (s StepDoneCondition) AddStepInfoFor(raw cwl.Value) cwl.Value {
+	// 文件
+	if file, ok := raw.(cwl.File); ok {
+		if !path.IsAbs(file.Location) {
+			file.Location = path.Join(s.runtime.RootHost, file.Location)
+		}
+		return file
+	}
+	// 目录
+	if dir, ok := raw.(cwl.Directory); ok {
+		if dir.Location != "" {
+			dir.Listing = nil
+			if !path.IsAbs(dir.Location) {
+				dir.Location = path.Join(s.runtime.RootHost, dir.Location)
+			}
+		}
+		return dir
+	}
+	// 默认，直接返回
+	return raw
 }
 
 // StepErrorCondition 步骤错误结束的条件，包含错误

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/lijiang2014/cwl.go"
 	"log"
-	"path"
 )
 
 type WorkflowRunner struct {
@@ -148,35 +147,13 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	return r, nil
 }
 
-//func mergeCwlValues(base *cwl.Values, others ...*cwl.Values) *cwl.Values {
-//	if base == nil {
-//		base = &cwl.Values{}
-//	}
-//	for _, other := range others {
-//		for key, value := range *other {
-//			(*base)[key] = value
-//		}
-//	}
-//	return base
-//}
-
 func mergeStepOutputs(parameter *cwl.Values, stepDone StepDoneCondition) *cwl.Values {
 	if parameter == nil {
 		parameter = &cwl.Values{}
 	}
 
 	for key, value := range *stepDone.out {
-		var tmpValue cwl.Value
-		if file, ok := value.(cwl.File); ok {
-			if !path.IsAbs(file.Location) {
-				file.Location = path.Join(stepDone.runtime.RootHost, file.Location)
-			}
-			tmpValue = file
-		} else {
-			tmpValue = value
-		}
-
-		(*parameter)[stepDone.step.ID+"/"+key] = tmpValue
+		(*parameter)[stepDone.step.ID+"/"+key] = stepDone.AddStepInfoFor(value)
 	}
 	return parameter
 }
