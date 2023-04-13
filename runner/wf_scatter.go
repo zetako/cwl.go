@@ -122,6 +122,19 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	} else {
 		// 非空，整理
 		for _, doneCond := range allOutputs {
+			// 如果是空的，说明When没有通过；需要为它的所有结果设置为nil
+			if doneCond.out == nil || *doneCond.out == nil {
+				for _, out := range r.process.root.Process.Base().Outputs {
+					key := out.GetOutputParameter().ID
+					if _, ok := output[key]; !ok {
+						//output[key] = []cwl.Value{}
+						output[key] = make([]cwl.Value, totalTask)
+					}
+					output[key].([]cwl.Value)[doneCond.scatterID] = nil
+				}
+				continue
+			}
+			// 否则，进行结果合并
 			for key, value := range *doneCond.out {
 				if _, ok := output[key]; !ok {
 					//output[key] = []cwl.Value{}
@@ -147,17 +160,53 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 
 // scatterTaskWrapper 已分发任务的运行封装，用于在协程中运行；使用channel传递结果
 func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, ID int) {
-	out, err := r.engine.RunProcess(p)
-	if err != nil {
-		condChan <- &ScatterErrorCondition{
-			scatterID: ID,
-			err:       err,
+	var (
+		err  error
+		out  cwl.Values
+		pass interface{}
+	)
+	// 用于捕捉错误的退出
+	defer func() {
+		if err != nil {
+			condChan <- &ScatterErrorCondition{
+				scatterID: ID,
+				err:       err,
+			}
 		}
+	}()
+	if r.step.When != "" {
+		// 有运行条件
+		err = p.RefreshVMInputs()
+		if err != nil {
+			return
+		}
+		pass, err = p.Eval(r.step.When, nil)
+		if err != nil {
+			return
+		}
+		if passBoolean, ok := pass.(bool); !ok {
+			err = fmt.Errorf("when表达式未输出布尔值")
+		} else {
+			if !passBoolean {
+				// 没有通过测试，直接输出空结果
+				condChan <- &ScatterDoneCondition{
+					scatterID: ID,
+					out:       nil,
+				}
+			}
+			return
+		}
+	}
+	// 没有运行条件或者运行条件通过了
+	out, err = r.engine.RunProcess(p)
+	if err != nil {
+		return
 	}
 	condChan <- &ScatterDoneCondition{
 		scatterID: ID,
 		out:       &out,
 	}
+
 	return
 }
 

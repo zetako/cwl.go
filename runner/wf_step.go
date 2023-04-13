@@ -169,6 +169,37 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			(*r.process.inputs)[in.ID] = resultValue
 		}
 	}
+	// 如果需要计算When，计算
+	if r.step.When != "" {
+		err = r.process.RefreshVMInputs()
+		if err != nil {
+			return err
+		}
+		pass, err := r.process.Eval(r.step.When, nil)
+		if err != nil {
+			return err
+		}
+		if passBoolean, ok := pass.(bool); !ok {
+			return fmt.Errorf("when表达式未输出布尔值")
+		} else {
+			if !passBoolean {
+				for _, output := range r.step.Out {
+					conditions <- &OutputParamCondition{
+						step:   r.step,
+						output: &output,
+					}
+				}
+				conditions <- &StepDoneCondition{
+					step:    r.step,
+					out:     nil,
+					runtime: r.process.runtime,
+				}
+				// 5. 返回
+				return nil
+			} // 通过就走正常流程
+		}
+
+	}
 	// 3. 然后使用 Engine.RunProcess()
 	outs, err := r.engine.RunProcess(r.process)
 	if err != nil {

@@ -148,6 +148,9 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 }
 
 func mergeStepOutputs(parameter *cwl.Values, stepDone StepDoneCondition) *cwl.Values {
+	if stepDone.out == nil || *stepDone.out == nil { // 是空的，不需要输出
+		return nil
+	}
 	if parameter == nil {
 		parameter = &cwl.Values{}
 	}
