@@ -1,10 +1,13 @@
 package runner
 
 import (
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"path"
 )
 
+// evalValueFrom 以 cwl.Value 的形式计算表达式
+// TODO 重构为jsvm的方法
 func evalValueFrom(vm *jsvm, expr cwl.Expression, self cwl.Value) (cwl.Value, error) {
 	plain, err := toJSONMap(self)
 	if err != nil {
@@ -18,6 +21,8 @@ func evalValueFrom(vm *jsvm, expr cwl.Expression, self cwl.Value) (cwl.Value, er
 	return ret, err
 }
 
+// setInputs 将 cwl.Values 设置为jsvm中的"$inputs"
+// TODO 重构为jsvm的方法
 func setInputs(vm *jsvm, inputs cwl.Values) error {
 	plain, err := toJSONMap(inputs)
 	if err != nil {
@@ -49,4 +54,54 @@ func preprocessInputs(inputs *cwl.Values) error {
 		}
 	}
 	return nil
+}
+
+// pickValue 计算pickValue表达式
+//   - 将不需要计算的量以及其对应的空Method传进来是安全的
+func pickValue(value cwl.Value, method cwl.PickValueMethod) (cwl.Value, error) {
+	if method == "" {
+		return value, nil
+	}
+	arr, ok := value.([]cwl.Value)
+	if !ok {
+		return value, fmt.Errorf("无法对非数组对象执行PickValue")
+	}
+	switch method {
+	case cwl.FIRST_NON_NULL:
+		for _, entity := range arr {
+			if entity != nil {
+				return entity, nil
+			}
+		}
+		return value, fmt.Errorf("pickValue=first_non_null，但是不存在非空值")
+	case cwl.THE_ONLY_NON_NULL:
+		var ret cwl.Value = nil
+		for _, entity := range arr {
+			if entity != nil {
+				if ret != nil {
+					return value, fmt.Errorf("pickValue=the_only_non_null，但是存在多个非空值")
+				}
+				ret = entity
+			}
+			if ret != nil {
+				return ret, nil
+			}
+			return ret, fmt.Errorf("pickValue=the_only_non_null，但是不存在非空值")
+		}
+	case cwl.ALL_NON_NULL:
+		var ret []cwl.Value
+		for _, entity := range arr {
+			if entity != nil {
+				ret = append(ret, entity)
+			}
+		}
+		if len(ret) > 0 {
+			return ret, nil
+		}
+		return ret, fmt.Errorf("pickValue=all_non_null，但是不存在非空值")
+	default:
+		// 不应该有default,这里就什么都不做吧！
+		return value, nil
+	}
+	return value, fmt.Errorf("unreachable")
 }

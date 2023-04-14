@@ -151,7 +151,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			}
 		}
 	}
-	condition <- &StepDoneCondition{
+	condition <- &StepDoneCondition{ // TODO StepDoneCondition 已更新，需要更新
 		step: r.step,
 		out:  &output,
 	}

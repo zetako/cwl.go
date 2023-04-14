@@ -105,6 +105,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			}
 		}
 	}
+	// 处理PickValue
 
 	// 处理ValueFrom
 	err = preprocessInputs(r.process.inputs)
