@@ -193,8 +193,8 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 					scatterID: ID,
 					out:       nil,
 				}
+				return
 			}
-			return
 		}
 	}
 	// 没有运行条件或者运行条件通过了
