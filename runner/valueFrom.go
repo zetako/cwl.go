@@ -83,11 +83,11 @@ func pickValue(value cwl.Value, method cwl.PickValueMethod) (cwl.Value, error) {
 				}
 				ret = entity
 			}
-			if ret != nil {
-				return ret, nil
-			}
-			return ret, fmt.Errorf("pickValue=the_only_non_null，但是不存在非空值")
 		}
+		if ret != nil {
+			return ret, nil
+		}
+		return ret, fmt.Errorf("pickValue=the_only_non_null，但是不存在非空值")
 	case cwl.ALL_NON_NULL:
 		var ret []cwl.Value
 		for _, entity := range arr {
@@ -95,10 +95,12 @@ func pickValue(value cwl.Value, method cwl.PickValueMethod) (cwl.Value, error) {
 				ret = append(ret, entity)
 			}
 		}
-		if len(ret) > 0 {
-			return ret, nil
-		}
-		return ret, fmt.Errorf("pickValue=all_non_null，但是不存在非空值")
+		return ret, nil
+		// 使用该方法时，即使没有符合条件的值也应该输出一个空列表
+		//if len(ret) > 0 {
+		//	return ret, nil
+		//}
+		//return ret, fmt.Errorf("pickValue=all_non_null，但是不存在非空值")
 	default:
 		// 不应该有default,这里就什么都不做吧！
 		return value, nil

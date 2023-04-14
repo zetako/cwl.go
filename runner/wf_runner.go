@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"log"
 )
@@ -96,13 +97,27 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		if workflowOutput, ok := output.(*cwl.WorkflowOutputParameter); ok {
 			if workflowOutput.PickValue != nil && *workflowOutput.PickValue != "" {
 				// 有pickValue，先产生数组，然后pick
-				var valueArr []cwl.Value
-				for _, src := range workflowOutput.OutputSource {
-					value, ok := (*r.parameter)[src]
-					if ok {
-						valueArr = append(valueArr, value)
-					} else {
-						valueArr = append(valueArr, nil)
+				var (
+					valueArr []cwl.Value
+					value    cwl.Value
+				)
+				if len(workflowOutput.OutputSource) == 1 { // 可能还是需要考虑linkMerged
+					value, ok = (*r.parameter)[workflowOutput.OutputSource[0]]
+					if !ok {
+						return fmt.Errorf("缺少输出")
+					}
+					valueArr, ok = value.([]cwl.Value)
+					if !ok {
+						valueArr = []cwl.Value{value}
+					}
+				} else {
+					for _, src := range workflowOutput.OutputSource {
+						value, ok = (*r.parameter)[src]
+						if ok {
+							valueArr = append(valueArr, value)
+						} else {
+							valueArr = append(valueArr, nil)
+						}
 					}
 				}
 				// pick

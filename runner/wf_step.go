@@ -106,6 +106,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		}
 	}
 	// 处理PickValue
+	log.Println("Break Here")
 
 	// 处理ValueFrom
 	err = preprocessInputs(r.process.inputs)
