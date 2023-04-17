@@ -151,6 +151,7 @@ func doTest(t *testing.T, doc TestDoc) {
 	err = os.RemoveAll("/tmp/testcwl")
 	e.SetDefaultExecutor(ex)
 	outputs, err := e.Run()
+	Expect(t, err).ToBe(nil)
 	rawout, _ = json.Marshal(outputs)
 	//Expect(t, outputs).ToBe(doc.Output)
 	if !ExpectOutputs(outputs, doc.Output) {
