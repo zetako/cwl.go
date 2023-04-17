@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="v1.2-conditional" type="GoTestRunConfiguration" factoryName="Go Test" folderName="regression">
+    <module name="cwl.go-lijiang2014" />
+    <working_directory value="$PROJECT_DIR$/tests/runner_test" />
+    <kind value="PACKAGE" />
+    <package value="github.com/lijiang2014/cwl.go/tests/conditional_test" />
+    <directory value="$PROJECT_DIR$/" />
+    <filePath value="$PROJECT_DIR$/" />
+    <framework value="gotest" />
+    <pattern value="^TestCWLWhen_RunIdx" />
+    <method v="2" />
+  </configuration>
+</component>
