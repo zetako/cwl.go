@@ -101,32 +101,19 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 					valueArr []cwl.Value
 					value    cwl.Value
 				)
-				if len(workflowOutput.OutputSource) == 1 { // 可能还是需要考虑linkMerged
-					value, ok = (*r.parameter)[workflowOutput.OutputSource[0]]
-					if !ok {
-						return fmt.Errorf("缺少输出")
-					}
-					valueArr, ok = value.([]cwl.Value)
-					if !ok {
-						valueArr = []cwl.Value{value}
-					}
-				} else {
-					for _, src := range workflowOutput.OutputSource {
-						value, ok = (*r.parameter)[src]
-						if ok {
-							valueArr = append(valueArr, value)
-						} else {
-							valueArr = append(valueArr, nil)
-						}
-					}
-				}
-				// pick
-				value, err := pickValue(valueArr, *workflowOutput.PickValue)
+				// linkMerge
+				value, err := linkMerge(workflowOutput.LinkMerge, workflowOutput.OutputSource, *r.parameter)
 				if err != nil {
 					return err
 				}
-				key := workflowOutput.ID
-				outputs[key] = value
+				// pickValue
+				if valueArr, ok = value.([]cwl.Value); ok {
+					value, err = pickValue(valueArr, *workflowOutput.PickValue)
+					if err != nil {
+						return err
+					}
+				}
+				outputs[workflowOutput.ID] = value
 			} else {
 				// 没有PickValue，仅考虑单个输出
 				value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
@@ -176,15 +163,36 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	}
 	// 初始化输入条件
 	r.reachedConditions = []Condition{}
-	for key, value := range *inputs {
-		if value == nil {
-			continue
+	for _, in := range r.workflow.Inputs {
+		wfIn, ok := in.(*cwl.WorkflowInputParameter)
+		key := wfIn.ID
+		value, ok := (*inputs)[key]
+		if !ok {
+			if wfIn.Type.IsNullable() {
+				r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
+					key:   key,
+					value: nil,
+				})
+			} else {
+				return nil, fmt.Errorf("一个非空输入的值没有定义")
+			}
+		} else {
+			r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
+				key:   key,
+				value: value,
+			})
 		}
-		r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
-			key:   key,
-			value: value,
-		})
 	}
+	//for key, value := range *inputs {
+	//	// TODO 这里如果是Optional值，要传一个nil
+	//	if value == nil {
+	//		continue
+	//	}
+	//	r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
+	//		key:   key,
+	//		value: value,
+	//	})
+	//}
 	return r, nil
 }
 

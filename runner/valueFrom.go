@@ -105,5 +105,41 @@ func pickValue(value cwl.Value, method cwl.PickValueMethod) (cwl.Value, error) {
 		// 不应该有default,这里就什么都不做吧！
 		return value, nil
 	}
-	return value, fmt.Errorf("unreachable")
+}
+
+func linkMerge(method cwl.LinkMergeMethod, sources cwl.ArrayString, values cwl.Values) (cwl.Value, error) {
+	if len(sources) == 1 {
+		return values[sources[0]], nil
+	} else {
+		switch method {
+		case cwl.MERGE_FLATTENED:
+			var tmpInput []cwl.Value
+			for _, src := range sources {
+				tmp, ok := values[src]
+				if !ok { // 拿不到可能是When没有执行，设为nil
+					tmp = nil
+					//return nil, errors.New("没有匹配 " + src + " 的输入")
+				}
+				if tmpList, ok := tmp.([]cwl.Value); ok {
+					tmpInput = append(tmpInput, tmpList...)
+				} else { // 也有可能是单个元素
+					tmpInput = append(tmpInput, tmp)
+				}
+			}
+			return tmpInput, nil
+		case cwl.MERGE_NESTED:
+			var tmpInput []cwl.Value
+			for _, src := range sources {
+				tmp, ok := values[src]
+				if !ok { // 拿不到可能是When没有执行，设为nil
+					tmp = nil
+					//return nil, errors.New("没有匹配 " + src + " 的输入")
+				}
+				tmpInput = append(tmpInput, tmp)
+			}
+			return tmpInput, nil
+		default:
+			return values[sources[0]], nil
+		}
+	}
 }

@@ -39,7 +39,7 @@ func (i InputParamCondition) Meet(condition []Condition) bool {
 		for _, cond := range condition {
 			if outCond, ok := cond.(*OutputParamCondition); ok {
 				tmp := outCond.step.ID + "/" + outCond.output.ID
-				if tmp == source {
+				if tmp == source && outCond.output != nil {
 					return true
 				}
 			}
@@ -48,7 +48,7 @@ func (i InputParamCondition) Meet(condition []Condition) bool {
 		// 需匹配初始条件
 		for _, cond := range condition {
 			if initCond, ok := cond.(WorkflowInitCondition); ok {
-				if initCond.key == source {
+				if initCond.key == source && initCond.value != nil {
 					return true
 				}
 			}
