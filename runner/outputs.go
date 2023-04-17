@@ -241,7 +241,8 @@ Loop:
 			if typ.Kind() != reflect.Slice {
 				continue Loop
 			}
-			array := t.MustArraySchema().(*cwl.CommandOutputArraySchema)
+			//array := t.MustArraySchema().(*cwl.CommandOutputArraySchema)
+			array := t.MustArraySchema()
 			var res []cwl.Value
 			arr := reflect.ValueOf(val)
 			for i := 0; i < arr.Len(); i++ {
@@ -325,7 +326,8 @@ func (process *Process) matchFiles(fs Filesystem, globs []string, loadContents b
 //
 // cwl spec:
 // "If an expression is provided, the expression must return a string or an array
-//  of strings, which will then be evaluated as one or more glob patterns."
+//
+//	of strings, which will then be evaluated as one or more glob patterns."
 func (process *Process) evalGlobPatterns(patterns []cwl.Expression) ([]string, error) {
 	var out []string
 
