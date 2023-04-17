@@ -35,7 +35,6 @@ func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
 	default:
 		values = nil
 	}
-	// TODO 绑定输出 || 验证输出
 	for _, out := range wf.Outputs {
 		wfOut := out.(*cwl.WorkflowOutputParameter)
 		p.fs = p.outputFS

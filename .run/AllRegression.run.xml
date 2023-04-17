@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="AllRegression" type="CompoundRunConfigurationType">
+    <toRun name="v1.0" type="GoTestRunConfiguration" />
+    <toRun name="v1.2-conditional" type="GoTestRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
