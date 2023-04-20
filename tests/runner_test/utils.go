@@ -89,13 +89,14 @@ func init() {
 }
 
 type TestDoc struct {
-	ID     int `json:"id"`
-	Tags   []string
-	Label  string
-	Tool   string
-	Job    string
-	Output cwl.Values
-	Doc    string
+	ID         int `json:"id"`
+	Tags       []string
+	Label      string
+	Tool       string
+	Job        string
+	Output     cwl.Values
+	Doc        string
+	ShouldFail bool `json:"should_fail"`
 }
 
 func (recv *TestDoc) UnmarshalJSON(b []byte) error {
@@ -133,9 +134,11 @@ func doTest(t *testing.T, doc TestDoc) {
 		if t.Failed() {
 			t.Logf("Test Failed: %d %s %s", doc.ID, doc.Tool, doc.Job)
 			t.Logf("Labels: %s Tag: %v ", doc.Label, doc.Tags)
-			t.Logf("actual outraw: %s ", string(rawout))
-			rawout, _ = json.Marshal(doc.Output)
-			t.Logf("excepted outraw: %s ", string(rawout))
+			if !doc.ShouldFail {
+				t.Logf("actual outraw: %s ", string(rawout))
+				rawout, _ = json.Marshal(doc.Output)
+				t.Logf("excepted outraw: %s ", string(rawout))
+			}
 
 		}
 	}()
@@ -148,11 +151,16 @@ func doTest(t *testing.T, doc TestDoc) {
 	err = os.RemoveAll("/tmp/testcwl")
 	e.SetDefaultExecutor(ex)
 	outputs, err := e.Run()
-	rawout, _ = json.Marshal(outputs)
-	//Expect(t, outputs).ToBe(doc.Output)
-	if !ExpectOutputs(outputs, doc.Output) {
-		Expect(t, outputs).ToBe(doc.Output)
-		//t.Fail()
+	if !doc.ShouldFail {
+		Expect(t, err).ToBe(nil)
+		rawout, _ = json.Marshal(outputs)
+		//Expect(t, outputs).ToBe(doc.Output)
+		if !ExpectOutputs(outputs, doc.Output) {
+			Expect(t, outputs).ToBe(doc.Output)
+			//t.Fail()
+		}
+	} else if err == nil {
+		Expect(t, err).Not().ToBe(nil)
 	}
 }
 

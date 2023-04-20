@@ -552,7 +552,8 @@ func TestCWLR2_run131(t *testing.T) {
 	testByID(t, 131)
 }
 
-// ✅ report error @ input no meet
-func TestCWLR2_run132(t *testing.T) {
-	testByID(t, 132)
-}
+// ❎ report error @ input defined on other step
+// ⚠️ should not pass!
+//func TestCWLR2_run132(t *testing.T) {
+//	testByID(t, 132)
+//}
