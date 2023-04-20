@@ -79,7 +79,11 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		if _, ok := r.useWorkflowDefault[in.ID]; ok {
 			(*r.process.inputs)[in.ID] = in.Default
 		} else if len(in.Source) == 1 {
-			(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
+			tmp, ok := (*r.parameter)[in.Source[0]]
+			if !ok || tmp == nil {
+				tmp = in.Default
+			}
+			(*r.process.inputs)[in.ID] = tmp
 		} else {
 			switch in.LinkMerge {
 			case cwl.MERGE_FLATTENED:

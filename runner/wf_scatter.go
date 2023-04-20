@@ -29,6 +29,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		layout       []int
 	)
 	totalTask, allInputs, layout, err = r.getAllScatterInputs()
+	if err != nil {
+		return err
+	}
 	for i := 0; i < totalTask; i++ {
 		// 1. Scatter的每个任务都需要创建Process
 		process, err = r.engine.GenerateSubProcess(r.step)
@@ -147,7 +150,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		if err != nil {
 			condition <- &StepErrorCondition{
 				step: r.step,
-				err:  errors.New("输出格式化失败"),
+				err:  fmt.Errorf("输出格式化失败: %s", err),
 			}
 		}
 	}
@@ -295,11 +298,23 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 		// 先为每个key分配对应的空间
 		scatterValues[key] = []cwl.Value{}
 		// 然后根据source数量判断行为
-		if len(sources) == 1 { // 仅有单一source
+		if len(sources) <= 0 {
+			// 如果没有来源，就使用默认值
+			for _, in := range r.step.In {
+				if in.ID == key && in.Default != nil {
+					if defaultArr, ok := in.Default.([]cwl.Value); ok {
+						scatterValues[key] = append(scatterValues[key], defaultArr...)
+					}
+				}
+			}
+			if len(scatterValues[key]) <= 0 {
+				return -1, nil, nil, fmt.Errorf("输入%s没有绑定值或默认值", key)
+			}
+		} else if len(sources) == 1 { // 仅有单一source
 			source := sources[0]
 			tmp, ok := (*r.parameter)[source]
 			if !ok {
-				return -1, nil, nil, errors.New("没有匹配的输入")
+				return -1, nil, nil, fmt.Errorf("来源%s没有匹配的输入", source)
 			}
 			if tmpList, ok := tmp.([]cwl.Value); ok {
 				for _, entity := range tmpList {
@@ -312,7 +327,9 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 			for _, source := range sources {
 				tmp, ok := (*r.parameter)[source]
 				if !ok {
-					return -1, nil, nil, errors.New("没有匹配的输入")
+					tmp = nil
+					// 多来源可以允许空来源
+					//return -1, nil, nil, fmt.Errorf("来源%s没有匹配的输入", source)
 				}
 
 				switch scatterSinks[key].LinkMerge {
@@ -331,7 +348,17 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 				}
 			}
 		}
+		if len(scatterValues[key]) == 0 {
+			for _, in := range r.step.In {
+				if in.ID == key && in.Default != nil {
+					if defaultArr, ok := in.Default.([]cwl.Value); ok {
+						scatterValues[key] = defaultArr
+					}
+				}
+			}
+		}
 	}
+
 	// 1.3 计算出总scatter量和layout
 	//   - 需要根据ScatterMethod方法来实现
 	switch r.step.ScatterMethod {

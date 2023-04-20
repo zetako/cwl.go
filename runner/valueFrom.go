@@ -3,6 +3,7 @@ package runner
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/robertkrimen/otto"
 	"path"
 )
 
@@ -24,11 +25,19 @@ func evalValueFrom(vm *jsvm, expr cwl.Expression, self cwl.Value) (cwl.Value, er
 // setInputs 将 cwl.Values 设置为jsvm中的"$inputs"
 // TODO 重构为jsvm的方法
 func setInputs(vm *jsvm, inputs cwl.Values) error {
+	// 如果有nil，需要替换为js的null
 	plain, err := toJSONMap(inputs)
 	if err != nil {
 		return err
 	}
-	err = vm.vm.Set("inputs", plain)
+
+	plainMap := plain.(map[string]interface{})
+	for key, value := range plainMap {
+		if value == nil {
+			plainMap[key] = otto.NullValue()
+		}
+	}
+	err = vm.vm.Set("inputs", plainMap)
 	return err
 }
 
