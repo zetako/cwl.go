@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"log"
 	"path"
 )
 
@@ -13,7 +14,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		if err != nil {
 			condition <- &StepErrorCondition{
 				step: r.step,
-				err:  fmt.Errorf("Step Err : %v\n", err),
+				err:  err,
 			}
 		}
 	}()
@@ -80,7 +81,6 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
 				runningTask--
 			} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
-				// TODO 需要一种将该步错误传出的方法
 				runningTask--
 			}
 		}
@@ -106,7 +106,6 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
 				runningTask--
 			} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
-				// TODO 需要一种将该步错误传出的方法
 				runningTask--
 			}
 		}
@@ -164,18 +163,26 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 
 // scatterTaskWrapper 已分发任务的运行封装，用于在协程中运行；使用channel传递结果
 func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, ID int) {
+	log.Printf("[Step \"%s\": Scatter %d] Start", r.step.ID, ID)
 	var (
-		err  error
-		out  cwl.Values
-		pass interface{}
+		err         error
+		out         cwl.Values
+		pass        interface{}
+		passBoolean bool
+		ok          bool
 	)
 	// 用于捕捉错误的退出
 	defer func() {
 		if err != nil {
+			log.Printf("[Step \"%s\": Scatter %d] Error:%s", r.step.ID, ID, err)
 			condChan <- &ScatterErrorCondition{
 				scatterID: ID,
 				err:       err,
 			}
+		} else if r.step.When != "" && !passBoolean {
+			log.Printf("[Step \"%s\": Scatter %d] Skip", r.step.ID, ID)
+		} else {
+			log.Printf("[Step \"%s\": Scatter %d] Finish", r.step.ID, ID)
 		}
 	}()
 	if r.step.When != "" {
@@ -188,7 +195,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 		if err != nil {
 			return
 		}
-		if passBoolean, ok := pass.(bool); !ok {
+		if passBoolean, ok = pass.(bool); !ok {
 			err = fmt.Errorf("when表达式未输出布尔值")
 		} else {
 			if !passBoolean {
