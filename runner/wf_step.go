@@ -109,8 +109,17 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			}
 		}
 	}
-	// 处理PickValue TODO
-	log.Println("Break Here")
+	// 处理PickValue
+	for _, in := range r.step.In {
+		if in.PickValue != nil {
+			value := (*r.process.inputs)[in.ID]
+			value, err = pickValue(value, *in.PickValue)
+			if err != nil {
+				return fmt.Errorf("PickValue计算失败: %s", err)
+			}
+			(*r.process.inputs)[in.ID] = value
+		}
+	}
 
 	// 处理ValueFrom
 	err = preprocessInputs(r.process.inputs)
