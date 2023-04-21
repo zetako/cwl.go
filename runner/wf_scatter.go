@@ -29,6 +29,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		layout       []int
 	)
 	totalTask, allInputs, layout, err = r.getAllScatterInputs()
+	if err != nil {
+		return err
+	}
 	for i := 0; i < totalTask; i++ {
 		// 1. Scatter的每个任务都需要创建Process
 		process, err = r.engine.GenerateSubProcess(r.step)
@@ -50,7 +53,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		if err != nil {
 			return fmt.Errorf("预处理inputs失败: %v\n", err)
 		}
-		err = setInputs(process.jsvm, *process.inputs)
+		err = process.jsvm.setInputs(*process.inputs)
 		if err != nil {
 			return fmt.Errorf("设置inputs失败: %v\n", err)
 		}
@@ -58,7 +61,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			//if in.ValueFrom != "" && !r.needScatter(in.ID) {
 			if in.ValueFrom != "" {
 				tmp := (*process.inputs)[in.ID]
-				tmp, err = evalValueFrom(process.jsvm, in.ValueFrom, tmp)
+				tmp, err = process.jsvm.evalValueFrom(in.ValueFrom, tmp)
 				if err != nil {
 					return fmt.Errorf("ValueFrom计算失败: %v\n", err)
 				}
@@ -122,6 +125,19 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	} else {
 		// 非空，整理
 		for _, doneCond := range allOutputs {
+			// 如果是空的，说明When没有通过；需要为它的所有结果设置为nil
+			if doneCond.out == nil || *doneCond.out == nil {
+				for _, out := range r.process.root.Process.Base().Outputs {
+					key := out.GetOutputParameter().ID
+					if _, ok := output[key]; !ok {
+						//output[key] = []cwl.Value{}
+						output[key] = make([]cwl.Value, totalTask)
+					}
+					output[key].([]cwl.Value)[doneCond.scatterID] = nil
+				}
+				continue
+			}
+			// 否则，进行结果合并
 			for key, value := range *doneCond.out {
 				if _, ok := output[key]; !ok {
 					//output[key] = []cwl.Value{}
@@ -134,30 +150,67 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		if err != nil {
 			condition <- &StepErrorCondition{
 				step: r.step,
-				err:  errors.New("输出格式化失败"),
+				err:  fmt.Errorf("输出格式化失败: %s", err),
 			}
 		}
 	}
 	condition <- &StepDoneCondition{
-		step: r.step,
-		out:  &output,
+		step:    r.step,
+		out:     &output,
+		runtime: r.process.runtime,
 	}
 	return nil
 }
 
 // scatterTaskWrapper 已分发任务的运行封装，用于在协程中运行；使用channel传递结果
 func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, ID int) {
-	out, err := r.engine.RunProcess(p)
-	if err != nil {
-		condChan <- &ScatterErrorCondition{
-			scatterID: ID,
-			err:       err,
+	var (
+		err  error
+		out  cwl.Values
+		pass interface{}
+	)
+	// 用于捕捉错误的退出
+	defer func() {
+		if err != nil {
+			condChan <- &ScatterErrorCondition{
+				scatterID: ID,
+				err:       err,
+			}
 		}
+	}()
+	if r.step.When != "" {
+		// 有运行条件
+		err = p.RefreshVMInputs()
+		if err != nil {
+			return
+		}
+		pass, err = p.Eval(r.step.When, nil)
+		if err != nil {
+			return
+		}
+		if passBoolean, ok := pass.(bool); !ok {
+			err = fmt.Errorf("when表达式未输出布尔值")
+		} else {
+			if !passBoolean {
+				// 没有通过测试，直接输出空结果
+				condChan <- &ScatterDoneCondition{
+					scatterID: ID,
+					out:       nil,
+				}
+				return
+			}
+		}
+	}
+	// 没有运行条件或者运行条件通过了
+	out, err = r.engine.RunProcess(p)
+	if err != nil {
+		return
 	}
 	condChan <- &ScatterDoneCondition{
 		scatterID: ID,
 		out:       &out,
 	}
+
 	return
 }
 
@@ -246,11 +299,23 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 		// 先为每个key分配对应的空间
 		scatterValues[key] = []cwl.Value{}
 		// 然后根据source数量判断行为
-		if len(sources) == 1 { // 仅有单一source
+		if len(sources) <= 0 {
+			// 如果没有来源，就使用默认值
+			for _, in := range r.step.In {
+				if in.ID == key && in.Default != nil {
+					if defaultArr, ok := in.Default.([]cwl.Value); ok {
+						scatterValues[key] = append(scatterValues[key], defaultArr...)
+					}
+				}
+			}
+			if len(scatterValues[key]) <= 0 {
+				return -1, nil, nil, fmt.Errorf("输入%s没有绑定值或默认值", key)
+			}
+		} else if len(sources) == 1 { // 仅有单一source
 			source := sources[0]
 			tmp, ok := (*r.parameter)[source]
 			if !ok {
-				return -1, nil, nil, errors.New("没有匹配的输入")
+				return -1, nil, nil, fmt.Errorf("来源%s没有匹配的输入", source)
 			}
 			if tmpList, ok := tmp.([]cwl.Value); ok {
 				for _, entity := range tmpList {
@@ -263,7 +328,9 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 			for _, source := range sources {
 				tmp, ok := (*r.parameter)[source]
 				if !ok {
-					return -1, nil, nil, errors.New("没有匹配的输入")
+					tmp = nil
+					// 多来源可以允许空来源
+					//return -1, nil, nil, fmt.Errorf("来源%s没有匹配的输入", source)
 				}
 
 				switch scatterSinks[key].LinkMerge {
@@ -282,7 +349,17 @@ func (r *RegularRunner) getAllScatterInputs() (total int, inputs []cwl.Values, l
 				}
 			}
 		}
+		if len(scatterValues[key]) == 0 {
+			for _, in := range r.step.In {
+				if in.ID == key && in.Default != nil {
+					if defaultArr, ok := in.Default.([]cwl.Value); ok {
+						scatterValues[key] = defaultArr
+					}
+				}
+			}
+		}
 	}
+
 	// 1.3 计算出总scatter量和layout
 	//   - 需要根据ScatterMethod方法来实现
 	switch r.step.ScatterMethod {

@@ -1,12 +1,10 @@
-package runnertest
+package conditionaltest
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -17,10 +15,14 @@ import (
 
 const version = "1.0"
 
+var (
+	tests    []TestDoc
+	pathBase string = "/home/zetako/git/cwl-v1.2/tests/conditionals"
+)
+
 // Provides file object for testable official .cwl files.
 func load(name string) *os.File {
-	fpath := fmt.Sprintf("../../cwl/v%[1]s/%s", version, name)
-	f, err := os.Open(fpath)
+	f, err := os.Open(path.Join(pathBase, name))
 	if err != nil {
 		panic(err)
 	}
@@ -45,9 +47,6 @@ func newEngine(tool, param string) (*irunner.Engine, error) {
 	f2 := load(param)
 	data2, _ := ioutil.ReadAll(f2)
 	jd2, _ := cwl.Y2J(data2)
-
-	wd, _ := os.Getwd()
-	wd = filepath.Join(wd, "../../cwl/v1.0/v1.0")
 	return irunner.NewEngine(irunner.EngineConfig{
 		DocumentID:   documentID,
 		RunID:        "testcwl",
@@ -56,7 +55,7 @@ func newEngine(tool, param string) (*irunner.Engine, error) {
 		WorkDir:      "run",
 		Process:      jd1,
 		Params:       jd2,
-		DocImportDir: wd,
+		DocImportDir: pathBase,
 	})
 }
 
@@ -67,29 +66,33 @@ func ExpectArray(t *testing.T, v []string, wanna []string) {
 	}
 }
 
-var (
-	tests []TestDoc
-)
-
-func init() {
-	f := load("conformance_test_v1.0.yaml")
+func Reload(testIndexFile string) error {
+	f := load("test-index.yaml")
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	tests = make([]TestDoc, 0)
 	bj, err := cwl.Y2J(b)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = json.Unmarshal(bj, &tests)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func init() {
+	err := Reload("test-index.yaml")
 	if err != nil {
 		panic(err)
 	}
 }
 
 type TestDoc struct {
-	ID         int `json:"id"`
+	ID         string `json:"id"`
 	Tags       []string
 	Label      string
 	Tool       string
@@ -108,10 +111,10 @@ func (recv *TestDoc) UnmarshalJSON(b []byte) error {
 
 func filterTests(search TestDoc) []TestDoc {
 	var out []TestDoc
-	if search.ID == 0 && search.Label == "" && len(search.Tags) == 0 {
+	if search.ID == "" && search.Label == "" && len(search.Tags) == 0 {
 		return tests
 	}
-	if search.ID != 0 || search.Label != "" {
+	if search.ID != "" || search.Label != "" {
 		for _, testi := range tests {
 			if testi.ID == search.ID || testi.Label == search.Label {
 				return []TestDoc{testi}
@@ -132,7 +135,7 @@ func doTest(t *testing.T, doc TestDoc) {
 	var rawout []byte
 	defer func() {
 		if t.Failed() {
-			t.Logf("Test Failed: %d %s %s", doc.ID, doc.Tool, doc.Job)
+			t.Logf("Test Failed: %s %s %s", doc.ID, doc.Tool, doc.Job)
 			t.Logf("Labels: %s Tag: %v ", doc.Label, doc.Tags)
 			if !doc.ShouldFail {
 				t.Logf("actual outraw: %s ", string(rawout))

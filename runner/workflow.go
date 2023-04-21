@@ -35,6 +35,14 @@ func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
 	default:
 		values = nil
 	}
-
+	for _, out := range wf.Outputs {
+		wfOut := out.(*cwl.WorkflowOutputParameter)
+		p.fs = p.outputFS
+		v, err := p.bindOutput(p.outputFS, wfOut.Type, nil, wfOut.SecondaryFiles, values[wfOut.ID])
+		if err != nil {
+			return nil, fmt.Errorf(`failed to bind value for "%s": %s`, wfOut.ID, err)
+		}
+		values[wfOut.ID] = v
+	}
 	return values, err
 }

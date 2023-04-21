@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"log"
 )
@@ -49,7 +50,10 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		tmpCondition = <-conditionChannel
 		moreCondition = true
 		if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-			mergeStepOutputs(r.parameter, *doneCond)
+			_, err := mergeStepOutputs(r.parameter, *doneCond)
+			if err != nil {
+				return err
+			}
 			runningCounter--
 		}
 		if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
@@ -60,7 +64,10 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 			select {
 			case tmpCondition = <-conditionChannel:
 				if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-					mergeStepOutputs(r.parameter, *doneCond)
+					_, err := mergeStepOutputs(r.parameter, *doneCond)
+					if err != nil {
+						return err
+					}
 					runningCounter--
 				}
 				if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
@@ -88,13 +95,35 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 	outputs := cwl.Values{}
 	for _, output := range r.workflow.Outputs {
 		if workflowOutput, ok := output.(*cwl.WorkflowOutputParameter); ok {
-			// 目前仅考虑单个输出 TODO
-			value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
-			if !ok {
-				return errors.New("输出不匹配")
+			if workflowOutput.PickValue != nil && *workflowOutput.PickValue != "" {
+				// 有pickValue，先产生数组，然后pick
+				var (
+					valueArr []cwl.Value
+					value    cwl.Value
+				)
+				// linkMerge
+				value, err := linkMerge(workflowOutput.LinkMerge, workflowOutput.OutputSource, *r.parameter)
+				if err != nil {
+					return err
+				}
+				// pickValue
+				if valueArr, ok = value.([]cwl.Value); ok {
+					value, err = pickValue(valueArr, *workflowOutput.PickValue)
+					if err != nil {
+						return err
+					}
+				}
+				outputs[workflowOutput.ID] = value
+			} else {
+				// 没有PickValue，仅考虑单个输出
+				value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
+				if !ok {
+					//return fmt.Errorf("变量%s存在问题", workflowOutput.ID)
+					outputs[workflowOutput.ID] = nil
+				} else {
+					outputs[workflowOutput.ID] = value
+				}
 			}
-			key := workflowOutput.ID
-			outputs[key] = value
 		} else {
 			return errors.New("输出不匹配")
 		}
@@ -135,25 +164,45 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 	}
 	// 初始化输入条件
 	r.reachedConditions = []Condition{}
-	for key, value := range *inputs {
-		if value == nil {
-			continue
+	for _, in := range r.workflow.Inputs {
+		wfIn, ok := in.(*cwl.WorkflowInputParameter)
+		key := wfIn.ID
+		value, ok := (*inputs)[key]
+		if !ok {
+			if wfIn.Type.IsNullable() {
+				r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
+					key:   key,
+					value: nil,
+				})
+			} else {
+				return nil, fmt.Errorf("一个非空输入的值没有定义")
+			}
+		} else {
+			r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
+				key:   key,
+				value: value,
+			})
 		}
-		r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
-			key:   key,
-			value: value,
-		})
 	}
 	return r, nil
 }
 
-func mergeStepOutputs(parameter *cwl.Values, stepDone StepDoneCondition) *cwl.Values {
-	if parameter == nil {
-		parameter = &cwl.Values{}
+// mergeStepOutputs 将 StepDoneCondition 的输出合并到指定数值列表中
+// TODO 重构为 StepDoneCondition 的方法
+func mergeStepOutputs(ori *cwl.Values, stepDone StepDoneCondition) (*cwl.Values, error) {
+	// 0.预处理空值
+	// 0.1 空输出不需要处理
+	if stepDone.out == nil || *stepDone.out == nil { // 是空的，不需要输出
+		return nil, nil
 	}
-
+	// 0.2 空输入需要初始化
+	if ori == nil {
+		ori = &cwl.Values{}
+	}
+	// 1. 处理每个数据
 	for key, value := range *stepDone.out {
-		(*parameter)[stepDone.step.ID+"/"+key] = stepDone.AddStepInfoFor(value)
+		// 合并值
+		(*ori)[stepDone.step.ID+"/"+key] = stepDone.AddStepInfoFor(value)
 	}
-	return parameter
+	return ori, nil
 }

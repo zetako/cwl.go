@@ -79,7 +79,11 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		if _, ok := r.useWorkflowDefault[in.ID]; ok {
 			(*r.process.inputs)[in.ID] = in.Default
 		} else if len(in.Source) == 1 {
-			(*r.process.inputs)[in.ID] = (*r.parameter)[in.Source[0]]
+			tmp, ok := (*r.parameter)[in.Source[0]]
+			if !ok || tmp == nil {
+				tmp = in.Default
+			}
+			(*r.process.inputs)[in.ID] = tmp
 		} else {
 			switch in.LinkMerge {
 			case cwl.MERGE_FLATTENED:
@@ -105,13 +109,24 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			}
 		}
 	}
+	// 处理PickValue
+	for _, in := range r.step.In {
+		if in.PickValue != nil {
+			value := (*r.process.inputs)[in.ID]
+			value, err = pickValue(value, *in.PickValue)
+			if err != nil {
+				return fmt.Errorf("PickValue计算失败: %s", err)
+			}
+			(*r.process.inputs)[in.ID] = value
+		}
+	}
 
 	// 处理ValueFrom
 	err = preprocessInputs(r.process.inputs)
 	if err != nil {
 		return fmt.Errorf("预处理inputs失败: %v\n", err)
 	}
-	err = setInputs(r.process.jsvm, *r.process.inputs)
+	err = r.process.jsvm.setInputs(*r.process.inputs)
 	if err != nil {
 		return err
 	}
@@ -168,6 +183,37 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			// 保存结果
 			(*r.process.inputs)[in.ID] = resultValue
 		}
+	}
+	// 如果需要计算When，计算
+	if r.step.When != "" {
+		err = r.process.RefreshVMInputs()
+		if err != nil {
+			return err
+		}
+		pass, err := r.process.Eval(r.step.When, nil)
+		if err != nil {
+			return err
+		}
+		if passBoolean, ok := pass.(bool); !ok {
+			return fmt.Errorf("when表达式未输出布尔值")
+		} else {
+			if !passBoolean {
+				for _, output := range r.step.Out {
+					conditions <- &OutputParamCondition{
+						step:   r.step,
+						output: &output,
+					}
+				}
+				conditions <- &StepDoneCondition{
+					step:    r.step,
+					out:     nil,
+					runtime: r.process.runtime,
+				}
+				// 5. 返回
+				return nil
+			} // 通过就走正常流程
+		}
+
 	}
 	// 3. 然后使用 Engine.RunProcess()
 	outs, err := r.engine.RunProcess(r.process)
