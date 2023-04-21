@@ -8,8 +8,7 @@ import (
 )
 
 // evalValueFrom 以 cwl.Value 的形式计算表达式
-// TODO 重构为jsvm的方法
-func evalValueFrom(vm *jsvm, expr cwl.Expression, self cwl.Value) (cwl.Value, error) {
+func (vm *jsvm) evalValueFrom(expr cwl.Expression, self cwl.Value) (cwl.Value, error) {
 	plain, err := toJSONMap(self)
 	if err != nil {
 		return nil, err
@@ -23,8 +22,7 @@ func evalValueFrom(vm *jsvm, expr cwl.Expression, self cwl.Value) (cwl.Value, er
 }
 
 // setInputs 将 cwl.Values 设置为jsvm中的"$inputs"
-// TODO 重构为jsvm的方法
-func setInputs(vm *jsvm, inputs cwl.Values) error {
+func (vm *jsvm) setInputs(inputs cwl.Values) error {
 	// 如果有nil，需要替换为js的null
 	plain, err := toJSONMap(inputs)
 	if err != nil {

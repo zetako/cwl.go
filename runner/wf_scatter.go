@@ -53,7 +53,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		if err != nil {
 			return fmt.Errorf("预处理inputs失败: %v\n", err)
 		}
-		err = setInputs(process.jsvm, *process.inputs)
+		err = process.jsvm.setInputs(*process.inputs)
 		if err != nil {
 			return fmt.Errorf("设置inputs失败: %v\n", err)
 		}
@@ -61,7 +61,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			//if in.ValueFrom != "" && !r.needScatter(in.ID) {
 			if in.ValueFrom != "" {
 				tmp := (*process.inputs)[in.ID]
-				tmp, err = evalValueFrom(process.jsvm, in.ValueFrom, tmp)
+				tmp, err = process.jsvm.evalValueFrom(in.ValueFrom, tmp)
 				if err != nil {
 					return fmt.Errorf("ValueFrom计算失败: %v\n", err)
 				}

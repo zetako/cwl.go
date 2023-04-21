@@ -184,16 +184,6 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*Workfl
 			})
 		}
 	}
-	//for key, value := range *inputs {
-	//	// TODO 这里如果是Optional值，要传一个nil
-	//	if value == nil {
-	//		continue
-	//	}
-	//	r.reachedConditions = append(r.reachedConditions, WorkflowInitCondition{
-	//		key:   key,
-	//		value: value,
-	//	})
-	//}
 	return r, nil
 }
 

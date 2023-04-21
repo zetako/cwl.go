@@ -135,9 +135,7 @@ func parseExp(expr cwl.Expression) []*ExpPart {
 	return parts
 }
 
-func (j *jsvm) EvalParts(parts []*ExpPart) (interface{}, error) {
-
-	var vm = j.vm
+func (vm *jsvm) EvalParts(parts []*ExpPart) (interface{}, error) {
 
 	if len(parts) == 0 {
 		return nil, nil
@@ -160,7 +158,7 @@ func (j *jsvm) EvalParts(parts []*ExpPart) (interface{}, error) {
 			code = "(function(){ return " + part.Expr + "; })()"
 		}
 
-		val, err := vm.Run(code)
+		val, err := vm.vm.Run(code)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run JS expression: %s", err)
 		}
@@ -179,7 +177,7 @@ func (j *jsvm) EvalParts(parts []*ExpPart) (interface{}, error) {
 	for _, part := range parts {
 		if part.Expr != "" {
 
-			val, err := vm.Run(part.Expr)
+			val, err := vm.vm.Run(part.Expr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to run JS expression: %s", err)
 			}

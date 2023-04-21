@@ -109,7 +109,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			}
 		}
 	}
-	// 处理PickValue
+	// 处理PickValue TODO
 	log.Println("Break Here")
 
 	// 处理ValueFrom
@@ -117,7 +117,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	if err != nil {
 		return fmt.Errorf("预处理inputs失败: %v\n", err)
 	}
-	err = setInputs(r.process.jsvm, *r.process.inputs)
+	err = r.process.jsvm.setInputs(*r.process.inputs)
 	if err != nil {
 		return err
 	}

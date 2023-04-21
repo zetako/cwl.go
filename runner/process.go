@@ -275,5 +275,5 @@ func (process *Process) ResourcesLimites() (*ResourcesLimites, error) {
 }
 
 func (process *Process) RefreshVMInputs() error {
-	return setInputs(process.jsvm, *process.inputs)
+	return process.jsvm.setInputs(*process.inputs)
 }
