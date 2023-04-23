@@ -180,7 +180,7 @@ func (p *Process) RunExpression() (cwl.Values, error) {
 	}
 
 	out, err := p.jsvm.Eval(tool.Expression, nil)
-	log.Printf("out %#v", out)
+	//log.Printf("out %#v", out)
 	// Convert out into values
 	valMap, ok := out.(map[string]interface{})
 	if !ok {

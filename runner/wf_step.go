@@ -59,16 +59,30 @@ func (r *RegularRunner) MeetConditions(now []Condition) bool {
 }
 
 func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
+	log.Printf("[Step \"%s\"] Start", r.step.ID)
+	var (
+		passBoolean bool
+		doScattered bool
+		ok          bool
+	)
 	defer func() { // 负责处理运行结束的情况
 		if err != nil {
+			log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
 			conditions <- &StepErrorCondition{
 				step: r.step,
 				err:  err,
 			}
+		} else if doScattered {
+			log.Printf("[Step \"%s\"] Scattered", r.step.ID)
+		} else if !passBoolean {
+			log.Printf("[Step \"%s\"] Skip", r.step.ID)
+		} else {
+			log.Printf("[Step \"%s\"] Finish", r.step.ID)
 		}
 	}()
 	// 1. 如果需要Scatter，任务交由RunScatter
 	if r.step.Scatter != nil && len(r.step.Scatter) > 0 {
+		doScattered = true
 		return r.RunScatter(conditions)
 	}
 	// 2. 处理输入
@@ -194,7 +208,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		if err != nil {
 			return err
 		}
-		if passBoolean, ok := pass.(bool); !ok {
+		if passBoolean, ok = pass.(bool); !ok {
 			return fmt.Errorf("when表达式未输出布尔值")
 		} else {
 			if !passBoolean {
@@ -213,7 +227,6 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				return nil
 			} // 通过就走正常流程
 		}
-
 	}
 	// 3. 然后使用 Engine.RunProcess()
 	outs, err := r.engine.RunProcess(r.process)
@@ -238,14 +251,8 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 
 func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool) {
 	if r.MeetConditions(now) {
-		log.Println("Step Run :", r.step.ID)
 		go func() {
-			err := r.Run(channel)
-			if err != nil {
-				log.Printf("Step Err : %s\n%v", r.step.ID, err)
-			} else {
-				log.Println("Step Done:", r.step.ID)
-			}
+			_ = r.Run(channel)
 		}()
 		return true
 	}
