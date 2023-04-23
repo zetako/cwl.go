@@ -84,6 +84,15 @@ func Reload(testIndexFile string) error {
 	return nil
 }
 
+func SwitchTestSet(path, file string) error {
+	if path != pathBase {
+		pathBase = path
+		return Reload(file)
+	} else {
+		return nil
+	}
+}
+
 func init() {
 	err := Reload("test-index.yaml")
 	if err != nil {
