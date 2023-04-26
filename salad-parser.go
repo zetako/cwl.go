@@ -123,9 +123,11 @@ func (p *Parser) setField(fieldType reflect.Type, fieldValue reflect.Value, bean
 // 根据 salad 扩展 json 结构体的解析
 // ✅ 支持 salad.mapSubject 特性
 // ✅ 支持 salad.default 特性
-//   支持 通过 ClassBase 来推断 Interface 的 具体 Struct
+//
+//	支持 通过 ClassBase 来推断 Interface 的 具体 Struct
+//
 // ✅ 支持 json:inline 特性
-//	- [ ] 优化：避免 map[key]Raw 的重复解析
+//   - [ ] 优化：避免 map[key]Raw 的重复解析
 func (p *Parser) parseObject(typeOfRecv reflect.Type, valueOfRecv reflect.Value, data []byte) (err error) {
 	//log.Println("old value", typeOfRecv.Name(), valueOfRecv.Interface(), valueOfRecv.Type().Name())
 	if (valueOfRecv.Kind() == reflect.Interface || valueOfRecv.Kind() == reflect.Ptr) && valueOfRecv.IsNil() {
@@ -706,20 +708,40 @@ func debugType(fieldType reflect.Type) {
 }
 
 func ConvertToValue(bean interface{}) (out Value, err error) {
-	switch t := bean.(type) {
-	case []interface{}:
-		arr := make([]Value, len(t))
-		for i, item := range t {
-			v, err := ConvertToValue(item)
+	beanRef := reflect.ValueOf(bean)
+	switch beanRef.Kind() {
+	case reflect.Slice, reflect.Array:
+		arr := make([]Value, beanRef.Len())
+		for i := 0; i < beanRef.Len(); i++ {
+			item := beanRef.Index(i).Interface()
+			val, err := ConvertToValue(item)
 			if err != nil {
 				return nil, err
 			}
-			arr[i] = v
+			arr[i] = val
 		}
 		return arr, nil
-	case map[string]interface{}:
-		tClass, _ := t["class"]
-		switch tClass {
+	case reflect.Map:
+		// 这一步保证Key是string
+		keys := beanRef.MapKeys()
+		if len(keys) == 0 || keys[0].Kind() != reflect.String {
+			return bean, nil
+		}
+		// 这一步转换map["class"]为string
+		var className string = "class" // 这里先设为需要查找的Key来取得Index
+		classRef := beanRef.MapIndex(reflect.ValueOf(className))
+		if !classRef.IsValid() {
+			className = ""
+		} else {
+			var ok bool
+			className, ok = classRef.Interface().(string)
+			if !ok {
+				className = ""
+			}
+		}
+
+		// 根据map["class"]来分支
+		switch className {
 		case "File":
 			var entry File
 			raw, err := json.Marshal(bean)
@@ -739,21 +761,23 @@ func ConvertToValue(bean interface{}) (out Value, err error) {
 			}
 			err = JsonUnmarshal(raw, &entry)
 			return entry, nil
-		}
-		values := make(map[string]Value)
-		// values := Values{}
-		for key, beani := range t {
-			newVal, err := ConvertToValue(beani)
-			if err != nil {
-				return nil, err
+		default:
+			values := make(map[string]Value)
+			iter := beanRef.MapRange()
+			for iter.Next() {
+				key := iter.Key().String()        // 可以直接转，前面判断过了
+				value := iter.Value().Interface() // 转成空接口来提供给函数
+				newValue, err := ConvertToValue(value)
+				if err != nil {
+					return nil, err
+				}
+				values[key] = newValue
 			}
-			values[key] = newVal
+			return values, nil
 		}
-		return values, nil
 	default:
 		return bean, nil
 	}
-	return bean, nil
 }
 
 func debugValue(val reflect.Value) {

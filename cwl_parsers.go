@@ -53,9 +53,13 @@ func (p *ExpressionTool) UnmarshalJSON(data []byte) error {
 
 	db["SaladType"] = &RecordFieldGraph{Example: CommandInputType{},
 		Fields: map[string]*RecordFieldGraph{
-			"ArrayType":  &RecordFieldGraph{Example: ArraySchema{}},
-			"EnumType":   &RecordFieldGraph{Example: EnumSchema{}},
-			"RecordType": &RecordFieldGraph{Example: RecordSchema{}},
+			// TODO: Change Example as an temp fix. Should change bindInput logic.
+			//"ArrayType":  &RecordFieldGraph{Example: ArraySchema{}},
+			//"EnumType":   &RecordFieldGraph{Example: EnumSchema{}},
+			//"RecordType": &RecordFieldGraph{Example: RecordSchema{}},
+			"ArrayType":  &RecordFieldGraph{Example: CommandInputArraySchema{}},
+			"EnumType":   &RecordFieldGraph{Example: CommandInputEnumSchema{}},
+			"RecordType": &RecordFieldGraph{Example: CommandInputRecordSchema{}},
 		},
 	}
 
