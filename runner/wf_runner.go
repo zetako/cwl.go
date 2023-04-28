@@ -50,7 +50,8 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		tmpCondition = <-conditionChannel
 		moreCondition = true
 		if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-			_, err := mergeStepOutputs(r.parameter, *doneCond)
+			var err error
+			r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
 			if err != nil {
 				return err
 			}
@@ -64,7 +65,8 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 			select {
 			case tmpCondition = <-conditionChannel:
 				if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-					_, err := mergeStepOutputs(r.parameter, *doneCond)
+					var err error
+					r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
 					if err != nil {
 						return err
 					}
