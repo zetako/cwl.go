@@ -137,17 +137,19 @@ func (e *Run) UnmarshalJSON(data []byte) error {
 }
 
 type WorkflowStep struct {
-	Identified    `json:",inline"`
-	Labeled       `json:",inline"`
-	Documented    `json:",inline"`
-	In            []WorkflowStepInput  `json:"in" salad:"mapSubject:id,mapPredicate:source"`
-	Out           []WorkflowStepOutput `json:"out"`
-	Requirements  Requirements         `json:"requirements,omitempty" salad:"mapSubject:class"`
-	Hints         Requirements         `json:"hints,omitempty" salad:"mapSubject:class"`
-	Run           Run                  `json:"run"`
-	When          Expression           `json:"when,omitempty"`
-	Scatter       ArrayString          `json:"scatter,omitempty"`
-	ScatterMethod ScatterMethod        `json:"scatterMethod,omitempty"`
+	Identified      `json:",inline"`
+	Labeled         `json:",inline"`
+	Documented      `json:",inline"`
+	In              []WorkflowStepInput  `json:"in" salad:"mapSubject:id,mapPredicate:source"`
+	Out             []WorkflowStepOutput `json:"out"`
+	Requirements    Requirements         `json:"requirements,omitempty" salad:"mapSubject:class"`
+	Hints           Requirements         `json:"hints,omitempty" salad:"mapSubject:class"`
+	Run             Run                  `json:"run"`
+	When            Expression           `json:"when,omitempty"`
+	Scatter         ArrayString          `json:"scatter,omitempty"`
+	ScatterMethod   ScatterMethod        `json:"scatterMethod,omitempty"`
+	While           Expression           `json:"while,omitempty"`
+	IterationInputs Expression           `json:"iterationInputs,omitempty"`
 }
 
 type Workflow struct {

@@ -23,20 +23,47 @@ func (vm *jsvm) evalValueFrom(expr cwl.Expression, self cwl.Value) (cwl.Value, e
 
 // setInputs 将 cwl.Values 设置为jsvm中的"$inputs"
 func (vm *jsvm) setInputs(inputs cwl.Values) error {
-	// 如果有nil，需要替换为js的null
-	plain, err := toJSONMap(inputs)
+	return vm.setValueAs(inputs, "inputs")
+}
+
+// setValuesAs 将一个cwl.Value设置为虚拟机中的map
+func (vm *jsvm) setValueAs(values cwl.Values, name string) error {
+	// 转换为一般结构
+	plain, err := toJSONMap(values)
 	if err != nil {
 		return err
 	}
-
 	plainMap := plain.(map[string]interface{})
+	// 将nil值转换为js中的null
 	for key, value := range plainMap {
 		if value == nil {
 			plainMap[key] = otto.NullValue()
 		}
 	}
-	err = vm.vm.Set("inputs", plainMap)
+	// 设置变量
+	err = vm.vm.Set(name, plainMap)
 	return err
+}
+
+// cwlValuesToJsValue 将cwl.values转换为jsvm的value
+func (vm *jsvm) cwlValuesToJsValue(values cwl.Values) (interface{}, error) {
+	if values == nil {
+		return otto.NullValue(), nil
+	}
+	// 转换为一般结构
+	plain, err := toJSONMap(values)
+	if err != nil {
+		return otto.UndefinedValue(), err
+	}
+	plainMap := plain.(map[string]interface{})
+	// 将nil值转换为js中的null
+	for key, value := range plainMap {
+		if value == nil {
+			plainMap[key] = otto.NullValue()
+		}
+	}
+	// 设置变量
+	return vm.vm.ToValue(plainMap)
 }
 
 // preprocessInputs 计算ValueFrom之前预处理输入
@@ -114,8 +141,10 @@ func pickValue(value cwl.Value, method cwl.PickValueMethod) (cwl.Value, error) {
 	}
 }
 
+// TODO: 这个函数需要返回是否尝试使用默认值
 func linkMerge(method cwl.LinkMergeMethod, sources cwl.ArrayString, values cwl.Values) (cwl.Value, error) {
 	if len(sources) == 1 {
+		// FIXME: 这里应该做能否取到值的验证
 		return values[sources[0]], nil
 	} else {
 		switch method {
@@ -145,8 +174,40 @@ func linkMerge(method cwl.LinkMergeMethod, sources cwl.ArrayString, values cwl.V
 				tmpInput = append(tmpInput, tmp)
 			}
 			return tmpInput, nil
-		default:
+		default: // FIXME: 这里是错的，default就应该是merge_nested
 			return values[sources[0]], nil
 		}
 	}
+}
+
+func (vm *jsvm) EvalBoolExpr(expression cwl.Expression) (bool, error) {
+	tmp, err := vm.Eval(expression, nil)
+	if err != nil {
+		return false, err
+	}
+	tmpBool, ok := tmp.(bool)
+	if !ok {
+		return false, fmt.Errorf("表达式计算结果不是布尔值")
+	}
+	return tmpBool, nil
+}
+
+func (vm *jsvm) EvalValuesExpr(expression cwl.Expression) (cwl.Values, error) {
+	tmp, err := vm.Eval(expression, nil)
+	if err != nil {
+		return nil, err
+	}
+	valMap, ok := tmp.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("表达式计算结果不是对象")
+	}
+	values := cwl.Values{}
+	for key, interfaceValue := range valMap {
+		value, err := cwl.ConvertToValue(interfaceValue)
+		if err != nil {
+			return nil, err
+		}
+		values[key] = value
+	}
+	return values, nil
 }
