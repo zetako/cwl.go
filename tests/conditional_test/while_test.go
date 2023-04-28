@@ -99,30 +99,18 @@ func TestCWLWhile_RunIdx05(t *testing.T) {
 	t.Log("Doc: ", test.Doc)
 	doTest(t, test)
 }
-func TestCWLWhile_RunIdx06(t *testing.T) {
+
+func TestCWLWhile_RunId11(t *testing.T) {
 	err := SwitchTestSet("/home/zetako/NSCC/personaltechdoc/cwl/LoopFeature", "test-index.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
-	test := tests[6]
-	t.Log("Test 06: ")
+	test := tests[11]
+	t.Log("Test11: ")
 	t.Log("ID : ", test.ID)
 	t.Log("Doc: ", test.Doc)
 	doTest(t, test)
 }
-
-func TestCWLWhile_RunIdx07(t *testing.T) {
-	err := SwitchTestSet("/home/zetako/NSCC/personaltechdoc/cwl/LoopFeature", "test-index.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	test := tests[7]
-	t.Log("Test 07: ")
-	t.Log("ID : ", test.ID)
-	t.Log("Doc: ", test.Doc)
-	doTest(t, test)
-}
-
 func TestCWLWhile_RunId12(t *testing.T) {
 	err := SwitchTestSet("/home/zetako/NSCC/personaltechdoc/cwl/LoopFeature", "test-index.yaml")
 	if err != nil {
