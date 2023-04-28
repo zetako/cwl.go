@@ -122,3 +122,26 @@ func TestCWLWhile_RunIdx07(t *testing.T) {
 	t.Log("Doc: ", test.Doc)
 	doTest(t, test)
 }
+
+func TestCWLWhile_RunId12(t *testing.T) {
+	err := SwitchTestSet("/home/zetako/NSCC/personaltechdoc/cwl/LoopFeature", "test-index.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	test := tests[12]
+	t.Log("Test12: ")
+	t.Log("ID : ", test.ID)
+	t.Log("Doc: ", test.Doc)
+	doTest(t, test)
+}
+func TestCWLWhile_RunId13(t *testing.T) {
+	err := SwitchTestSet("/home/zetako/NSCC/personaltechdoc/cwl/LoopFeature", "test-index.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	test := tests[13]
+	t.Log("Test13: ")
+	t.Log("ID : ", test.ID)
+	t.Log("Doc: ", test.Doc)
+	doTest(t, test)
+}
