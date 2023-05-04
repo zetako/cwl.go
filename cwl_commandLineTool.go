@@ -157,6 +157,10 @@ type ToolTimeLimit struct {
 	Timelimit       LongFloatExpression `json:"timelimit"`
 }
 
+type LoopFeatureRequirement struct {
+	BaseRequirement `json:",inline"`
+}
+
 // Argument represents an element of "arguments" of CWL
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#CommandLineTool
 type Argument struct {

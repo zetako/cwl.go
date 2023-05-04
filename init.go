@@ -15,13 +15,15 @@ func init() {
 	classMap["StepInputExpressionRequirement"] = StepInputExpressionRequirement{}
 	classMap["ShellCommandRequirement"] = ShellCommandRequirement{}
 	classMap["EnvVarRequirement"] = EnvVarRequirement{}
-	
+
+	classMap["LoopFeatureRequirement"] = LoopFeatureRequirement{}
+
 	classMap["File"] = File{}
 	classMap["Directory"] = Directory{}
-	
+
 }
 
 var (
-	NullType = SaladType{ primitive: "null"}
+	NullType = SaladType{primitive: "null"}
 	//ArgType = SaladType{ primitive: 	"arg"}
 )

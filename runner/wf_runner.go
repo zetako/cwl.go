@@ -50,7 +50,8 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		tmpCondition = <-conditionChannel
 		moreCondition = true
 		if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-			_, err := mergeStepOutputs(r.parameter, *doneCond)
+			var err error
+			r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
 			if err != nil {
 				return err
 			}
@@ -64,7 +65,8 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 			select {
 			case tmpCondition = <-conditionChannel:
 				if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-					_, err := mergeStepOutputs(r.parameter, *doneCond)
+					var err error
+					r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
 					if err != nil {
 						return err
 					}
@@ -97,10 +99,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		if workflowOutput, ok := output.(*cwl.WorkflowOutputParameter); ok {
 			if workflowOutput.PickValue != nil && *workflowOutput.PickValue != "" {
 				// 有pickValue，先产生数组，然后pick
-				var (
-					valueArr []cwl.Value
-					value    cwl.Value
-				)
+				var valueArr []cwl.Value
 				// linkMerge
 				value, err := linkMerge(workflowOutput.LinkMerge, workflowOutput.OutputSource, *r.parameter)
 				if err != nil {
@@ -115,14 +114,19 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 				}
 				outputs[workflowOutput.ID] = value
 			} else {
-				// 没有PickValue，仅考虑单个输出
-				value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
-				if !ok {
-					//return fmt.Errorf("变量%s存在问题", workflowOutput.ID)
-					outputs[workflowOutput.ID] = nil
-				} else {
-					outputs[workflowOutput.ID] = value
+				value, err := linkMerge(workflowOutput.LinkMerge, workflowOutput.OutputSource, *r.parameter)
+				if err != nil {
+					return err
 				}
+				outputs[workflowOutput.ID] = value
+				//// 没有PickValue，仅考虑单个输出
+				//value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
+				//if !ok {
+				//	//return fmt.Errorf("变量%s存在问题", workflowOutput.ID)
+				//	outputs[workflowOutput.ID] = nil
+				//} else {
+				//	outputs[workflowOutput.ID] = value
+				//}
 			}
 		} else {
 			return errors.New("输出不匹配")
@@ -193,7 +197,7 @@ func mergeStepOutputs(ori *cwl.Values, stepDone StepDoneCondition) (*cwl.Values,
 	// 0.预处理空值
 	// 0.1 空输出不需要处理
 	if stepDone.out == nil || *stepDone.out == nil { // 是空的，不需要输出
-		return nil, nil
+		return ori, nil
 	}
 	// 0.2 空输入需要初始化
 	if ori == nil {

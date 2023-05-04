@@ -82,6 +82,9 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	}()
 	// 1. 如果需要Scatter，任务交由RunScatter
 	if r.step.Scatter != nil && len(r.step.Scatter) > 0 {
+		if r.step.While != "" {
+			return fmt.Errorf("不允许同时使用Scatter和While")
+		}
 		doScattered = true
 		return r.RunScatter(conditions)
 	}
@@ -229,7 +232,12 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		}
 	}
 	// 3. 然后使用 Engine.RunProcess()
-	outs, err := r.engine.RunProcess(r.process)
+	var outs cwl.Values
+	if r.step.While != "" {
+		outs, err = r.RunLoop()
+	} else {
+		outs, err = r.engine.RunProcess(r.process)
+	}
 	if err != nil {
 		return err
 	}
