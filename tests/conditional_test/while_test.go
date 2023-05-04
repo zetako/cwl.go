@@ -28,6 +28,7 @@ func TestCWLWhile_TestAllBaseTool(t *testing.T) {
 	}
 }
 
+
 func TestCWLWhile_RunIdx00(t *testing.T) {
 	err := SwitchTestSet("/home/zetako/NSCC/personaltechdoc/cwl/LoopFeature", "test-index.yaml")
 	if err != nil {
