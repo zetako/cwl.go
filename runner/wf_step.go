@@ -64,6 +64,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		passBoolean bool
 		doScattered bool
 		ok          bool
+		outs        cwl.Values
 	)
 	defer func() { // 负责处理运行结束的情况
 		if err != nil {
@@ -73,11 +74,34 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				err:  err,
 			}
 		} else if doScattered {
-			log.Printf("[Step \"%s\"] Scattered", r.step.ID)
+			// 不再需要，日志会在scatter内
+			//log.Printf("[Step \"%s\"] Scattered", r.step.ID)
 		} else if !passBoolean {
 			log.Printf("[Step \"%s\"] Skip", r.step.ID)
+			for _, output := range r.step.Out {
+				conditions <- &OutputParamCondition{
+					step:   r.step,
+					output: &output,
+				}
+			}
+			conditions <- &StepDoneCondition{
+				step:    r.step,
+				out:     nil,
+				runtime: r.process.runtime,
+			}
 		} else {
 			log.Printf("[Step \"%s\"] Finish", r.step.ID)
+			for _, output := range r.step.Out {
+				conditions <- &OutputParamCondition{
+					step:   r.step,
+					output: &output,
+				}
+			}
+			conditions <- &StepDoneCondition{
+				step:    r.step,
+				out:     &outs,
+				runtime: r.process.runtime,
+			}
 		}
 	}()
 	// 1. 如果需要Scatter，任务交由RunScatter
@@ -215,24 +239,14 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			return fmt.Errorf("when表达式未输出布尔值")
 		} else {
 			if !passBoolean {
-				for _, output := range r.step.Out {
-					conditions <- &OutputParamCondition{
-						step:   r.step,
-						output: &output,
-					}
-				}
-				conditions <- &StepDoneCondition{
-					step:    r.step,
-					out:     nil,
-					runtime: r.process.runtime,
-				}
 				// 5. 返回
 				return nil
 			} // 通过就走正常流程
 		}
+	} else {
+		passBoolean = true
 	}
 	// 3. 然后使用 Engine.RunProcess()
-	var outs cwl.Values
 	if r.step.While != "" {
 		outs, err = r.RunLoop()
 	} else {
@@ -242,17 +256,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		return err
 	}
 	// 4. 最后，根据Step的输出，释放Condition
-	for _, output := range r.step.Out {
-		conditions <- &OutputParamCondition{
-			step:   r.step,
-			output: &output,
-		}
-	}
-	conditions <- &StepDoneCondition{
-		step:    r.step,
-		out:     &outs,
-		runtime: r.process.runtime,
-	}
+	// 移动到defer处理
 	// 5. 返回
 	return nil
 }
