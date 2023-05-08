@@ -129,12 +129,15 @@ func pickValue(value cwl.Value, method cwl.PickValueMethod) (cwl.Value, error) {
 				ret = append(ret, entity)
 			}
 		}
-		return ret, nil
 		// 使用该方法时，即使没有符合条件的值也应该输出一个空列表
-		//if len(ret) > 0 {
-		//	return ret, nil
-		//}
-		//return ret, fmt.Errorf("pickValue=all_non_null，但是不存在非空值")
+		return ret, nil
+	case cwl.LAST_NON_NULL:
+		for i := len(arr) - 1; i >= 0; i-- {
+			if arr[i] != nil {
+				return arr[i], nil
+			}
+		}
+		return value, fmt.Errorf("pickValue=last_non_null，但是不存在非空值")
 	default:
 		// 不应该有default,这里就什么都不做吧！
 		return value, nil
@@ -154,7 +157,6 @@ func linkMerge(method cwl.LinkMergeMethod, sources cwl.ArrayString, values cwl.V
 				tmp, ok := values[src]
 				if !ok { // 拿不到可能是When没有执行，设为nil
 					tmp = nil
-					//return nil, errors.New("没有匹配 " + src + " 的输入")
 				}
 				if tmpList, ok := tmp.([]cwl.Value); ok {
 					tmpInput = append(tmpInput, tmpList...)
@@ -169,7 +171,6 @@ func linkMerge(method cwl.LinkMergeMethod, sources cwl.ArrayString, values cwl.V
 				tmp, ok := values[src]
 				if !ok { // 拿不到可能是When没有执行，设为nil
 					tmp = nil
-					//return nil, errors.New("没有匹配 " + src + " 的输入")
 				}
 				tmpInput = append(tmpInput, tmp)
 			}
