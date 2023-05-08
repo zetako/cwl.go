@@ -33,12 +33,6 @@ type RegularRunner struct {
 
 func (r *RegularRunner) MeetConditions(now []Condition) bool {
 	// 比较条件集
-	// 老的不考虑默认值的版本
-	//for _, need := range r.neededCondition {
-	//	if !need.Meet(now) {
-	//		return false
-	//	}
-	//}
 	for _, need := range r.neededCondition {
 		inputCond, ok := need.(InputParamCondition)
 		if !ok {
@@ -74,8 +68,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				err:  err,
 			}
 		} else if doScattered {
-			// 不再需要，日志会在scatter内
-			//log.Printf("[Step \"%s\"] Scattered", r.step.ID)
+			// 相关日志由scatter内处理
 		} else if !passBoolean {
 			log.Printf("[Step \"%s\"] Skip", r.step.ID)
 			for _, output := range r.step.Out {

@@ -108,12 +108,6 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 		previous iterData
 		parent   []iterData
 	)
-	// 捕捉失败事件
-	//defer func() {
-	//	if err != nil {
-	//		log.Printf("[Step \"%s\": Loop Index %d] Error:%v", r.step.ID, index, err)
-	//	}
-	//}()
 
 	parent = make([]iterData, 0)
 	// 循环

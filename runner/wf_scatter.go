@@ -119,10 +119,6 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			}
 		}
 		// b. 返回一个错误
-		//condition <- &StepErrorCondition{
-		//	step: r.step,
-		//	err:  errors.New("分发的任务执行失败"),
-		//}
 		return errors.New("分发的任务执行失败")
 	}
 	// 5. 整理结果
@@ -156,18 +152,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		}
 		output, err = reconstructOutput(output, layout)
 		if err != nil {
-			//condition <- &StepErrorCondition{
-			//	step: r.step,
-			//	err:  fmt.Errorf("输出格式化失败: %s", err),
-			//}
 			return
 		}
 	}
-	//condition <- &StepDoneCondition{
-	//	step:    r.step,
-	//	out:     &output,
-	//	runtime: r.process.runtime,
-	//}
 	return nil
 }
 

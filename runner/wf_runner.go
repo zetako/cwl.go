@@ -119,14 +119,6 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 					return err
 				}
 				outputs[workflowOutput.ID] = value
-				//// 没有PickValue，仅考虑单个输出
-				//value, ok := (*r.parameter)[workflowOutput.OutputSource[0]]
-				//if !ok {
-				//	//return fmt.Errorf("变量%s存在问题", workflowOutput.ID)
-				//	outputs[workflowOutput.ID] = nil
-				//} else {
-				//	outputs[workflowOutput.ID] = value
-				//}
 			}
 		} else {
 			return errors.New("输出不匹配")
