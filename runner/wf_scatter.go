@@ -10,14 +10,7 @@ import (
 
 // RunScatter 运行需要分发任务的步骤
 func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
-	defer func() {
-		if err != nil {
-			condition <- &StepErrorCondition{
-				step: r.step,
-				err:  err,
-			}
-		}
-	}()
+
 	var (
 		totalTask    int
 		runningTask  int            = 0
@@ -29,6 +22,22 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		output       cwl.Values
 		layout       []int
 	)
+	defer func() {
+		if err != nil {
+			log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
+			condition <- &StepErrorCondition{
+				step: r.step,
+				err:  err,
+			}
+		} else {
+			log.Printf("[Step \"%s\"] Scattered", r.step.ID)
+			condition <- &StepDoneCondition{
+				step:    r.step,
+				out:     &output,
+				runtime: r.process.runtime,
+			}
+		}
+	}()
 	totalTask, allInputs, layout, err = r.getAllScatterInputs()
 	if err != nil {
 		return err
@@ -110,10 +119,6 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			}
 		}
 		// b. 返回一个错误
-		condition <- &StepErrorCondition{
-			step: r.step,
-			err:  errors.New("分发的任务执行失败"),
-		}
 		return errors.New("分发的任务执行失败")
 	}
 	// 5. 整理结果
@@ -147,16 +152,8 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		}
 		output, err = reconstructOutput(output, layout)
 		if err != nil {
-			condition <- &StepErrorCondition{
-				step: r.step,
-				err:  fmt.Errorf("输出格式化失败: %s", err),
-			}
+			return
 		}
-	}
-	condition <- &StepDoneCondition{
-		step:    r.step,
-		out:     &output,
-		runtime: r.process.runtime,
 	}
 	return nil
 }
@@ -181,8 +178,17 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 			}
 		} else if r.step.When != "" && !passBoolean {
 			log.Printf("[Step \"%s\": Scatter %d] Skip", r.step.ID, ID)
+			// 没有通过测试，直接输出空结果
+			condChan <- &ScatterDoneCondition{
+				scatterID: ID,
+				out:       nil,
+			}
 		} else {
 			log.Printf("[Step \"%s\": Scatter %d] Finish", r.step.ID, ID)
+			condChan <- &ScatterDoneCondition{
+				scatterID: ID,
+				out:       &out,
+			}
 		}
 	}()
 	if r.step.When != "" {
@@ -199,11 +205,6 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 			err = fmt.Errorf("when表达式未输出布尔值")
 		} else {
 			if !passBoolean {
-				// 没有通过测试，直接输出空结果
-				condChan <- &ScatterDoneCondition{
-					scatterID: ID,
-					out:       nil,
-				}
 				return
 			}
 		}
@@ -213,11 +214,6 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 	if err != nil {
 		return
 	}
-	condChan <- &ScatterDoneCondition{
-		scatterID: ID,
-		out:       &out,
-	}
-
 	return
 }
 

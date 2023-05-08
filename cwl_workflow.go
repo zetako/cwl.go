@@ -40,6 +40,7 @@ const (
 	FIRST_NON_NULL    PickValueMethod = "first_non_null"
 	THE_ONLY_NON_NULL PickValueMethod = "the_only_non_null"
 	ALL_NON_NULL      PickValueMethod = "all_non_null"
+	LAST_NON_NULL     PickValueMethod = "last_non_null" // 该方法不是标准规定
 )
 
 type WorkflowOutputParameter struct {
