@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/lijiang2014/cwl.go"
 	"os"
 	"os/user"
 	"path"
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/lijiang2014/cwl.go"
 )
 
 // Engine
@@ -25,6 +25,8 @@ type Engine struct {
 	outputFS Filesystem
 	root     *cwl.Root // root Documents.
 	params   *cwl.Values
+	MessageReceiver
+	SignalChannel chan Signal
 	//runtime Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
@@ -139,6 +141,9 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 		}
 		return nil, err
 	}
+	// set other defaults, can be changed later
+	e.MessageReceiver = DefaultMsgReceiver{}
+	e.SignalChannel = make(chan Signal)
 	return e, nil
 }
 

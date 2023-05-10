@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/robertkrimen/otto"
-	"log"
 )
 
 // StepRunner 对应CWL的一个任务，即
@@ -53,7 +52,12 @@ func (r *RegularRunner) MeetConditions(now []Condition) bool {
 }
 
 func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
-	log.Printf("[Step \"%s\"] Start", r.step.ID)
+	//log.Printf("[Step \"%s\"] Start", r.step.ID)
+	r.engine.SendMsg(Message{
+		Class:  StepMsg,
+		Status: StatusStart,
+		ID:     r.step.ID,
+	})
 	var (
 		passBoolean bool
 		doScattered bool
@@ -62,7 +66,13 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	)
 	defer func() { // 负责处理运行结束的情况
 		if err != nil {
-			log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
+			//log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
+			r.engine.SendMsg(Message{
+				Class:  StepMsg,
+				Status: StatusError,
+				ID:     r.step.ID,
+				Error:  err,
+			})
 			conditions <- &StepErrorCondition{
 				step: r.step,
 				err:  err,
@@ -70,7 +80,12 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		} else if doScattered {
 			// 相关日志由scatter内处理
 		} else if !passBoolean {
-			log.Printf("[Step \"%s\"] Skip", r.step.ID)
+			//log.Printf("[Step \"%s\"] Skip", r.step.ID)
+			r.engine.SendMsg(Message{
+				Class:  StepMsg,
+				Status: StatusSkip,
+				ID:     r.step.ID,
+			})
 			for _, output := range r.step.Out {
 				conditions <- &OutputParamCondition{
 					step:   r.step,
@@ -83,7 +98,13 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				runtime: r.process.runtime,
 			}
 		} else {
-			log.Printf("[Step \"%s\"] Finish", r.step.ID)
+			//log.Printf("[Step \"%s\"] Finish", r.step.ID)
+			r.engine.SendMsg(Message{
+				Class:  StepMsg,
+				Status: StatusFinish,
+				ID:     r.step.ID,
+				Values: outs,
+			})
 			for _, output := range r.step.Out {
 				conditions <- &OutputParamCondition{
 					step:   r.step,

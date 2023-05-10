@@ -24,13 +24,24 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	)
 	defer func() {
 		if err != nil {
-			log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
+			//log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
+			r.engine.SendMsg(Message{
+				Class:  StepMsg,
+				Status: StatusError,
+				ID:     r.step.ID,
+				Error:  err,
+			})
 			condition <- &StepErrorCondition{
 				step: r.step,
 				err:  err,
 			}
 		} else {
-			log.Printf("[Step \"%s\"] Scattered", r.step.ID)
+			//log.Printf("[Step \"%s\"] Scattered", r.step.ID)
+			r.engine.SendMsg(Message{
+				Class:  StepMsg,
+				Status: StatusScatter,
+				ID:     r.step.ID,
+			})
 			condition <- &StepDoneCondition{
 				step:    r.step,
 				out:     &output,
@@ -171,20 +182,40 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 	// 用于捕捉错误的退出
 	defer func() {
 		if err != nil {
-			log.Printf("[Step \"%s\": Scatter %d] Error:%s", r.step.ID, ID, err)
+			//log.Printf("[Step \"%s\": Scatter %d] Error:%s", r.step.ID, ID, err)
+			r.engine.SendMsg(Message{
+				Class:  ScatterMsg,
+				Status: StatusError,
+				ID:     r.step.ID,
+				Index:  ID,
+				Error:  err,
+			})
 			condChan <- &ScatterErrorCondition{
 				scatterID: ID,
 				err:       err,
 			}
 		} else if r.step.When != "" && !passBoolean {
-			log.Printf("[Step \"%s\": Scatter %d] Skip", r.step.ID, ID)
+			//log.Printf("[Step \"%s\": Scatter %d] Skip", r.step.ID, ID)
+			r.engine.SendMsg(Message{
+				Class:  ScatterMsg,
+				Status: StatusSkip,
+				ID:     r.step.ID,
+				Index:  ID,
+			})
 			// 没有通过测试，直接输出空结果
 			condChan <- &ScatterDoneCondition{
 				scatterID: ID,
 				out:       nil,
 			}
 		} else {
-			log.Printf("[Step \"%s\": Scatter %d] Finish", r.step.ID, ID)
+			//log.Printf("[Step \"%s\": Scatter %d] Finish", r.step.ID, ID)
+			r.engine.SendMsg(Message{
+				Class:  ScatterMsg,
+				Status: StatusFinish,
+				ID:     r.step.ID,
+				Index:  ID,
+				Values: out,
+			})
 			condChan <- &ScatterDoneCondition{
 				scatterID: ID,
 				out:       &out,
