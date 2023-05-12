@@ -166,7 +166,7 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		if err != nil {
 			return nil, err
 		}
-		pid, ret, err := e.executor.Run(p)
+		pid, ret, _, err := e.executor.Run(p)
 		if err != nil {
 			return nil, err
 		}
