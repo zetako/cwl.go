@@ -125,6 +125,11 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("迭代进程%d创建失败: %v", index, err)
 		}
+		process.msgTemplate = Message{
+			Class: IterMsg,
+			ID:    r.step.ID,
+			Index: index,
+		}
 		err = setupLoop(process.jsvm, *r.process.inputs, index, previous, parent)
 		if err != nil {
 			return nil, fmt.Errorf("迭代进程%d预处理失败: %v", index, err)

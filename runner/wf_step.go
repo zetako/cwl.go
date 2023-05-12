@@ -323,6 +323,10 @@ func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (S
 	if err != nil {
 		return nil, err
 	}
+	ret.process.msgTemplate = Message{
+		Class: StepMsg,
+		ID:    ret.step.ID,
+	}
 	// 继承父运行时
 	ret.process.parentRuntime = e.process.runtime
 	// 从engine处继承requirement和hints

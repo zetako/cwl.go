@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,12 +22,12 @@ type Engine struct {
 	importer Importer
 	executor Executor
 	//
-	inputFS  Filesystem
-	outputFS Filesystem
-	root     *cwl.Root // root Documents.
-	params   *cwl.Values
-	MessageReceiver
-	SignalChannel chan Signal
+	inputFS         Filesystem
+	outputFS        Filesystem
+	root            *cwl.Root // root Documents.
+	params          *cwl.Values
+	MessageReceiver             // inline struct for sending message
+	SignalChannel   chan Signal // send ctrl signal
 	//runtime Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
@@ -115,6 +116,9 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 	if err := json.Unmarshal(c.Params, &e.params); err != nil {
 		return nil, err
 	}
+	// set other defaults, can be changed later
+	e.MessageReceiver = DefaultMsgReceiver{}
+	e.SignalChannel = make(chan Signal)
 	// import Doc
 	if c.Process, err = e.EnsureImportedDoc(c.Process); err != nil {
 		return nil, err
@@ -141,9 +145,6 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 		}
 		return nil, err
 	}
-	// set other defaults, can be changed later
-	e.MessageReceiver = DefaultMsgReceiver{}
-	e.SignalChannel = make(chan Signal)
 	return e, nil
 }
 
@@ -170,8 +171,16 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		if err != nil {
 			return nil, err
 		}
+		// save infos
 		p.JobID = pid
 		p.signalChannel = schan
+		// send assign message
+		tmpMsg := p.msgTemplate
+		tmpMsg.Info = p.JobID
+		tmpMsg.Status = StatusAssign
+		tmpMsg.TimeStamp = time.Now()
+		e.SendMsg(tmpMsg)
+		// wait for return
 		retCode, _ := <-ret
 		p.SetRuntime(Runtime{ExitCode: &retCode})
 		if p.outputFS == nil {

@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
-	
+
 	. "github.com/otiai10/mint"
 )
 
@@ -71,7 +71,7 @@ func TestCWLR2_detail(t *testing.T) {
 	ex := runner.LocalExecutor{}
 	err = os.RemoveAll("/tmp/testcwl")
 	Expect(t, err).ToBe(nil)
-	pid, ret, err := ex.Run(p)
+	pid, ret, _, err := ex.Run(p)
 	Expect(t, err).ToBe(nil)
 	t.Log(pid)
 	retCode, _ := <-ret
@@ -85,4 +85,3 @@ func TestCWLR2_detail(t *testing.T) {
 	json.Unmarshal([]byte(outputRaw), &outputCheck)
 	Expect(t, outputs).ToBe(outputCheck)
 }
-

@@ -46,7 +46,7 @@ func (m Message) ToString() string {
 	if m.Status == StatusError {
 		return m.Error.Error()
 	}
-	return ""
+	return m.Info
 }
 
 // ToLog convert a Message to log string
@@ -62,8 +62,12 @@ func (m Message) ToLog() string {
 	default:
 		// DO NOTHING
 	}
+	if m.ID != "" {
+		return fmt.Sprintf("[%s][Step \"%s\"%s][%s] %s", m.TimeStamp.Format(time.DateTime), m.ID, tmp, m.Status, m.ToString())
+	} else {
+		return fmt.Sprintf("[%s][Non-Workflow][%s] %s", m.TimeStamp.Format(time.DateTime), m.Status, m.ToString())
 
-	return fmt.Sprintf("[%s][Step %s%s][%s] %s", m.TimeStamp.Format(time.DateTime), m.ID, tmp, m.Status, m.ToString())
+	}
 }
 
 type MessageReceiver interface {

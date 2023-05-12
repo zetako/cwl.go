@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"log"
 	"path"
 	"time"
 )
@@ -62,6 +61,11 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		if err != nil {
 			isSuccess = false
 			break
+		}
+		process.msgTemplate = Message{
+			Class: ScatterMsg,
+			ID:    r.step.ID,
+			Index: i,
 		}
 		// 2. 设置输出 & 绑定输入
 		// 2.1 一般输入
@@ -174,7 +178,14 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 
 // scatterTaskWrapper 已分发任务的运行封装，用于在协程中运行；使用channel传递结果
 func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, ID int) {
-	log.Printf("[Step \"%s\": Scatter %d] Start", r.step.ID, ID)
+	//log.Printf("[Step \"%s\": Scatter %d] Start", r.step.ID, ID)
+	r.engine.SendMsg(Message{
+		Class:     ScatterMsg,
+		Status:    StatusStart,
+		TimeStamp: time.Time{},
+		ID:        r.step.ID,
+		Index:     ID,
+	})
 	var (
 		err         error
 		out         cwl.Values

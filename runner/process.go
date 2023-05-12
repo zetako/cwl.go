@@ -28,6 +28,7 @@ type Process struct {
 	stderr            string
 	stdin             string
 	signalChannel     chan<- Signal
+	msgTemplate       Message
 	*Log
 	*jsvm
 }
