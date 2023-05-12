@@ -166,11 +166,12 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		if err != nil {
 			return nil, err
 		}
-		pid, ret, _, err := e.executor.Run(p)
+		pid, ret, schan, err := e.executor.Run(p)
 		if err != nil {
 			return nil, err
 		}
 		p.JobID = pid
+		p.signalChannel = schan
 		retCode, _ := <-ret
 		p.SetRuntime(Runtime{ExitCode: &retCode})
 		if p.outputFS == nil {

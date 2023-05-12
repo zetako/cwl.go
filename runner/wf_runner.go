@@ -33,6 +33,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		moreCondition    bool
 		runningCounter   int = 0
 		conditionChannel chan Condition
+		ctrlSignal       Signal
 	)
 	conditionChannel = make(chan Condition)
 	// 遍历一遍，全部尝试启动
@@ -46,21 +47,53 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 	}
 	r.steps = tmpSteps
 	for runningCounter > 0 {
-		// 接收新完成的条件
-		tmpCondition = <-conditionChannel
-		moreCondition = true
-		if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-			var err error
-			r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
-			if err != nil {
-				return err
+		select {
+		case ctrlSignal = <-r.engine.SignalChannel: // 接收到了控制信号
+			r.SendCtrlSignal(ctrlSignal)
+			switch ctrlSignal {
+			case SignalAbort:
+				// 直接中断执行
+				return fmt.Errorf("SignalAbort received")
+			case SignalPause:
+			pausing: // 在这里阻塞，除非收到了恢复或中止信号
+				ctrlSignal = <-r.engine.SignalChannel
+				switch ctrlSignal {
+				case SignalResume:
+					// 可以继续
+					break
+				case SignalAbort:
+					// 直接中断执行
+					return fmt.Errorf("SignalAbort received")
+				default:
+					goto pausing
+				}
+			case SignalResume:
+				fallthrough
+			default:
+				// DO NOTHING
+				break
 			}
-			runningCounter--
+		case tmpCondition = <-conditionChannel: // 接收到步骤完成的条件
+			moreCondition = true
+			if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
+				var err error
+				r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
+				if err != nil {
+					return err
+				}
+				runningCounter--
+			}
+			if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
+				return errCond.err
+			}
+			r.reachedConditions = append(r.reachedConditions, tmpCondition)
+
+			// 没有default，上述两个任意命中才需要继续
+			//default:
+			//	// DO NOTHING
+			//	break
 		}
-		if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
-			return errCond.err
-		}
-		r.reachedConditions = append(r.reachedConditions, tmpCondition)
+
 		for moreCondition {
 			select {
 			case tmpCondition = <-conditionChannel:
@@ -139,6 +172,12 @@ func (r *WorkflowRunner) RunAtMeetConditions(now []Condition, channel chan<- Con
 		return true
 	}
 	return false
+}
+
+func (r *WorkflowRunner) SendCtrlSignal(signal Signal) {
+	for _, step := range r.steps {
+		step.SendCtrlSignal(signal)
+	}
 }
 
 func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*WorkflowRunner, error) {

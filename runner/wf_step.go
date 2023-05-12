@@ -16,6 +16,7 @@ type StepRunner interface {
 	MeetConditions(now []Condition) bool
 	Run(chan<- Condition) error
 	RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool)
+	SendCtrlSignal(signal Signal)
 }
 
 // RegularRunner 常规Step的执行器
@@ -288,6 +289,12 @@ func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Cond
 		return true
 	}
 	return false
+}
+
+func (r *RegularRunner) SendCtrlSignal(signal Signal) {
+	if r.process.signalChannel != nil {
+		go func() { r.process.signalChannel <- signal }()
+	}
 }
 
 func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (StepRunner, error) {
