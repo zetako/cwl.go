@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/robertkrimen/otto"
+	"time"
 )
 
 const (
@@ -113,10 +114,11 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 	for {
 		//log.Printf("[Step \"%s\": Loop Index %d] Start", r.step.ID, index)
 		r.engine.SendMsg(Message{
-			Class:  IterMsg,
-			Status: StatusStart,
-			ID:     r.step.ID,
-			Index:  index,
+			Class:     IterMsg,
+			Status:    StatusStart,
+			TimeStamp: time.Now(),
+			ID:        r.step.ID,
+			Index:     index,
 		})
 		// 0. 设置运行时
 		process, err := r.engine.GenerateSubProcess(r.step)
@@ -149,10 +151,11 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 		// 4. 准备下次运行
 		//log.Printf("[Step \"%s\": Loop Index %d] Finish", r.step.ID, index)
 		r.engine.SendMsg(Message{
-			Class:  IterMsg,
-			Status: StatusFinish,
-			ID:     r.step.ID,
-			Index:  index,
+			Class:     IterMsg,
+			Status:    StatusFinish,
+			TimeStamp: time.Now(),
+			ID:        r.step.ID,
+			Index:     index,
 		})
 		index++
 		previous = iterData{

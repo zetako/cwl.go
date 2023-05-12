@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/robertkrimen/otto"
+	"time"
 )
 
 // StepRunner 对应CWL的一个任务，即
@@ -54,9 +55,10 @@ func (r *RegularRunner) MeetConditions(now []Condition) bool {
 func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	//log.Printf("[Step \"%s\"] Start", r.step.ID)
 	r.engine.SendMsg(Message{
-		Class:  StepMsg,
-		Status: StatusStart,
-		ID:     r.step.ID,
+		Class:     StepMsg,
+		Status:    StatusStart,
+		TimeStamp: time.Now(),
+		ID:        r.step.ID,
 	})
 	var (
 		passBoolean bool
@@ -68,10 +70,11 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		if err != nil {
 			//log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
 			r.engine.SendMsg(Message{
-				Class:  StepMsg,
-				Status: StatusError,
-				ID:     r.step.ID,
-				Error:  err,
+				Class:     StepMsg,
+				Status:    StatusError,
+				TimeStamp: time.Now(),
+				ID:        r.step.ID,
+				Error:     err,
 			})
 			conditions <- &StepErrorCondition{
 				step: r.step,
@@ -82,9 +85,10 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		} else if !passBoolean {
 			//log.Printf("[Step \"%s\"] Skip", r.step.ID)
 			r.engine.SendMsg(Message{
-				Class:  StepMsg,
-				Status: StatusSkip,
-				ID:     r.step.ID,
+				Class:     StepMsg,
+				Status:    StatusSkip,
+				TimeStamp: time.Now(),
+				ID:        r.step.ID,
 			})
 			for _, output := range r.step.Out {
 				conditions <- &OutputParamCondition{
@@ -100,10 +104,11 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		} else {
 			//log.Printf("[Step \"%s\"] Finish", r.step.ID)
 			r.engine.SendMsg(Message{
-				Class:  StepMsg,
-				Status: StatusFinish,
-				ID:     r.step.ID,
-				Values: outs,
+				Class:     StepMsg,
+				Status:    StatusFinish,
+				TimeStamp: time.Now(),
+				ID:        r.step.ID,
+				Values:    outs,
 			})
 			for _, output := range r.step.Out {
 				conditions <- &OutputParamCondition{

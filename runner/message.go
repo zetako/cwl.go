@@ -3,9 +3,11 @@ package runner
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"log"
+	"time"
 )
 
+// MessageClass is class of Message source.
+// It can be a step, a scattered or looped sub-step or other similar thing
 type MessageClass string
 
 const (
@@ -14,27 +16,32 @@ const (
 	IterMsg    = "iter"
 )
 
+// MessageStatus represent status of the Message Source.
 type MessageStatus string
 
 const (
 	StatusStart   = "Start"
 	StatusFinish  = "Finish"
+	StatusAssign  = "Assign"
 	StatusError   = "Error"
 	StatusSkip    = "Skip"
 	StatusScatter = "Scattered"
 	StatusLoop    = "Looped"
 )
 
+// Message is a struct to transfer status change in workflow process
 type Message struct {
-	Class  MessageClass
-	Status MessageStatus
-	ID     string
-	Index  int
-	Info   string
-	Error  error
-	Values cwl.Values
+	Class     MessageClass  // Class of source
+	Status    MessageStatus // Status of source, usually message will be sent if status is changed
+	TimeStamp time.Time     // TimeStamp when this message been sent
+	ID        string        // ID is to identified source, usually StepID
+	Index     int           // Index can locate exact index when source is scatter or loop
+	Info      string        // Info is normal message. e.g. in StatusAssign msg, it contains JobID
+	Error     error         // Error is error message, normally used in StatusError msg
+	Values    cwl.Values    // Values is cwl.Values message, normally used in StatusFinish msg
 }
 
+// ToString convert a Message to plain string
 func (m Message) ToString() string {
 	if m.Status == StatusError {
 		return m.Error.Error()
@@ -42,6 +49,7 @@ func (m Message) ToString() string {
 	return ""
 }
 
+// ToLog convert a Message to log string
 func (m Message) ToLog() string {
 	var tmp string
 	switch m.Class {
@@ -55,7 +63,7 @@ func (m Message) ToLog() string {
 		// DO NOTHING
 	}
 
-	return fmt.Sprintf("[Step %s%s][%s] %s", m.ID, tmp, m.Status, m.ToString())
+	return fmt.Sprintf("[%s][Step %s%s][%s] %s", m.TimeStamp.Format(time.DateTime), m.ID, tmp, m.Status, m.ToString())
 }
 
 type MessageReceiver interface {
@@ -68,5 +76,5 @@ type DefaultMsgReceiver struct {
 
 // SendMsg impl the MessageReceiver interface
 func (DefaultMsgReceiver) SendMsg(message Message) {
-	log.Println(message.ToLog())
+	fmt.Println(message.ToLog())
 }
