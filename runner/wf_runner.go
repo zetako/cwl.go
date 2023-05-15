@@ -44,6 +44,10 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		} else {
 			tmpSteps = append(tmpSteps, r.steps[index])
 		}
+		// 读取flag内的最大并行任务数
+		if r.engine.flags.MaxParallelLimit > 0 && runningCounter > r.engine.flags.MaxParallelLimit {
+			break
+		}
 	}
 	r.steps = tmpSteps
 	for runningCounter > 0 {
