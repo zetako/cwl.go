@@ -55,12 +55,24 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	if err != nil {
 		return err
 	}
+	defer func() { // 定义任务启动失败的处理
+		if !genSuccess { // 任务启动失败，等待收回所有任务
+			for runningTask > 0 {
+				tmpCondition := <-internalChan
+				if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
+					runningTask--
+				} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
+					runningTask--
+				}
+			}
+		}
+	}()
 	for i := 0; i < totalTask; i++ {
 		// 1. Scatter的每个任务都需要创建Process
 		process, err = r.engine.GenerateSubProcess(r.step)
 		if err != nil {
 			genSuccess = false
-			return errors.New("任务分发启动失败")
+			return fmt.Errorf("创建Process实例失败")
 		}
 		process.msgTemplate = Message{
 			Class: ScatterMsg,
@@ -103,19 +115,22 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		// 3. 并行执行（?）
 		go r.scatterTaskWrapper(process, internalChan, i)
 		runningTask++
-	}
-	defer func() {
-		if !genSuccess { // 任务启动失败，等待收回所有任务
-			for runningTask > 0 {
-				tmpCondition := <-internalChan
-				if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
-					runningTask--
-				} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
-					runningTask--
-				}
+
+		// 4. 如果需要控制最大并行数，可以先回收部分任务
+		maxScatter := r.engine.flags.MaxScatterLimit
+		if maxScatter > 0 && runningTask > maxScatter {
+			// 暂定为只回收一个，未来可以通过flag控制
+			tmpCondition := <-internalChan
+			if doneCondition, ok := tmpCondition.(*ScatterDoneCondition); ok {
+				allOutputs = append(allOutputs, *doneCondition)
+				runningTask--
+			} else if errCondition, ok := tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
+				runningTask--
+				genSuccess = false
+				return errCondition.err
 			}
 		}
-	}()
+	}
 	// 4. 等待结束
 	for runningTask > 0 {
 		tmpCondition := <-internalChan
