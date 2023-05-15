@@ -16,7 +16,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		runningTask  int            = 0
 		internalChan chan Condition = make(chan Condition)
 		process      *Process       = nil
-		isSuccess    bool           = true // 标记所有任务是否成功
+		genSuccess   bool           = true // 标记所有任务是否成功
 		allInputs    []cwl.Values
 		allOutputs   []ScatterDoneCondition // 用以存储每一步的输出
 		output       cwl.Values
@@ -59,8 +59,8 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		// 1. Scatter的每个任务都需要创建Process
 		process, err = r.engine.GenerateSubProcess(r.step)
 		if err != nil {
-			isSuccess = false
-			break
+			genSuccess = false
+			return errors.New("任务分发启动失败")
 		}
 		process.msgTemplate = Message{
 			Class: ScatterMsg,
@@ -79,10 +79,12 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		// 2.2 ValueFrom输入
 		err = preprocessInputs(r.process.inputs)
 		if err != nil {
+			genSuccess = false
 			return fmt.Errorf("预处理inputs失败: %v\n", err)
 		}
 		err = process.jsvm.setInputs(*process.inputs)
 		if err != nil {
+			genSuccess = false
 			return fmt.Errorf("设置inputs失败: %v\n", err)
 		}
 		for _, in := range r.step.In {
@@ -91,6 +93,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 				tmp := (*process.inputs)[in.ID]
 				tmp, err = process.jsvm.evalValueFrom(in.ValueFrom, tmp)
 				if err != nil {
+					genSuccess = false
 					return fmt.Errorf("ValueFrom计算失败: %v\n", err)
 				}
 				(*process.inputs)[in.ID] = tmp
@@ -101,43 +104,29 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		go r.scatterTaskWrapper(process, internalChan, i)
 		runningTask++
 	}
-	if !isSuccess { // 任务启动失败，等待收回所有任务
-		// a. 等待所有任务结束
-		for runningTask > 0 {
-			tmpCondition := <-internalChan
-			if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
-				runningTask--
-			} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
-				runningTask--
+	defer func() {
+		if !genSuccess { // 任务启动失败，等待收回所有任务
+			for runningTask > 0 {
+				tmpCondition := <-internalChan
+				if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
+					runningTask--
+				} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
+					runningTask--
+				}
 			}
 		}
-		// b. 返回一个错误
-		return errors.New("任务分发启动失败")
-	}
+	}()
 	// 4. 等待结束
 	for runningTask > 0 {
 		tmpCondition := <-internalChan
 		if doneCondition, ok := tmpCondition.(*ScatterDoneCondition); ok {
 			allOutputs = append(allOutputs, *doneCondition)
 			runningTask--
-		} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
+		} else if errCondition, ok := tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
 			runningTask--
-			isSuccess = false
-			break
+			genSuccess = false
+			return errCondition.err
 		}
-	}
-	if !isSuccess { // 任务结束失败，等待收回所有任务
-		// a. 等待所有任务结束
-		for runningTask > 0 {
-			tmpCondition := <-internalChan
-			if _, ok := tmpCondition.(*ScatterDoneCondition); ok { // 该步正常结束
-				runningTask--
-			} else if _, ok = tmpCondition.(*ScatterErrorCondition); ok { // 该步异常结束
-				runningTask--
-			}
-		}
-		// b. 返回一个错误
-		return errors.New("分发的任务执行失败")
 	}
 	// 5. 整理结果
 	output = cwl.Values{}
