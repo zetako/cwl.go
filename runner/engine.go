@@ -22,13 +22,15 @@ type Engine struct {
 	importer Importer
 	executor Executor
 	//
-	inputFS         Filesystem
-	outputFS        Filesystem
-	root            *cwl.Root // root Documents.
-	params          *cwl.Values
+	inputFS  Filesystem
+	outputFS Filesystem
+	root     *cwl.Root // root Documents.
+	params   *cwl.Values
+	// Workflow Related
 	MessageReceiver             // inline struct for sending message
 	SignalChannel   chan Signal // send ctrl signal
-	//runtime Runtime
+	flags           EngineFlags // flags control workflow processing
+	// Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
 	RunID      string   // the workflow ID

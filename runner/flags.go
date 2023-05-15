@@ -3,12 +3,13 @@ package runner
 import "time"
 
 // EngineFlags is a set of flags controlling engine's processing
+// The zero value of this set can be used as default
 type EngineFlags struct {
 	// Modify CWL Feature (+loop)
-	EnablePlusLoop    bool // Switch of overall +loop modify
-	EnableLoopFeature bool // Switch of LoopFeatureRequirement
-	EnableLastNonNull bool // Switch of PickValue method last_non_null
-	MaxLoopCount      int  // Max loop count allowed, exceed the limit cause an error
+	DisablePlusLoop    bool // Switch of overall +loop modify
+	DisableLoopFeature bool // Switch of LoopFeatureRequirement
+	DisableLastNonNull bool // Switch of PickValue method last_non_null
+	MaxLoopCount       int  // Max loop count allowed, exceed the limit cause an error
 
 	// Workflow Related
 	MaxWorkflowNested int // Max sub-workflow nested count, exceed the limit cause an error
