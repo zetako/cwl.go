@@ -29,7 +29,7 @@ type Engine struct {
 	// Workflow Related
 	MessageReceiver             // inline struct for sending message
 	SignalChannel   chan Signal // send ctrl signal
-	flags           EngineFlags // flags control workflow processing
+	Flags           EngineFlags // Flags control workflow processing
 	// Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
@@ -382,6 +382,7 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 		process.root.Process = step.Run.Process
 	}
 
+	// DELETE: 不再需要下列的读取文件的代码，所有读取在初始化工作流时完成
 	//if step.Run.Process != nil {
 	//	if process.root == nil {
 	//		process.root = &cwl.Root{}

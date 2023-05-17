@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+var (
+	overallFeatureSwitch bool
+	flags                runner.EngineFlags
+)
+
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run [doc] [job]",
@@ -19,8 +24,13 @@ var runCmd = &cobra.Command{
 	Long:  `cwl.go can run directly with a cwl document and an inputs`,
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// set flag
+		if !overallFeatureSwitch {
+			flags.DisableLoopFeature = true
+			flags.DisableLastNonNull = true
+		}
 		// The args is exact 2 element
-		return run(args[0], args[1])
+		return run(args[0], args[1], flags)
 	},
 }
 
@@ -36,6 +46,17 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	runCmd.Flags().BoolVarP(&overallFeatureSwitch, "disable-plus-loop-set", "L", false, "Disable +loop feature set")
+	runCmd.Flags().BoolVar(&flags.DisableLoopFeature, "disable-loop-feature", false, "Disable loop feature")
+	runCmd.Flags().BoolVar(&flags.DisableLastNonNull, "disable-last-non-null", false, "Disable last_non_null pickValue method")
+	runCmd.Flags().IntVar(&flags.MaxLoopCount, "max-loop-count", 0, "Max loop iter count allowed")
+
+	runCmd.Flags().IntVar(&flags.MaxWorkflowNested, "max-nested", 10, "Max nested sub workflow count allowed")
+	runCmd.Flags().IntVar(&flags.MaxParallelLimit, "max-parallel", 0, "Max step task run in parallel")
+	runCmd.Flags().IntVar(&flags.MaxScatterLimit, "max-scatter", 0, "Max scatter task run in parallel")
+
+	runCmd.Flags().DurationVar(&flags.TotalTimeLimit, "timeout", 0, "Timeout for entire run")
+	runCmd.Flags().DurationVar(&flags.StepTimeLimit, "step-timeout", 0, "timeout for single step")
 }
 
 func splitPackedFile(raw string) (fileName, fragID string) {
@@ -62,7 +83,7 @@ func openFileAsJSON(pathlike string) ([]byte, error) {
 	return data, nil
 }
 
-func run(doc, job string) error {
+func run(doc, job string, engineFlags runner.EngineFlags) error {
 	fmt.Printf("doc is %s, job is %s", doc, job)
 
 	// read data
@@ -95,6 +116,7 @@ func run(doc, job string) error {
 		return err
 	}
 	e.SetDefaultExecutor(&runner.LocalExecutor{})
+	e.Flags = engineFlags
 
 	// run
 	outputs, err := e.Run()

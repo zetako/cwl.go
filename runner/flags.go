@@ -6,7 +6,6 @@ import "time"
 // The zero value of this set can be used as default
 type EngineFlags struct {
 	// Modify CWL Feature (+loop)
-	DisablePlusLoop    bool // Switch of overall +loop modify
 	DisableLoopFeature bool // Switch of LoopFeatureRequirement
 	DisableLastNonNull bool // Switch of PickValue method last_non_null
 	MaxLoopCount       int  // Max loop count allowed, exceed the limit cause an error

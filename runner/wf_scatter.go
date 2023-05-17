@@ -117,7 +117,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		runningTask++
 
 		// 4. 如果需要控制最大并行数，可以先回收部分任务
-		maxScatter := r.engine.flags.MaxScatterLimit
+		maxScatter := r.engine.Flags.MaxScatterLimit
 		if maxScatter > 0 && runningTask > maxScatter {
 			// 暂定为只回收一个，未来可以通过flag控制
 			tmpCondition := <-internalChan

@@ -179,7 +179,7 @@ func (e *Engine) tryImport(bean interface{}) (json.RawMessage, error) {
 
 func (e *Engine) tryImportRun(wfDoc *cwl.Workflow, graphs cwl.Graphs, count int) error {
 	// count
-	max := e.flags.MaxWorkflowNested
+	max := e.Flags.MaxWorkflowNested
 	if max <= 0 {
 		max = DefaultWorkflowNested
 	}
