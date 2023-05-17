@@ -20,3 +20,5 @@ type EngineFlags struct {
 	TotalTimeLimit time.Duration // The overall running time limit of whole process
 	StepTimeLimit  time.Duration // The seperated running time limit of each step
 }
+
+const DefaultWorkflowNested = 15

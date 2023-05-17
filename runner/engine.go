@@ -380,50 +380,57 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 			process.root = &cwl.Root{}
 		}
 		process.root.Process = step.Run.Process
-	} else { // 没有已序列化的进程，此时需要读文件
-		if len(step.Run.ID) <= 0 {
-			return nil, fmt.Errorf("no Process or Run.ID to use")
-		}
-		cwlFile := step.Run.ID
-		if cwlFile[0] == '#' { // 先判断是否#开头，此时是graph模式
-			if e.root.SaladRootDoc.Graph == nil {
-				return nil, fmt.Errorf("specify a packed doc but not found")
-			}
-			cwlFile = cwlFile[1:]
-			for _, graph := range e.root.SaladRootDoc.Graph {
-				if graph.Process.Base().ID == cwlFile {
-					process.root = graph
-					break
-				}
-			}
-			if process.root == nil {
-				return nil, fmt.Errorf("specify a packed doc but not found")
-			}
-		} else { // 否则就应该去读cwl
-			if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
-				return nil, errors.New("Run.ID not a cwl file")
-				// TODO 可能还需要考虑带#的情况
-			}
-			// 读文件
-			cwlFileReader, err := e.importer.Load(cwlFile)
-			if err != nil {
-				return nil, err
-			}
-			cwlFileJSON, err := cwl.Y2J(cwlFileReader)
-			if err != nil {
-				return nil, err
-			}
-			cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
-			if err != nil {
-				return nil, err
-			}
-
-			// 生成
-			if err = json.Unmarshal(cwlFileJSON, &process.root); err != nil {
-				return nil, err
-			}
-		}
 	}
+
+	//if step.Run.Process != nil {
+	//	if process.root == nil {
+	//		process.root = &cwl.Root{}
+	//	}
+	//	process.root.Process = step.Run.Process
+	//} else { // 没有已序列化的进程，此时需要读文件
+	//	if len(step.Run.ID) <= 0 {
+	//		return nil, fmt.Errorf("no Process or Run.ID to use")
+	//	}
+	//	cwlFile := step.Run.ID
+	//	if cwlFile[0] == '#' { // 先判断是否#开头，此时是graph模式
+	//		if e.root.SaladRootDoc.Graph == nil {
+	//			return nil, fmt.Errorf("specify a packed doc but not found")
+	//		}
+	//		cwlFile = cwlFile[1:]
+	//		for _, graph := range e.root.SaladRootDoc.Graph {
+	//			if graph.Process.Base().ID == cwlFile {
+	//				process.root = graph
+	//				break
+	//			}
+	//		}
+	//		if process.root == nil {
+	//			return nil, fmt.Errorf("specify a packed doc but not found")
+	//		}
+	//	} else { // 否则就应该去读cwl
+	//		if len(cwlFile) <= 4 || cwlFile[len(cwlFile)-4:] != ".cwl" {
+	//			return nil, errors.New("Run.ID not a cwl file")
+	//			// TODO 可能还需要考虑带#的情况
+	//		}
+	//		// 读文件
+	//		cwlFileReader, err := e.importer.Load(cwlFile)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		cwlFileJSON, err := cwl.Y2J(cwlFileReader)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//
+	//		// 生成
+	//		if err = json.Unmarshal(cwlFileJSON, &process.root); err != nil {
+	//			return nil, err
+	//		}
+	//	}
+	//}
 
 	// 其他处理（来自MainProcess）
 	process.SetRuntime(defaultRuntime)

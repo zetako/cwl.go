@@ -176,3 +176,75 @@ func (e *Engine) tryImport(bean interface{}) (json.RawMessage, error) {
 	}
 	return nil, nil
 }
+
+func (e *Engine) tryImportRun(wfDoc *cwl.Workflow, graphs cwl.Graphs, count int) error {
+	// count
+	max := e.flags.MaxWorkflowNested
+	if max <= 0 {
+		max = DefaultWorkflowNested
+	}
+	if count > max {
+		return fmt.Errorf("import recursive count reached %d", count)
+	}
+	// each step
+	for index, step := range wfDoc.Steps {
+		run := step.Run
+		if run.Process == nil {
+			// get fileName and fragID
+			var fileName, fragID string
+			if run.ID == "" {
+				return fmt.Errorf("no Process or Run.ID to use")
+			}
+			tmp := strings.IndexByte(run.ID, '#')
+			if tmp == -1 {
+				fileName = run.ID
+			} else {
+				fileName = run.ID[:tmp]
+				fragID = run.ID[tmp+1:]
+			}
+			// 3 possible types:
+			// a. [file]: read file as process
+			// b. #[frag]: use graph to read
+			// c. [file]#[frag]: read file as graph, then process as b
+			var tmpRoot cwl.Root
+			if fileName != "" {
+				if !strings.HasSuffix(fileName, ".cwl") {
+					return fmt.Errorf("Run.ID not a cwl file")
+				}
+				cwlFileReader, err := e.importer.Load(fileName)
+				if err != nil {
+					return err
+				}
+				cwlFileJSON, err := cwl.Y2J(cwlFileReader)
+				if err != nil {
+					return err
+				}
+				cwlFileJSON, err = e.EnsureImportedDoc(cwlFileJSON)
+				if err != nil {
+					return err
+				}
+				if err = json.Unmarshal(cwlFileJSON, &tmpRoot); err != nil {
+					return err
+				}
+				graphs = tmpRoot.Graph
+			}
+			if fragID == "" { // a
+				wfDoc.Steps[index].Run.Process = tmpRoot.Process
+			} else {
+				for _, graph := range graphs {
+					if graph.Process.Base().ID == fragID {
+						wfDoc.Steps[index].Run.Process = graph.Process
+						break
+					}
+				}
+			}
+		}
+		// if workflow, recursive
+		if wfProc, ok := wfDoc.Steps[index].Run.Process.(*cwl.Workflow); ok {
+			if err := e.tryImportRun(wfProc, graphs, count+1); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
