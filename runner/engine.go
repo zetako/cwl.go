@@ -178,7 +178,7 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		p.signalChannel = schan
 		// send assign message
 		tmpMsg := p.msgTemplate
-		tmpMsg.Info = p.JobID
+		tmpMsg.Content = p.JobID
 		tmpMsg.Status = StatusAssign
 		tmpMsg.TimeStamp = time.Now()
 		e.SendMsg(tmpMsg)

@@ -75,7 +75,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				Status:    StatusError,
 				TimeStamp: time.Now(),
 				ID:        r.step.ID,
-				Error:     err,
+				Content:   err,
 			})
 			conditions <- &StepErrorCondition{
 				step: r.step,
@@ -109,7 +109,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				Status:    StatusFinish,
 				TimeStamp: time.Now(),
 				ID:        r.step.ID,
-				Values:    outs,
+				Content:   outs,
 			})
 			for _, output := range r.step.Out {
 				conditions <- &OutputParamCondition{

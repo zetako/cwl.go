@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"log"
+	"time"
 )
 
 type WorkflowRunner struct {
@@ -35,6 +36,17 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		conditionChannel chan Condition
 		ctrlSignal       Signal
 	)
+	// 发送初始化信息
+	var stepNames []string
+	for _, step := range r.workflow.Steps {
+		stepNames = append(stepNames, step.ID)
+	}
+	r.engine.SendMsg(Message{
+		Class:     WorkflowMsg,
+		Status:    StatusInit,
+		TimeStamp: time.Now(),
+		Content:   stepNames,
+	})
 	conditionChannel = make(chan Condition)
 	// 遍历一遍，全部尝试启动
 	var tmpSteps []StepRunner

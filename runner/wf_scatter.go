@@ -30,7 +30,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 				Status:    StatusError,
 				TimeStamp: time.Now(),
 				ID:        r.step.ID,
-				Error:     err,
+				Content:   err,
 			})
 			condition <- &StepErrorCondition{
 				step: r.step,
@@ -207,7 +207,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 				TimeStamp: time.Now(),
 				ID:        r.step.ID,
 				Index:     ID,
-				Error:     err,
+				Content:   err,
 			})
 			condChan <- &ScatterErrorCondition{
 				scatterID: ID,
@@ -235,7 +235,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 				TimeStamp: time.Now(),
 				ID:        r.step.ID,
 				Index:     ID,
-				Values:    out,
+				Content:   out,
 			})
 			condChan <- &ScatterDoneCondition{
 				scatterID: ID,
