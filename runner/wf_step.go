@@ -15,8 +15,9 @@ import (
 type StepRunner interface {
 	MeetConditions(now []Condition) bool
 	Run(chan<- Condition) error
-	RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool)
+	RunAtMeetConditions(now []Condition, channel chan<- Condition, parameter cwl.Values) (run bool)
 	SendCtrlSignal(signal Signal)
+	SetInput(values cwl.Values) error
 }
 
 // RegularRunner 常规Step的执行器
@@ -59,7 +60,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		Class:     StepMsg,
 		Status:    StatusStart,
 		TimeStamp: time.Now(),
-		ID:        r.step.ID,
+		ID:        r.process.PathID,
 	})
 	var (
 		passBoolean bool
@@ -74,7 +75,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				Class:     StepMsg,
 				Status:    StatusError,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 				Content:   err,
 			})
 			conditions <- &StepErrorCondition{
@@ -89,7 +90,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				Class:     StepMsg,
 				Status:    StatusSkip,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 			})
 			for _, output := range r.step.Out {
 				conditions <- &OutputParamCondition{
@@ -108,7 +109,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				Class:     StepMsg,
 				Status:    StatusFinish,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 				Content:   outs,
 			})
 			for _, output := range r.step.Out {
@@ -267,6 +268,7 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 		passBoolean = true
 	}
 	// 3. 然后使用 Engine.RunProcess()
+	// TODO 此处需要判断是否为工作流，如果是的话直接创建一个工作流执行器来继续
 	if r.step.While != "" {
 		outs, err = r.RunLoop()
 	} else {
@@ -281,9 +283,10 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	return nil
 }
 
-func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool) {
+func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition, parameter cwl.Values) (run bool) {
 	if r.MeetConditions(now) {
 		go func() {
+			_ = r.SetInput(parameter)
 			_ = r.Run(channel)
 		}()
 		return true
@@ -295,6 +298,34 @@ func (r *RegularRunner) SendCtrlSignal(signal Signal) {
 	if r.process.signalChannel != nil {
 		go func() { r.process.signalChannel <- signal }()
 	}
+}
+
+func (r *RegularRunner) SetInput(values cwl.Values) error {
+	// 使用tmp作为本次的输入
+	tmp := cwl.Values{}
+	// 对于普通步骤，只需要将StepInput中要求的数据存起来
+	for _, in := range r.step.In {
+		gotValue := false
+		for _, src := range in.Source {
+			if value, ok := values[src]; ok {
+				gotValue = true
+				tmp[src] = value
+			}
+		}
+		if !gotValue {
+			// 如果缺少某个数据，需要考虑其是否为默认输入，如果不是则需要报告错误
+			if in.Default == nil {
+				return fmt.Errorf("input %s cannot match value", in.ID)
+			}
+		}
+	}
+	// 设置为parameter
+	r.parameter = &tmp
+	return nil
+}
+
+func (r *RegularRunner) deriveWorkflowRunner() (wfRunner *WorkflowRunner, err error) {
+	return nil, fmt.Errorf("TODO ")
 }
 
 func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (StepRunner, error) {
@@ -323,9 +354,10 @@ func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (S
 	if err != nil {
 		return nil, err
 	}
+	ret.process.PathID = parent.process.ChildPathID(ret.step.ID)
 	ret.process.msgTemplate = Message{
 		Class: StepMsg,
-		ID:    ret.step.ID,
+		ID:    ret.process.PathID,
 	}
 	// 继承父运行时
 	ret.process.parentRuntime = e.process.runtime

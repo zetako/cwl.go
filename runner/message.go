@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"path"
 	"time"
 )
 
@@ -37,9 +38,10 @@ type Message struct {
 	Class     MessageClass  // Class of source
 	Status    MessageStatus // Status of source, usually message will be sent if status is changed
 	TimeStamp time.Time     // TimeStamp when this message been sent
-	ID        string        // ID is to identified source, usually StepID
-	Index     int           // Index can locate exact index when source is scatter or loop
-	Content   interface{}   // Content is Message's actual info, the type is determined by Status
+	//ID        string        // ID is to identified source, usually StepID
+	ID      PathID      // ID is to identified source, usually StepID
+	Index   int         // Index can locate exact index when source is scatter or loop
+	Content interface{} // Content is Message's actual info, the type is determined by Status
 	//Info      string        // Info is normal message. e.g. in StatusAssign msg, it contains JobID
 	//Error     error         // Error is error message, normally used in StatusError msg
 	//Values    cwl.Values    // Values is cwl.Values message, normally used in StatusFinish msg
@@ -68,14 +70,14 @@ func (m Message) ToLog() string {
 	case StepMsg:
 		// DO NOTHING
 	case ScatterMsg:
-		tmp = fmt.Sprintf(" :Scatter %d", m.Index)
+		tmp = fmt.Sprintf("[Scatter %d]", m.Index)
 	case IterMsg:
-		tmp = fmt.Sprintf(" :Iteration %d", m.Index)
+		tmp = fmt.Sprintf("[Iteration %d]", m.Index)
 	default:
 		// DO NOTHING
 	}
-	if m.ID != "" {
-		return fmt.Sprintf("[%s][Step \"%s\"%s][%s] %s", m.TimeStamp.Format(time.DateTime), m.ID, tmp, m.Status, m.ToString())
+	if m.ID != nil {
+		return fmt.Sprintf("[%s][%s]%s[%s] %s", m.TimeStamp.Format(time.DateTime), m.ID.Path(), tmp, m.Status, m.ToString())
 	} else if m.Class == WorkflowMsg {
 		return fmt.Sprintf("[%s][Workflow Root][%s] %s", m.TimeStamp.Format(time.DateTime), m.Status, m.ToString())
 	} else {
@@ -95,4 +97,23 @@ type DefaultMsgReceiver struct {
 // SendMsg impl the MessageReceiver interface
 func (DefaultMsgReceiver) SendMsg(message Message) {
 	fmt.Println(message.ToLog())
+}
+
+type PathID []string
+
+func (p PathID) ID() string {
+	if len(p) <= 0 {
+		return ""
+	} else {
+		return p[len(p)-1]
+	}
+}
+
+func (p PathID) Path() string {
+	return path.Join(p...)
+}
+
+func (p PathID) ChildPathID(child string) PathID {
+	ret := append(PathID{}, p...)
+	return append(ret, child)
 }

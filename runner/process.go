@@ -27,10 +27,11 @@ type Process struct {
 	stdout            string
 	stderr            string
 	stdin             string
-	signalChannel     chan<- Signal
+	signalChannel     chan Signal
 	msgTemplate       Message
 	*Log
 	*jsvm
+	PathID
 }
 
 func (p *Process) Root() *cwl.Root {

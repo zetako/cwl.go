@@ -17,12 +17,12 @@ func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
 		return nil, fmt.Errorf("not Workflow")
 	}
 
-	// 尝试先引入所有量
+	// 尝试先引入所有文档
 	if err = e.tryImportRun(wf, p.root.Graph, 0); err != nil {
 		return nil, err
 	}
 
-	wfRunner, err := NewWorkflowRunner(e, wf, p.inputs)
+	wfRunner, err := NewWorkflowRunner(e, wf, p, p.inputs)
 	if err != nil {
 		return nil, err
 	}

@@ -29,7 +29,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 				Class:     StepMsg,
 				Status:    StatusError,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 				Content:   err,
 			})
 			condition <- &StepErrorCondition{
@@ -42,7 +42,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 				Class:     StepMsg,
 				Status:    StatusScatter,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 			})
 			condition <- &StepDoneCondition{
 				step:    r.step,
@@ -76,7 +76,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		}
 		process.msgTemplate = Message{
 			Class: ScatterMsg,
-			ID:    r.step.ID,
+			ID:    r.process.PathID,
 			Index: i,
 		}
 		// 2. 设置输出 & 绑定输入
@@ -187,7 +187,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 		Class:     ScatterMsg,
 		Status:    StatusStart,
 		TimeStamp: time.Time{},
-		ID:        r.step.ID,
+		ID:        r.process.PathID,
 		Index:     ID,
 	})
 	var (
@@ -205,7 +205,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 				Class:     ScatterMsg,
 				Status:    StatusError,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 				Index:     ID,
 				Content:   err,
 			})
@@ -219,7 +219,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 				Class:     ScatterMsg,
 				Status:    StatusSkip,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 				Index:     ID,
 			})
 			// 没有通过测试，直接输出空结果
@@ -233,7 +233,7 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 				Class:     ScatterMsg,
 				Status:    StatusFinish,
 				TimeStamp: time.Now(),
-				ID:        r.step.ID,
+				ID:        r.process.PathID,
 				Index:     ID,
 				Content:   out,
 			})

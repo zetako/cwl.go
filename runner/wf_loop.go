@@ -117,7 +117,7 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 			Class:     IterMsg,
 			Status:    StatusStart,
 			TimeStamp: time.Now(),
-			ID:        r.step.ID,
+			ID:        r.process.PathID,
 			Index:     index,
 		})
 		// 0. 设置运行时
@@ -127,7 +127,7 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 		}
 		process.msgTemplate = Message{
 			Class: IterMsg,
-			ID:    r.step.ID,
+			ID:    r.process.PathID,
 			Index: index,
 		}
 		err = setupLoop(process.jsvm, *r.process.inputs, index, previous, parent)
@@ -159,7 +159,7 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 			Class:     IterMsg,
 			Status:    StatusFinish,
 			TimeStamp: time.Now(),
-			ID:        r.step.ID,
+			ID:        r.process.PathID,
 			Index:     index,
 		})
 		index++

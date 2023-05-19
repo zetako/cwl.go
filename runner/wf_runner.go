@@ -10,6 +10,7 @@ import (
 
 type WorkflowRunner struct {
 	engine            *Engine
+	process           *Process
 	workflow          *cwl.Workflow
 	neededConditions  []Condition
 	steps             []StepRunner
@@ -44,6 +45,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 	r.engine.SendMsg(Message{
 		Class:     WorkflowMsg,
 		Status:    StatusInit,
+		ID:        r.process.PathID,
 		TimeStamp: time.Now(),
 		Content:   stepNames,
 	})
@@ -51,7 +53,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 	// 遍历一遍，全部尝试启动
 	var tmpSteps []StepRunner
 	for index := range r.steps {
-		if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel) {
+		if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel, *r.parameter) {
 			runningCounter++
 		} else {
 			tmpSteps = append(tmpSteps, r.steps[index])
@@ -64,7 +66,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 	r.steps = tmpSteps
 	for runningCounter > 0 {
 		select {
-		case ctrlSignal = <-r.engine.SignalChannel: // 接收到了控制信号
+		case ctrlSignal = <-r.process.signalChannel: // 接收到了控制信号
 			r.SendCtrlSignal(ctrlSignal)
 			switch ctrlSignal {
 			case SignalAbort:
@@ -72,7 +74,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 				return fmt.Errorf("SignalAbort received")
 			case SignalPause:
 			pausing: // 在这里阻塞，除非收到了恢复或中止信号
-				ctrlSignal = <-r.engine.SignalChannel
+				ctrlSignal = <-r.process.signalChannel
 				switch ctrlSignal {
 				case SignalResume:
 					// 可以继续
@@ -134,7 +136,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		// 遍历一遍，全部尝试启动
 		tmpSteps = []StepRunner{}
 		for index := range r.steps {
-			if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel) {
+			if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel, *r.parameter) {
 				runningCounter++
 			} else {
 				tmpSteps = append(tmpSteps, r.steps[index])
@@ -177,7 +179,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 	return nil
 }
 
-func (r *WorkflowRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition) (run bool) {
+func (r *WorkflowRunner) RunAtMeetConditions(now []Condition, channel chan<- Condition, parameter cwl.Values) (run bool) {
 	if r.MeetConditions(now) {
 		go func() {
 			err := r.Run(channel)
@@ -196,14 +198,22 @@ func (r *WorkflowRunner) SendCtrlSignal(signal Signal) {
 	}
 }
 
-func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, inputs *cwl.Values) (*WorkflowRunner, error) {
+func (r *WorkflowRunner) SetInput(values cwl.Values) error {
+	return fmt.Errorf("TODO ")
+}
+
+func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, p *Process, inputs *cwl.Values) (*WorkflowRunner, error) {
 	r := &WorkflowRunner{
 		engine:   e,
+		process:  p,
 		workflow: wf,
 	}
 	// 初始化需求的条件 TODO
 	// 初始化每一步的执行器
 	r.parameter = inputs
+	if r.parameter == nil {
+		r.parameter = &cwl.Values{}
+	}
 	r.steps = []StepRunner{}
 	for _, step := range wf.Steps {
 		tmpStep := step
