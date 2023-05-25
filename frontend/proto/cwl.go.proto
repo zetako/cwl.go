@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option go_package = "../proto";
+
+service cwl {
+  // Load will load a cwl file
+  rpc Load(Doc) returns (Result) {}
+  // Start will load an input and start an engine running
+  rpc Start(Job) returns (Result) {}
+  // Pause send a signal to engine, it may block for a few second till engine received
+  rpc Pause(NotNeeded) returns (Result) {}
+  // Resume send a signal to engine, it may block for a few second till engine received
+  rpc Resume(NotNeeded) returns (Result) {}
+  // Abort send a signal to engine, it may block for a few second till engine received
+  rpc Abort(NotNeeded) returns (Result) {}
+  // Export can get all steps status, it's recommended to use after pause
+  rpc Export(NotNeeded) returns (Status) {}
+  // Import will import status to engine, thus running in a middle state
+  rpc Import(Status) returns (Result) {}
+}
+
+// NotNeeded is an empty message used in functions that don't need args
+message NotNeeded {}
+
+// Result works like return value, and can contains details
+message Result {
+  bool success = 1;
+  string info = 2;
+}
+
+// Doc is url to cwl file
+message Doc {
+  string name = 1;
+}
+
+// Job is url to inputs
+message Job {
+  string name = 1;
+}
+
+// Value stands for any possible value used in cwl
+// Normally it will be a simple string, for complicate struct like file, it can also be a json string
+message Value {
+  string value = 1;
+}
+
+// Status is status of whole cwl engine
+message Status {
+  Result result = 1;
+  repeated StepStatus steps = 2;
+}
+
+// StepStatus contain all infos needed to describe a step's running
+message StepStatus {
+  string path = 1;
+  string status = 2;
+  string job = 3;
+  map<string, Value> values = 5;
+  optional string error = 4;
+}
