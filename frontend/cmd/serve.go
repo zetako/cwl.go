@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-
+	"github.com/lijiang2014/cwl.go/frontend/server"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +12,11 @@ var serveCmd = &cobra.Command{
 	Short: "Run cwl.go as a server",
 	Long:  `cwl.go can run as a grpc server. Use any grpc client to connect and control it.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called")
+		err := server.StartServe(4321, "", "")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	},
 }
 

@@ -44,6 +44,7 @@ message Job {
 message Status {
   Result result = 1;
   repeated StepStatus steps = 2;
+  optional Job job = 3;
 }
 
 // StepStatus contain all infos needed to describe a step's running

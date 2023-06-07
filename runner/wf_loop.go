@@ -3,6 +3,7 @@ package runner
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/runner/message"
 	"github.com/robertkrimen/otto"
 	"time"
 )
@@ -113,9 +114,9 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 	// 循环
 	for {
 		//log.Printf("[Step \"%s\": Loop Index %d] Start", r.step.ID, index)
-		r.engine.SendMsg(Message{
-			Class:     IterMsg,
-			Status:    StatusStart,
+		r.engine.SendMsg(message.Message{
+			Class:     message.IterMsg,
+			Status:    message.StatusStart,
 			TimeStamp: time.Now(),
 			ID:        r.process.PathID,
 			Index:     index,
@@ -125,8 +126,8 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("迭代进程%d创建失败: %v", index, err)
 		}
-		process.msgTemplate = Message{
-			Class: IterMsg,
+		process.msgTemplate = message.Message{
+			Class: message.IterMsg,
 			ID:    r.process.PathID,
 			Index: index,
 		}
@@ -155,9 +156,9 @@ func (r *RegularRunner) RunLoop() (values cwl.Values, err error) {
 		}
 		// 4. 准备下次运行
 		//log.Printf("[Step \"%s\": Loop Index %d] Finish", r.step.ID, index)
-		r.engine.SendMsg(Message{
-			Class:     IterMsg,
-			Status:    StatusFinish,
+		r.engine.SendMsg(message.Message{
+			Class:     message.IterMsg,
+			Status:    message.StatusFinish,
 			TimeStamp: time.Now(),
 			ID:        r.process.PathID,
 			Index:     index,

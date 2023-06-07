@@ -3,6 +3,10 @@ package runner
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/frontend/status"
+	"github.com/lijiang2014/cwl.go/runner/message"
+	"log"
+	"time"
 )
 
 func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
@@ -23,6 +27,10 @@ func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
 	}
 
 	wfRunner, err := NewWorkflowRunner(e, wf, p, p.inputs)
+	if err != nil {
+		return nil, err
+	}
+	err = wfRunner.tryRecover()
 	if err != nil {
 		return nil, err
 	}
@@ -50,4 +58,126 @@ func (p *Process) RunWorkflow(e *Engine) (cwl.Values, error) {
 		values[wfOut.ID] = v
 	}
 	return values, err
+}
+
+func (r *WorkflowRunner) tryRecover() error {
+	// 没有标记的工作流不需要恢复
+	if !r.workflow.NeedRecovered {
+		return nil
+	}
+	if r.engine.ImportedStatus == nil {
+		return fmt.Errorf("cannnot recovered without imported status")
+	}
+
+	// 若需要恢复
+	// 先获取3种Step
+	var (
+		allSteps     *status.StepStatusArray
+		finishSteps  []*status.StepStatus
+		runningSteps []*status.StepStatus
+		waitingSteps []*status.StepStatus
+		tmpRunners   []StepRunner
+		tmpCounter   int
+	)
+	allSteps = r.engine.ImportedStatus.GetTier(r.process.PathID)
+	allSteps.Foreach(func(status *status.StepStatus) {
+		switch status.Status {
+		case message.StatusFinish:
+			finishSteps = append(finishSteps, status)
+		case message.StatusStart:
+			runningSteps = append(runningSteps, status)
+		default:
+			waitingSteps = append(waitingSteps, status)
+		}
+	})
+	// 已完成的保存值
+	if r.parameter == nil {
+		r.parameter = &cwl.Values{}
+	}
+	for _, s := range finishSteps {
+		// 记录结果
+		for k, v := range s.Output {
+			(*r.parameter)[s.ID.ID()+"/"+k] = v
+		}
+		// 找到对应的步骤
+		var myStep cwl.WorkflowStep
+		for _, step := range r.workflow.Steps {
+			if step.ID == s.ID.ID() {
+				myStep = step
+			}
+		}
+		// 设置结果条件
+		for _, out := range myStep.Out {
+			r.reachedConditions = append(r.reachedConditions, &OutputParamCondition{
+				step:   &myStep,
+				output: &out,
+			})
+		}
+		// 设置完成条件
+		r.reachedConditions = append(r.reachedConditions, &StepDoneCondition{
+			step: &myStep,
+			out:  &s.Output,
+		})
+		// 发送步骤完成信号
+		r.engine.SendMsg(message.Message{
+			Class:     message.StepMsg,
+			Status:    message.StatusFinish,
+			TimeStamp: time.Now(),
+			ID:        nil,
+			Index:     0,
+			Content:   s.Output,
+		})
+	}
+	// 进行中的调用协程启动
+	for _, s := range runningSteps {
+		// 找到对应的步骤
+		var myStep cwl.WorkflowStep
+		for _, step := range r.workflow.Steps {
+			if step.ID == s.ID.ID() {
+				myStep = step
+			}
+		}
+		// 产生RegularRunner
+		tmpRunner, err := NewStepRunner(r.engine, r, &myStep)
+		if err != nil {
+			return err
+		}
+		// 设置Input
+		err = tmpRunner.SetInput(*r.parameter)
+		if err != nil {
+			return err
+		}
+		// 设置recover标志位
+		tmpRunner.SetRecoverFlag()
+		// 协程调用Run
+		go func() {
+			err = tmpRunner.Run(r.conditionChan)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+		// 计数++
+		tmpCounter++
+	}
+	r.runningCounter = tmpCounter
+	// 否则加入等待列表
+	for _, s := range waitingSteps {
+		// 找到对应的步骤
+		var myStep cwl.WorkflowStep
+		for _, step := range r.workflow.Steps {
+			if step.ID == s.ID.ID() {
+				myStep = step
+			}
+		}
+		// 产生RegularRunner
+		tmpRunner, err := NewStepRunner(r.engine, r, &myStep)
+		if err != nil {
+			return err
+		}
+		// 加入列表
+		tmpRunners = append(tmpRunners, tmpRunner)
+	}
+	r.steps = tmpRunners
+
+	return nil
 }

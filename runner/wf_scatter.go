@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/runner/message"
 	"path"
 	"time"
 )
@@ -25,9 +26,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 	defer func() {
 		if err != nil {
 			//log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
-			r.engine.SendMsg(Message{
-				Class:     StepMsg,
-				Status:    StatusError,
+			r.engine.SendMsg(message.Message{
+				Class:     message.StepMsg,
+				Status:    message.StatusError,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 				Content:   err,
@@ -38,11 +39,12 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			}
 		} else {
 			//log.Printf("[Step \"%s\"] Scattered", r.step.ID)
-			r.engine.SendMsg(Message{
-				Class:     StepMsg,
-				Status:    StatusScatter,
+			r.engine.SendMsg(message.Message{
+				Class:     message.StepMsg,
+				Status:    message.StatusScatter,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
+				Content:   output,
 			})
 			condition <- &StepDoneCondition{
 				step:    r.step,
@@ -74,8 +76,8 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 			genSuccess = false
 			return fmt.Errorf("创建Process实例失败")
 		}
-		process.msgTemplate = Message{
-			Class: ScatterMsg,
+		process.msgTemplate = message.Message{
+			Class: message.ScatterMsg,
 			ID:    r.process.PathID,
 			Index: i,
 		}
@@ -183,9 +185,9 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 // scatterTaskWrapper 已分发任务的运行封装，用于在协程中运行；使用channel传递结果
 func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, ID int) {
 	//log.Printf("[Step \"%s\": Scatter %d] Start", r.step.ID, ID)
-	r.engine.SendMsg(Message{
-		Class:     ScatterMsg,
-		Status:    StatusStart,
+	r.engine.SendMsg(message.Message{
+		Class:     message.ScatterMsg,
+		Status:    message.StatusStart,
 		TimeStamp: time.Time{},
 		ID:        r.process.PathID,
 		Index:     ID,
@@ -201,9 +203,9 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 	defer func() {
 		if err != nil {
 			//log.Printf("[Step \"%s\": Scatter %d] Error:%s", r.step.ID, ID, err)
-			r.engine.SendMsg(Message{
-				Class:     ScatterMsg,
-				Status:    StatusError,
+			r.engine.SendMsg(message.Message{
+				Class:     message.ScatterMsg,
+				Status:    message.StatusError,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 				Index:     ID,
@@ -215,9 +217,9 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 			}
 		} else if r.step.When != "" && !passBoolean {
 			//log.Printf("[Step \"%s\": Scatter %d] Skip", r.step.ID, ID)
-			r.engine.SendMsg(Message{
-				Class:     ScatterMsg,
-				Status:    StatusSkip,
+			r.engine.SendMsg(message.Message{
+				Class:     message.ScatterMsg,
+				Status:    message.StatusSkip,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 				Index:     ID,
@@ -229,9 +231,9 @@ func (r *RegularRunner) scatterTaskWrapper(p *Process, condChan chan Condition, 
 			}
 		} else {
 			//log.Printf("[Step \"%s\": Scatter %d] Finish", r.step.ID, ID)
-			r.engine.SendMsg(Message{
-				Class:     ScatterMsg,
-				Status:    StatusFinish,
+			r.engine.SendMsg(message.Message{
+				Class:     message.ScatterMsg,
+				Status:    message.StatusFinish,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 				Index:     ID,

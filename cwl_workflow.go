@@ -154,9 +154,10 @@ type WorkflowStep struct {
 }
 
 type Workflow struct {
-	ProcessBase `json:",inline" salad:"abstract"`
-	ClassBase   `json:",inline"`
-	Steps       []WorkflowStep `json:"steps" salad:"mapSubject:id"`
+	ProcessBase   `json:",inline" salad:"abstract"`
+	ClassBase     `json:",inline"`
+	Steps         []WorkflowStep `json:"steps" salad:"mapSubject:id"`
+	NeedRecovered bool           `json:"-"` // This value is not a part of spec
 }
 
 type SubworkflowFeatureRequirement struct {

@@ -1,10 +1,11 @@
-package runner
+package message
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -116,4 +117,33 @@ func (p PathID) Path() string {
 func (p PathID) ChildPathID(child string) PathID {
 	ret := append(PathID{}, p...)
 	return append(ret, child)
+}
+
+func (p PathID) Equal(other PathID) bool {
+	if len(p) != len(other) {
+		return false
+	}
+	for idx := range p {
+		if p[idx] != other[idx] {
+			return false
+		}
+	}
+	return true
+}
+
+func NewPathID(pathlike string) PathID {
+	return strings.Split(pathlike, "/")
+}
+
+func (p PathID) IsSonOf(parent PathID) bool {
+	if len(p) != len(parent)+1 {
+		return false
+	}
+	if len(p) <= 0 {
+		return false
+	}
+	if !parent.Equal(p[:len(p)-1]) {
+		return false
+	}
+	return true
 }

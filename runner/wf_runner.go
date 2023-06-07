@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/runner/message"
 	"log"
 	"time"
 )
@@ -12,6 +13,8 @@ type WorkflowRunner struct {
 	engine            *Engine
 	process           *Process
 	workflow          *cwl.Workflow
+	runningCounter    int
+	conditionChan     chan Condition
 	neededConditions  []Condition
 	steps             []StepRunner
 	reachedConditions []Condition
@@ -29,42 +32,39 @@ func (r *WorkflowRunner) MeetConditions(now []Condition) bool {
 
 // Run 执行工作流
 //   - 该函数线程不安全，一个工作流实例仅可执行一个
-func (r *WorkflowRunner) Run(channel chan<- Condition) error {
+func (r *WorkflowRunner) Run(channel chan<- Condition) (err error) {
 	var (
-		tmpCondition     Condition
-		moreCondition    bool
-		runningCounter   int = 0
-		conditionChannel chan Condition
-		ctrlSignal       Signal
+		tmpCondition  Condition
+		moreCondition bool
+		ctrlSignal    Signal
 	)
 	// 发送初始化信息
 	var stepNames []string
 	for _, step := range r.workflow.Steps {
 		stepNames = append(stepNames, step.ID)
 	}
-	r.engine.SendMsg(Message{
-		Class:     WorkflowMsg,
-		Status:    StatusInit,
+	r.engine.SendMsg(message.Message{
+		Class:     message.WorkflowMsg,
+		Status:    message.StatusInit,
 		ID:        r.process.PathID,
 		TimeStamp: time.Now(),
 		Content:   stepNames,
 	})
-	conditionChannel = make(chan Condition)
 	// 遍历一遍，全部尝试启动
 	var tmpSteps []StepRunner
 	for index := range r.steps {
-		if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel, *r.parameter) {
-			runningCounter++
+		if r.steps[index].RunAtMeetConditions(r.reachedConditions, r.conditionChan, *r.parameter) {
+			r.runningCounter++
 		} else {
 			tmpSteps = append(tmpSteps, r.steps[index])
 		}
 		// 读取flag内的最大并行任务数
-		if r.engine.Flags.MaxParallelLimit > 0 && runningCounter > r.engine.Flags.MaxParallelLimit {
+		if r.engine.Flags.MaxParallelLimit > 0 && r.runningCounter > r.engine.Flags.MaxParallelLimit {
 			break
 		}
 	}
 	r.steps = tmpSteps
-	for runningCounter > 0 {
+	for r.runningCounter > 0 {
 		select {
 		case ctrlSignal = <-r.process.signalChannel: // 接收到了控制信号
 			r.SendCtrlSignal(ctrlSignal)
@@ -91,7 +91,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 				// DO NOTHING
 				break
 			}
-		case tmpCondition = <-conditionChannel: // 接收到步骤完成的条件
+		case tmpCondition = <-r.conditionChan: // 接收到步骤完成的条件
 			moreCondition = true
 			if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
 				var err error
@@ -99,7 +99,7 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 				if err != nil {
 					return err
 				}
-				runningCounter--
+				r.runningCounter--
 			}
 			if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
 				return errCond.err
@@ -114,14 +114,14 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 
 		for moreCondition {
 			select {
-			case tmpCondition = <-conditionChannel:
+			case tmpCondition = <-r.conditionChan:
 				if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
 					var err error
 					r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
 					if err != nil {
 						return err
 					}
-					runningCounter--
+					r.runningCounter--
 				}
 				if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
 					return errCond.err
@@ -136,8 +136,8 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) error {
 		// 遍历一遍，全部尝试启动
 		tmpSteps = []StepRunner{}
 		for index := range r.steps {
-			if r.steps[index].RunAtMeetConditions(r.reachedConditions, conditionChannel, *r.parameter) {
-				runningCounter++
+			if r.steps[index].RunAtMeetConditions(r.reachedConditions, r.conditionChan, *r.parameter) {
+				r.runningCounter++
 			} else {
 				tmpSteps = append(tmpSteps, r.steps[index])
 			}
@@ -202,6 +202,10 @@ func (r *WorkflowRunner) SetInput(values cwl.Values) error {
 	return fmt.Errorf("TODO ")
 }
 
+func (r *WorkflowRunner) GetPath() message.PathID {
+	return r.process.PathID
+}
+
 func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, p *Process, inputs *cwl.Values) (*WorkflowRunner, error) {
 	r := &WorkflowRunner{
 		engine:   e,
@@ -245,6 +249,8 @@ func NewWorkflowRunner(e *Engine, wf *cwl.Workflow, p *Process, inputs *cwl.Valu
 			})
 		}
 	}
+	r.conditionChan = make(chan Condition, 10)
+	r.runningCounter = 0
 	return r, nil
 }
 
@@ -267,3 +273,123 @@ func mergeStepOutputs(ori *cwl.Values, stepDone StepDoneCondition) (*cwl.Values,
 	}
 	return ori, nil
 }
+
+func (r *WorkflowRunner) SetRecoverFlag() {
+	r.workflow.NeedRecovered = true
+}
+
+// Recover 从导入的值恢复状态（并执行）
+//func (r *WorkflowRunner) Recover(array *status.StepStatusArray, channel chan<- Condition) error {
+//	// 获取3个类型的步骤
+//	var (
+//		allSteps     *status.StepStatusArray
+//		finishSteps  []*status.StepStatus
+//		runningSteps []*status.StepStatus
+//		waitingSteps []*status.StepStatus
+//		tmpRunners   []StepRunner
+//		tmpCounter   int
+//	)
+//	allSteps = array.GetTier(r.process.PathID)
+//	allSteps.Foreach(func(status *status.StepStatus) {
+//		switch status.Status {
+//		case message.StatusFinish:
+//			finishSteps = append(finishSteps, status)
+//		case message.StatusStart:
+//			runningSteps = append(runningSteps, status)
+//		default:
+//			waitingSteps = append(waitingSteps, status)
+//		}
+//	})
+//
+//	// 完成的步骤：记录结果，设置条件，发送信号
+//	if r.parameter == nil {
+//		r.parameter = &cwl.Values{}
+//	}
+//	for _, s := range finishSteps {
+//		// 记录结果
+//		for k, v := range s.Output {
+//			(*r.parameter)[s.ID.ID()+"/"+k] = v
+//		}
+//		// 找到对应的步骤
+//		var myStep cwl.WorkflowStep
+//		for _, step := range r.workflow.Steps {
+//			if step.ID == s.ID.ID() {
+//				myStep = step
+//			}
+//		}
+//		// 设置结果条件
+//		for _, out := range myStep.Out {
+//			channel <- &OutputParamCondition{
+//				step:   &myStep,
+//				output: &out,
+//			}
+//		}
+//		// 设置完成条件
+//		channel <- &StepDoneCondition{
+//			step: &myStep,
+//			out:  nil,
+//		}
+//		// 发送步骤完成信号
+//		// TODO
+//	}
+//
+//	// 执行中的步骤：调用Recover启动
+//	for _, s := range runningSteps {
+//		// 找到对应的步骤
+//		var myStep cwl.WorkflowStep
+//		for _, step := range r.workflow.Steps {
+//			if step.ID == s.ID.ID() {
+//				myStep = step
+//			}
+//		}
+//		// 产生RegularRunner
+//		tmpRunner, err := NewStepRunner(r.engine, r, &myStep)
+//		if err != nil {
+//			return err
+//		}
+//		// 设置Input
+//		err = tmpRunner.SetInput(*r.parameter)
+//		if err != nil {
+//			return err
+//		}
+//		// 执行Recover
+//		err = tmpRunner.Recover(array, channel)
+//		if err != nil {
+//			return err
+//		}
+//		// 计数++
+//		tmpCounter++
+//	}
+//	// 执行计数回写到Workflow中
+//	r.runningCounter = tmpCounter
+//
+//	// 等待的步骤：加入列表
+//	for _, s := range waitingSteps {
+//		// 找到对应的步骤
+//		var myStep cwl.WorkflowStep
+//		for _, step := range r.workflow.Steps {
+//			if step.ID == s.ID.ID() {
+//				myStep = step
+//			}
+//		}
+//		// 产生RegularRunner
+//		tmpRunner, err := NewStepRunner(r.engine, r, &myStep)
+//		if err != nil {
+//			return err
+//		}
+//		// 加入列表
+//		tmpRunners = append(tmpRunners, tmpRunner)
+//	}
+//	// 将列表回写到Workflow中
+//	r.steps = tmpRunners
+//
+//	// 回归正常执行，协程启动Run
+//	go func() {
+//		err := r.Run(channel)
+//		if err != nil {
+//			channel <- &WorkflowErrorCondition{Err: err}
+//		}
+//	}()
+//
+//	return nil
+//}

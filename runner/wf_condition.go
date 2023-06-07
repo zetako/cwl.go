@@ -146,6 +146,16 @@ func (w WorkflowEndCondition) Meet(condition []Condition) bool {
 	return true
 }
 
+// WorkflowErrorCondition 工作流异常结束的条件，包含错误
+type WorkflowErrorCondition struct {
+	Err error
+}
+
+// Meet 无意义的判断，始终满足
+func (w WorkflowErrorCondition) Meet(condition []Condition) bool {
+	return true
+}
+
 // WorkflowInitCondition 工作流初始化时的输入
 type WorkflowInitCondition struct {
 	key   string

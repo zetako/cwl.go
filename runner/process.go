@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/lijiang2014/cwl.go/runner/message"
 	"log"
 	"sort"
 	"strings"
@@ -28,10 +29,10 @@ type Process struct {
 	stderr            string
 	stdin             string
 	signalChannel     chan Signal
-	msgTemplate       Message
+	msgTemplate       message.Message
 	*Log
 	*jsvm
-	PathID
+	message.PathID
 }
 
 func (p *Process) Root() *cwl.Root {

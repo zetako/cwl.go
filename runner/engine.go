@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/frontend/status"
+	"github.com/lijiang2014/cwl.go/runner/message"
 	"os"
 	"os/user"
 	"path"
@@ -27,9 +29,9 @@ type Engine struct {
 	root     *cwl.Root // root Documents.
 	params   *cwl.Values
 	// Workflow Related
-	MessageReceiver // inline struct for sending message
-	//SignalChannel   chan Signal // send ctrl signal
-	Flags EngineFlags // Flags control workflow processing
+	message.MessageReceiver                         // inline struct for sending message
+	ImportedStatus          *status.StepStatusArray // status used to recovered
+	Flags                   EngineFlags             // Flags control workflow processing
 	// Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
@@ -119,7 +121,7 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 		return nil, err
 	}
 	// set other defaults, can be changed later
-	e.MessageReceiver = DefaultMsgReceiver{}
+	e.MessageReceiver = message.DefaultMsgReceiver{}
 	//e.SignalChannel = make(chan Signal)
 	// import Doc
 	if c.Process, err = e.EnsureImportedDoc(c.Process); err != nil {
@@ -179,7 +181,7 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		// send assign message
 		tmpMsg := p.msgTemplate
 		tmpMsg.Content = p.JobID
-		tmpMsg.Status = StatusAssign
+		tmpMsg.Status = message.StatusAssign
 		tmpMsg.TimeStamp = time.Now()
 		e.SendMsg(tmpMsg)
 		// wait for return
@@ -204,6 +206,17 @@ func (e *Engine) Run() (outs cwl.Values, err error) {
 	_, err = e.MainProcess()
 	if err != nil {
 		return nil, err
+	}
+	return e.RunProcess(e.process)
+}
+
+func (e *Engine) Recover() (outs cwl.Values, err error) {
+	_, err = e.MainProcess()
+	if err != nil {
+		return nil, err
+	}
+	if wf, ok := e.process.root.Process.(*cwl.Workflow); ok {
+		wf.NeedRecovered = true
 	}
 	return e.RunProcess(e.process)
 }
@@ -367,7 +380,7 @@ func (e *Engine) MainProcess() (*Process, error) {
 
 	process.runtime.RootHost = e.RootHost
 	process.loadRuntime()
-	process.PathID = PathID{}.ChildPathID("root")
+	process.PathID = message.PathID{}.ChildPathID("root")
 	e.process = process
 	return process, nil
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/runner/message"
 	"github.com/robertkrimen/otto"
 	"time"
 )
@@ -15,9 +16,12 @@ import (
 type StepRunner interface {
 	MeetConditions(now []Condition) bool
 	Run(chan<- Condition) error
+	SetRecoverFlag()
+	//Recover(*status.StepStatusArray, chan<- Condition) error
 	RunAtMeetConditions(now []Condition, channel chan<- Condition, parameter cwl.Values) (run bool)
 	SendCtrlSignal(signal Signal)
 	SetInput(values cwl.Values) error
+	GetPath() message.PathID
 }
 
 // RegularRunner 常规Step的执行器
@@ -56,9 +60,9 @@ func (r *RegularRunner) MeetConditions(now []Condition) bool {
 
 func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	//log.Printf("[Step \"%s\"] Start", r.step.ID)
-	r.engine.SendMsg(Message{
-		Class:     StepMsg,
-		Status:    StatusStart,
+	r.engine.SendMsg(message.Message{
+		Class:     message.StepMsg,
+		Status:    message.StatusStart,
 		TimeStamp: time.Now(),
 		ID:        r.process.PathID,
 	})
@@ -71,9 +75,9 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 	defer func() { // 负责处理运行结束的情况
 		if err != nil {
 			//log.Printf("[Step \"%s\"] Error:%s", r.step.ID, err)
-			r.engine.SendMsg(Message{
-				Class:     StepMsg,
-				Status:    StatusError,
+			r.engine.SendMsg(message.Message{
+				Class:     message.StepMsg,
+				Status:    message.StatusError,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 				Content:   err,
@@ -86,9 +90,9 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			// 相关日志由scatter内处理
 		} else if !passBoolean {
 			//log.Printf("[Step \"%s\"] Skip", r.step.ID)
-			r.engine.SendMsg(Message{
-				Class:     StepMsg,
-				Status:    StatusSkip,
+			r.engine.SendMsg(message.Message{
+				Class:     message.StepMsg,
+				Status:    message.StatusSkip,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 			})
@@ -105,9 +109,9 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 			}
 		} else {
 			//log.Printf("[Step \"%s\"] Finish", r.step.ID)
-			r.engine.SendMsg(Message{
-				Class:     StepMsg,
-				Status:    StatusFinish,
+			r.engine.SendMsg(message.Message{
+				Class:     message.StepMsg,
+				Status:    message.StatusFinish,
 				TimeStamp: time.Now(),
 				ID:        r.process.PathID,
 				Content:   outs,
@@ -324,8 +328,18 @@ func (r *RegularRunner) SetInput(values cwl.Values) error {
 	return nil
 }
 
+func (r *RegularRunner) GetPath() message.PathID {
+	return r.process.PathID
+}
+
 func (r *RegularRunner) deriveWorkflowRunner() (wfRunner *WorkflowRunner, err error) {
 	return nil, fmt.Errorf("TODO ")
+}
+
+func (r *RegularRunner) SetRecoverFlag() {
+	if wf, ok := r.process.root.Process.(*cwl.Workflow); ok {
+		wf.NeedRecovered = true
+	}
 }
 
 func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (StepRunner, error) {
@@ -355,8 +369,8 @@ func NewStepRunner(e *Engine, parent *WorkflowRunner, step *cwl.WorkflowStep) (S
 		return nil, err
 	}
 	ret.process.PathID = parent.process.ChildPathID(ret.step.ID)
-	ret.process.msgTemplate = Message{
-		Class: StepMsg,
+	ret.process.msgTemplate = message.Message{
+		Class: message.StepMsg,
 		ID:    ret.process.PathID,
 	}
 	// 继承父运行时
