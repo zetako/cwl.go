@@ -20,6 +20,7 @@ import (
 
 var (
 	globalCwlServer cwlServer
+	GlobalFlags     runner.EngineFlags
 )
 
 type cwlServer struct {
@@ -99,6 +100,7 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 	}
 	c.engine.SetDefaultExecutor(&runner.LocalExecutor{})
 	c.engine.MessageReceiver = serverMsgReceiver{}
+	c.engine.Flags = GlobalFlags
 
 	// Run in go routine
 	go func() {

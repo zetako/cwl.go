@@ -46,17 +46,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	runCmd.Flags().BoolVarP(&overallFeatureSwitch, "disable-plus-loop-set", "L", false, "Disable +loop feature set")
-	runCmd.Flags().BoolVar(&flags.DisableLoopFeature, "disable-loop-feature", false, "Disable loop feature")
-	runCmd.Flags().BoolVar(&flags.DisableLastNonNull, "disable-last-non-null", false, "Disable last_non_null pickValue method")
-	runCmd.Flags().IntVar(&flags.MaxLoopCount, "max-loop-count", 0, "Max loop iter count allowed")
-
-	runCmd.Flags().IntVar(&flags.MaxWorkflowNested, "max-nested", 10, "Max nested sub workflow count allowed")
-	runCmd.Flags().IntVar(&flags.MaxParallelLimit, "max-parallel", 0, "Max step task run in parallel")
-	runCmd.Flags().IntVar(&flags.MaxScatterLimit, "max-scatter", 0, "Max scatter task run in parallel")
-
-	runCmd.Flags().DurationVar(&flags.TotalTimeLimit, "timeout", 0, "Timeout for entire run")
-	runCmd.Flags().DurationVar(&flags.StepTimeLimit, "step-timeout", 0, "timeout for single step")
 }
 
 func splitPackedFile(raw string) (fileName, fragID string) {
