@@ -1,13 +1,13 @@
 package runner
 
 import (
+	"github.com/lijiang2014/cwl.go"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/lijiang2014/cwl.go"
 )
 
 type Filesystem interface {
@@ -62,7 +62,7 @@ func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, er
 			f.Path = path
 		}
 		// Create Later
-		//x, err = process.fs.Create(path, f.Contents)
+		//x, err = process.sfs.Create(path, f.Contents)
 		//if err != nil {
 		//  return x, process.errorf("creating file from inline content: %s", err)
 		//}
