@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/zetako/scontrol"
 	"log"
 	"time"
 )
@@ -36,7 +37,6 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) (err error) {
 	var (
 		tmpCondition  Condition
 		moreCondition bool
-		ctrlSignal    Signal
 	)
 	// 发送初始化信息
 	var stepNames []string
@@ -65,52 +65,23 @@ func (r *WorkflowRunner) Run(channel chan<- Condition) (err error) {
 	}
 	r.steps = tmpSteps
 	for r.runningCounter > 0 {
-		select {
-		case ctrlSignal = <-r.process.signalChannel: // 接收到了控制信号
-			r.SendCtrlSignal(ctrlSignal)
-			switch ctrlSignal {
-			case SignalAbort:
-				// 直接中断执行
-				return fmt.Errorf("SignalAbort received")
-			case SignalPause:
-			pausing: // 在这里阻塞，除非收到了恢复或中止信号
-				ctrlSignal = <-r.process.signalChannel
-				switch ctrlSignal {
-				case SignalResume:
-					// 可以继续
-					break
-				case SignalAbort:
-					// 直接中断执行
-					return fmt.Errorf("SignalAbort received")
-				default:
-					goto pausing
-				}
-			case SignalResume:
-				fallthrough
-			default:
-				// DO NOTHING
-				break
-			}
-		case tmpCondition = <-r.conditionChan: // 接收到步骤完成的条件
-			moreCondition = true
-			if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
-				var err error
-				r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
-				if err != nil {
-					return err
-				}
-				r.runningCounter--
-			}
-			if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
-				return errCond.err
-			}
-			r.reachedConditions = append(r.reachedConditions, tmpCondition)
-
-			// 没有default，上述两个任意命中才需要继续
-			//default:
-			//	// DO NOTHING
-			//	break
+		if r.engine.controller.Check() == scontrol.StatusStop {
+			return fmt.Errorf("SignalAbort received")
 		}
+		tmpCondition = <-r.conditionChan // 接收到步骤完成的条件
+		moreCondition = true
+		if doneCond, ok := tmpCondition.(*StepDoneCondition); ok {
+			var err error
+			r.parameter, err = mergeStepOutputs(r.parameter, *doneCond)
+			if err != nil {
+				return err
+			}
+			r.runningCounter--
+		}
+		if errCond, ok := tmpCondition.(*StepErrorCondition); ok {
+			return errCond.err
+		}
+		r.reachedConditions = append(r.reachedConditions, tmpCondition)
 
 		for moreCondition {
 			select {
@@ -192,12 +163,6 @@ func (r *WorkflowRunner) RunAtMeetConditions(now []Condition, channel chan<- Con
 	return false
 }
 
-func (r *WorkflowRunner) SendCtrlSignal(signal Signal) {
-	for _, step := range r.steps {
-		step.SendCtrlSignal(signal)
-	}
-}
-
 func (r *WorkflowRunner) SetInput(values cwl.Values) error {
 	return fmt.Errorf("TODO ")
 }
@@ -277,119 +242,3 @@ func mergeStepOutputs(ori *cwl.Values, stepDone StepDoneCondition) (*cwl.Values,
 func (r *WorkflowRunner) SetRecoverFlag() {
 	r.workflow.NeedRecovered = true
 }
-
-// Recover 从导入的值恢复状态（并执行）
-//func (r *WorkflowRunner) Recover(array *status.StepStatusArray, channel chan<- Condition) error {
-//	// 获取3个类型的步骤
-//	var (
-//		allSteps     *status.StepStatusArray
-//		finishSteps  []*status.StepStatus
-//		runningSteps []*status.StepStatus
-//		waitingSteps []*status.StepStatus
-//		tmpRunners   []StepRunner
-//		tmpCounter   int
-//	)
-//	allSteps = array.GetTier(r.process.PathID)
-//	allSteps.Foreach(func(status *status.StepStatus) {
-//		switch status.Status {
-//		case message.StatusFinish:
-//			finishSteps = append(finishSteps, status)
-//		case message.StatusStart:
-//			runningSteps = append(runningSteps, status)
-//		default:
-//			waitingSteps = append(waitingSteps, status)
-//		}
-//	})
-//
-//	// 完成的步骤：记录结果，设置条件，发送信号
-//	if r.parameter == nil {
-//		r.parameter = &cwl.Values{}
-//	}
-//	for _, s := range finishSteps {
-//		// 记录结果
-//		for k, v := range s.Output {
-//			(*r.parameter)[s.ID.ID()+"/"+k] = v
-//		}
-//		// 找到对应的步骤
-//		var myStep cwl.WorkflowStep
-//		for _, step := range r.workflow.Steps {
-//			if step.ID == s.ID.ID() {
-//				myStep = step
-//			}
-//		}
-//		// 设置结果条件
-//		for _, out := range myStep.Out {
-//			channel <- &OutputParamCondition{
-//				step:   &myStep,
-//				output: &out,
-//			}
-//		}
-//		// 设置完成条件
-//		channel <- &StepDoneCondition{
-//			step: &myStep,
-//			out:  nil,
-//		}
-//		// 发送步骤完成信号
-//		// TODO
-//	}
-//
-//	// 执行中的步骤：调用Recover启动
-//	for _, s := range runningSteps {
-//		// 找到对应的步骤
-//		var myStep cwl.WorkflowStep
-//		for _, step := range r.workflow.Steps {
-//			if step.ID == s.ID.ID() {
-//				myStep = step
-//			}
-//		}
-//		// 产生RegularRunner
-//		tmpRunner, err := NewStepRunner(r.engine, r, &myStep)
-//		if err != nil {
-//			return err
-//		}
-//		// 设置Input
-//		err = tmpRunner.SetInput(*r.parameter)
-//		if err != nil {
-//			return err
-//		}
-//		// 执行Recover
-//		err = tmpRunner.Recover(array, channel)
-//		if err != nil {
-//			return err
-//		}
-//		// 计数++
-//		tmpCounter++
-//	}
-//	// 执行计数回写到Workflow中
-//	r.runningCounter = tmpCounter
-//
-//	// 等待的步骤：加入列表
-//	for _, s := range waitingSteps {
-//		// 找到对应的步骤
-//		var myStep cwl.WorkflowStep
-//		for _, step := range r.workflow.Steps {
-//			if step.ID == s.ID.ID() {
-//				myStep = step
-//			}
-//		}
-//		// 产生RegularRunner
-//		tmpRunner, err := NewStepRunner(r.engine, r, &myStep)
-//		if err != nil {
-//			return err
-//		}
-//		// 加入列表
-//		tmpRunners = append(tmpRunners, tmpRunner)
-//	}
-//	// 将列表回写到Workflow中
-//	r.steps = tmpRunners
-//
-//	// 回归正常执行，协程启动Run
-//	go func() {
-//		err := r.Run(channel)
-//		if err != nil {
-//			channel <- &WorkflowErrorCondition{Err: err}
-//		}
-//	}()
-//
-//	return nil
-//}

@@ -28,7 +28,6 @@ type Process struct {
 	stdout            string
 	stderr            string
 	stdin             string
-	signalChannel     chan Signal
 	msgTemplate       message.Message
 	*Log
 	*jsvm

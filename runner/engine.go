@@ -7,6 +7,7 @@ import (
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/status"
 	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/zetako/scontrol"
 	"os"
 	"os/user"
 	"path"
@@ -32,6 +33,7 @@ type Engine struct {
 	message.MessageReceiver                         // inline struct for sending message
 	ImportedStatus          *status.StepStatusArray // status used to recovered
 	Flags                   EngineFlags             // Flags control workflow processing
+	controller              *scontrol.Controller    // controller controls all go routines in engine
 	// Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
@@ -113,9 +115,10 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 			},
 			Log: logger(),
 		},
-		inputFS:  c.InputFS,
-		outputFS: c.OutputFS,
-		importer: c.Importer,
+		inputFS:    c.InputFS,
+		outputFS:   c.OutputFS,
+		importer:   c.Importer,
+		controller: scontrol.New(),
 	}
 	if err := json.Unmarshal(c.Params, &e.params); err != nil {
 		return nil, err
@@ -171,13 +174,12 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		if err != nil {
 			return nil, err
 		}
-		pid, ret, schan, err := e.executor.Run(p)
+		pid, ret, err := e.executor.Run(p)
 		if err != nil {
 			return nil, err
 		}
 		// save infos
 		p.JobID = pid
-		p.signalChannel = schan
 		// send assign message
 		tmpMsg := p.msgTemplate
 		tmpMsg.Content = p.JobID
@@ -348,8 +350,8 @@ func (e *Engine) ResolveProcess(process *Process) error {
 	return nil
 }
 
-func (e *Engine) SendSignal(signal Signal) {
-	e.process.signalChannel <- signal
+func (e *Engine) SendSignal(signal scontrol.Status) {
+	e.controller.Set(signal)
 }
 
 func (e *Engine) MainProcess() (*Process, error) {

@@ -14,9 +14,8 @@ type Executor interface {
 	// Run will start a process
 	//   - runID can be used to identify the running process, maybe pid or others
 	//   - retChan will release the return value of the process
-	//   - signalChan can be used to control process. if an impl cannot provide such control, it can just give a nil
 	//   - err is runtime error
-	Run(process *Process) (runID string, retChan <-chan int, signalChan chan Signal, err error)
+	Run(process *Process) (runID string, retChan <-chan int, err error)
 	// CWL 本身并无中断执行的机制，因此只需要Run 接口即可 <- 现在需要加上这样的功能
 
 	// QueryRuntime will return a runtime limit
@@ -33,7 +32,7 @@ func (exec LocalExecutor) QueryRuntime(limits ResourcesLimites) Runtime {
 	}
 }
 
-func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int, signalChan chan Signal, err error) {
+func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int, err error) {
 	envs := process.Env()
 	cmds, err := process.Command()
 	// SET INPUTS
@@ -43,7 +42,7 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 	// migrate inputs
 
 	if err = process.MigrateInputs(); err != nil {
-		return "", nil, nil, err
+		return "", nil, err
 	}
 	var r *exec.Cmd
 	if os.Getenv("DOCKER") != "off" {
@@ -99,7 +98,7 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 		outpath := path.Join(process.runtime.RootHost, process.stdout)
 		fout, err := os.Create(outpath)
 		if err != nil {
-			return "", nil, nil, err
+			return "", nil, err
 		}
 		r.Stdout = fout
 	}
@@ -107,7 +106,7 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 		errpath := path.Join(process.runtime.RootHost, process.stderr)
 		ferr, err := os.Create(errpath)
 		if err != nil {
-			return "", nil, nil, err
+			return "", nil, err
 		}
 		r.Stderr = ferr
 	}
@@ -118,13 +117,13 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 		}
 		fin, err := os.OpenFile(inPath, os.O_RDONLY, 0)
 		if err != nil {
-			return "", nil, nil, err
+			return "", nil, err
 		}
 		r.Stdin = fin
 	}
 	err = r.Start()
 	if err != nil {
-		return "", nil, nil, err
+		return "", nil, err
 	}
 	pid := r.Process.Pid
 	rChan := make(chan int)
@@ -133,5 +132,5 @@ func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int
 		rChan <- r.ProcessState.ExitCode()
 		close(rChan)
 	}()
-	return fmt.Sprint(pid), rChan, nil, nil
+	return fmt.Sprint(pid), rChan, nil
 }

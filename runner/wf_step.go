@@ -17,9 +17,7 @@ type StepRunner interface {
 	MeetConditions(now []Condition) bool
 	Run(chan<- Condition) error
 	SetRecoverFlag()
-	//Recover(*status.StepStatusArray, chan<- Condition) error
 	RunAtMeetConditions(now []Condition, channel chan<- Condition, parameter cwl.Values) (run bool)
-	SendCtrlSignal(signal Signal)
 	SetInput(values cwl.Values) error
 	GetPath() message.PathID
 }
@@ -296,12 +294,6 @@ func (r *RegularRunner) RunAtMeetConditions(now []Condition, channel chan<- Cond
 		return true
 	}
 	return false
-}
-
-func (r *RegularRunner) SendCtrlSignal(signal Signal) {
-	if r.process.signalChannel != nil {
-		go func() { r.process.signalChannel <- signal }()
-	}
 }
 
 func (r *RegularRunner) SetInput(values cwl.Values) error {

@@ -10,6 +10,7 @@ import (
 	"github.com/lijiang2014/cwl.go/frontend/proto"
 	"github.com/lijiang2014/cwl.go/frontend/status"
 	"github.com/lijiang2014/cwl.go/runner"
+	"github.com/zetako/scontrol"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -141,7 +142,7 @@ func (c *cwlServer) Pause(ctx context.Context, needed *proto.NotNeeded) (*proto.
 			Info:    getStringPointer("Workflow already finished"),
 		}, nil
 	}
-	c.engine.SendSignal(runner.SignalPause)
+	c.engine.SendSignal(scontrol.StatusPause)
 	return &proto.Result{Success: true}, nil
 }
 
@@ -158,7 +159,7 @@ func (c *cwlServer) Resume(ctx context.Context, needed *proto.NotNeeded) (*proto
 			Info:    getStringPointer("Workflow already finished"),
 		}, nil
 	}
-	c.engine.SendSignal(runner.SignalResume)
+	c.engine.SendSignal(scontrol.StatusRunning)
 	return &proto.Result{Success: true}, nil
 }
 
@@ -175,7 +176,7 @@ func (c *cwlServer) Abort(ctx context.Context, needed *proto.NotNeeded) (*proto.
 			Info:    getStringPointer("Workflow already finished"),
 		}, nil
 	}
-	c.engine.SendSignal(runner.SignalAbort)
+	c.engine.SendSignal(scontrol.StatusStop)
 	return &proto.Result{Success: true}, nil
 }
 
