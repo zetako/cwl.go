@@ -280,3 +280,7 @@ func (process *Process) ResourcesLimites() (*ResourcesLimites, error) {
 func (process *Process) RefreshVMInputs() error {
 	return process.jsvm.setInputs(*process.inputs)
 }
+
+func (process *Process) GetRedirection() (stdin, stdout, stderr string) {
+	return process.stdin, process.stdout, process.stderr
+}

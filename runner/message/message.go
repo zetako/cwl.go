@@ -147,3 +147,39 @@ func (p PathID) IsSonOf(parent PathID) bool {
 	}
 	return true
 }
+
+// ShortPath will return a path shorter than limit
+//
+// If full path is too long, it will reduce to: "path/too/long/to/.../display"
+func (p PathID) ShortPath(limit int) string {
+	// full path length not exceed
+	fullPath := p.Path()
+	if len(fullPath) <= limit {
+		return fullPath
+	}
+
+	// id itself already exceed
+	postfix := ".../" + p.ID()
+	if limit <= len(postfix) {
+		id := p.ID()
+		if len(id) > limit {
+			id = id[:limit-3] + "..."
+		}
+		return id
+	}
+
+	// get post part
+	limit -= len(postfix)
+	prefix := ""
+	preLen := 0
+	for _, part := range p {
+		preLen = preLen + 1 + len(part)
+		if preLen > limit {
+			break
+		}
+		prefix = prefix + part + "/"
+	}
+
+	// return
+	return prefix + postfix
+}
