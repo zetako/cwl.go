@@ -3,6 +3,7 @@ module github.com/lijiang2014/cwl.go
 go 1.12
 
 require (
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/otiai10/mint v1.3.2

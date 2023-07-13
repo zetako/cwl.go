@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+const (
+	MessageTimeFmt = "2006-01-02 15:04:05"
+)
+
 // MessageClass is class of Message source.
 // It can be a step, a scattered or looped sub-step or other similar thing
 type MessageClass string
@@ -78,11 +82,11 @@ func (m Message) ToLog() string {
 		// DO NOTHING
 	}
 	if m.ID != nil {
-		return fmt.Sprintf("[%s][%s]%s[%s] %s", m.TimeStamp.Format(time.DateTime), m.ID.Path(), tmp, m.Status, m.ToString())
+		return fmt.Sprintf("[%s][%s]%s[%s] %s", m.TimeStamp.Format(MessageTimeFmt), m.ID.Path(), tmp, m.Status, m.ToString())
 	} else if m.Class == WorkflowMsg {
-		return fmt.Sprintf("[%s][Workflow Root][%s] %s", m.TimeStamp.Format(time.DateTime), m.Status, m.ToString())
+		return fmt.Sprintf("[%s][Workflow Root][%s] %s", m.TimeStamp.Format(MessageTimeFmt), m.Status, m.ToString())
 	} else {
-		return fmt.Sprintf("[%s][Non-Workflow][%s] %s", m.TimeStamp.Format(time.DateTime), m.Status, m.ToString())
+		return fmt.Sprintf("[%s][Non-Workflow][%s] %s", m.TimeStamp.Format(MessageTimeFmt), m.Status, m.ToString())
 
 	}
 }
