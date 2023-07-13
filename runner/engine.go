@@ -5,8 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/frontend/status"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 	"github.com/zetako/scontrol"
 	"os"
 	"os/user"
@@ -31,7 +30,7 @@ type Engine struct {
 	params   *cwl.Values
 	// Workflow Related
 	message.MessageReceiver                         // inline struct for sending message
-	ImportedStatus          *status.StepStatusArray // status used to recovered
+	ImportedStatus          *message.StepStatusArray // status used to recovered
 	Flags                   EngineFlags             // Flags control workflow processing
 	controller              *scontrol.Controller    // controller controls all go routines in engine
 	// Runtime

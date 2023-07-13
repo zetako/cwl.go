@@ -3,7 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 	"log"
 	"sort"
 	"strings"

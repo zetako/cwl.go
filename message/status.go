@@ -1,9 +1,8 @@
-package status
+package message
 
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/runner/message"
 	"sort"
 	"sync"
 )
@@ -14,8 +13,8 @@ var (
 )
 
 type StepStatus struct {
-	ID     message.PathID
-	Status message.MessageStatus
+	ID     PathID
+	Status MessageStatus
 	JobID  string
 	Output cwl.Values
 	Error  error
@@ -25,7 +24,7 @@ type StepStatus struct {
 func (s *StepStatus) GenChild(child string) *StepStatus {
 	tmp := StepStatus{
 		ID:     s.ID.ChildPathID(child),
-		Status: message.StatusInit,
+		Status: StatusInit,
 	}
 	s.Child.Append(&tmp)
 	return &tmp
@@ -58,7 +57,7 @@ func (a *StepStatusArray) Get(idx int) (*StepStatus, error) {
 }
 
 // GetByID returns an element of specified runner.PathID; it's O(n) method
-func (a *StepStatusArray) GetByID(ID message.PathID) (*StepStatus, error) {
+func (a *StepStatusArray) GetByID(ID PathID) (*StepStatus, error) {
 	a.RLock()
 	defer a.RUnlock()
 	for _, s := range a.array {
@@ -124,7 +123,7 @@ func (a *StepStatusArray) GenerateTree() {
 }
 
 // GetTier return a new sub-array only contains son of specified base path
-func (a *StepStatusArray) GetTier(base message.PathID) *StepStatusArray {
+func (a *StepStatusArray) GetTier(base PathID) *StepStatusArray {
 	ret := StepStatusArray{}
 	a.Foreach(func(s *StepStatus) {
 		if s.ID.IsSonOf(base) {

@@ -1,27 +1,20 @@
-package status
+package server
 
 import (
 	"encoding/json"
 	"errors"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/proto"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 )
 
 // FromGrpcStatus generate an array from a grpc struct proto.Status
-//
-// TODO Should NOT BE an StepStatusArray method
-func (a *StepStatusArray) FromGrpcStatus(raw *proto.Status) error {
-	// lock
-	a.Lock()
-	defer a.Unlock()
-
-	// alloc
-	a.array = []*StepStatus{}
+func FromGrpcStatus(raw *proto.Status) (*message.StepStatusArray, error) {
+	ret := &message.StepStatusArray{}
 
 	// deep copy
 	for _, ss := range raw.Steps {
-		tmp := StepStatus{
+		tmp := message.StepStatus{
 			ID:     message.NewPathID(ss.Path),
 			Status: message.MessageStatus(ss.Status),
 			JobID:  ss.Job,
@@ -31,21 +24,19 @@ func (a *StepStatusArray) FromGrpcStatus(raw *proto.Status) error {
 		if ss.Values != nil {
 			err := json.Unmarshal([]byte(*ss.Values), &tmp.Output)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
 		if ss.Error != nil {
 			tmp.Error = errors.New(*ss.Error)
 		}
-		// don't use locked Append here, will cause dead lock
-		//a.Append(&tmp)
-		a.array = append(a.array, &tmp)
+		ret.Append(&tmp)
 	}
-	return nil
+	return ret, nil
 }
 
-func ToGrpcStepStatus(ss *StepStatus) *proto.StepStatus {
+func ToGrpcStepStatus(ss *message.StepStatus) *proto.StepStatus {
 	tmp, _ := json.Marshal(ss.Output)
 	tmpStr := string(tmp)
 	ret := proto.StepStatus{
@@ -61,9 +52,9 @@ func ToGrpcStepStatus(ss *StepStatus) *proto.StepStatus {
 	return &ret
 }
 
-func ToGrpcStatus(status *StepStatusArray) *proto.Status {
+func ToGrpcStatus(status *message.StepStatusArray) *proto.Status {
 	var tmp []*proto.StepStatus
-	status.Foreach(func(s *StepStatus) {
+	status.Foreach(func(s *message.StepStatus) {
 		tmp = append(tmp, ToGrpcStepStatus(s))
 	})
 	return &proto.Status{

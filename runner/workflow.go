@@ -3,8 +3,7 @@ package runner
 import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/frontend/status"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	message2 "github.com/lijiang2014/cwl.go/message"
 	"log"
 	"time"
 )
@@ -72,19 +71,19 @@ func (r *WorkflowRunner) tryRecover() error {
 	// 若需要恢复
 	// 先获取3种Step
 	var (
-		allSteps     *status.StepStatusArray
-		finishSteps  []*status.StepStatus
-		runningSteps []*status.StepStatus
-		waitingSteps []*status.StepStatus
+		allSteps     *message2.StepStatusArray
+		finishSteps  []*message2.StepStatus
+		runningSteps []*message2.StepStatus
+		waitingSteps []*message2.StepStatus
 		tmpRunners   []StepRunner
 		tmpCounter   int
 	)
 	allSteps = r.engine.ImportedStatus.GetTier(r.process.PathID)
-	allSteps.Foreach(func(status *status.StepStatus) {
+	allSteps.Foreach(func(status *message2.StepStatus) {
 		switch status.Status {
-		case message.StatusFinish:
+		case message2.StatusFinish:
 			finishSteps = append(finishSteps, status)
-		case message.StatusStart:
+		case message2.StatusStart:
 			runningSteps = append(runningSteps, status)
 		default:
 			waitingSteps = append(waitingSteps, status)
@@ -119,9 +118,9 @@ func (r *WorkflowRunner) tryRecover() error {
 			out:  &s.Output,
 		})
 		// 发送步骤完成信号
-		r.engine.SendMsg(message.Message{
-			Class:     message.StepMsg,
-			Status:    message.StatusFinish,
+		r.engine.SendMsg(message2.Message{
+			Class:     message2.StepMsg,
+			Status:    message2.StatusFinish,
 			TimeStamp: time.Now(),
 			ID:        nil,
 			Index:     0,

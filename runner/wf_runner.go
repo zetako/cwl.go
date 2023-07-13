@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 	"github.com/zetako/scontrol"
 	"log"
 	"time"

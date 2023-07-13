@@ -2,8 +2,7 @@ package server
 
 import (
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/frontend/status"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 	"log"
 )
 
@@ -32,7 +31,7 @@ func (r serverMsgReceiver) SendMsg(msg message.Message) {
 	}
 	// 1. get target
 	var (
-		parent, target *status.StepStatus
+		parent, target *message.StepStatus
 		err            error
 	)
 	parent, err = globalCwlServer.status.GetByID(msg.ID)
@@ -82,12 +81,12 @@ func (r serverMsgReceiver) SendMsg(msg message.Message) {
 	}
 }
 
-func (r serverMsgReceiver) unknownMsg(message message.Message) {
-	log.Println(message.ToLog())
+func (r serverMsgReceiver) unknownMsg(msg message.Message) {
+	log.Println(msg.ToLog())
 }
 
 func init() {
-	globalCwlServer.status.Append(&status.StepStatus{
+	globalCwlServer.status.Append(&message.StepStatus{
 		ID:     message.PathID{"root"},
 		Status: message.StatusStart,
 	})
