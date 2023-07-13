@@ -5,8 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/frontend/status"
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 	"os"
 	"os/user"
 	"path"
@@ -29,9 +28,9 @@ type Engine struct {
 	root     *cwl.Root // root Documents.
 	params   *cwl.Values
 	// Workflow Related
-	message.MessageReceiver                         // inline struct for sending message
-	ImportedStatus          *status.StepStatusArray // status used to recovered
-	Flags                   EngineFlags             // Flags control workflow processing
+	message.MessageReceiver                          // inline struct for sending message
+	ImportedStatus          *message.StepStatusArray // status used to recovered
+	Flags                   EngineFlags              // Flags control workflow processing
 	// Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run

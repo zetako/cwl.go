@@ -8,7 +8,7 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/proto"
-	"github.com/lijiang2014/cwl.go/frontend/status"
+	"github.com/lijiang2014/cwl.go/message"
 	"github.com/lijiang2014/cwl.go/runner"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -24,7 +24,7 @@ var (
 )
 
 type cwlServer struct {
-	status   status.StepStatusArray
+	status   *message.StepStatusArray
 	values   cwl.Values
 	doc, job []byte
 	fragID   string
@@ -180,7 +180,7 @@ func (c *cwlServer) Abort(ctx context.Context, needed *proto.NotNeeded) (*proto.
 }
 
 func (c *cwlServer) Export(ctx context.Context, needed *proto.NotNeeded) (*proto.Status, error) {
-	return status.ToGrpcStatus(&c.status), nil
+	return ToGrpcStatus(c.status), nil
 }
 
 func (c *cwlServer) Import(ctx context.Context, s *proto.Status) (result *proto.Result, err error) {
@@ -225,12 +225,12 @@ func (c *cwlServer) Import(ctx context.Context, s *proto.Status) (result *proto.
 	c.engine.SetDefaultExecutor(&runner.LocalExecutor{})
 	c.engine.MessageReceiver = serverMsgReceiver{}
 
-	err = c.status.FromGrpcStatus(s)
+	c.status, err = FromGrpcStatus(s)
 	if err != nil {
 		return nil, nil
 	}
 	c.status.GenerateTree()
-	c.engine.ImportedStatus = &c.status
+	c.engine.ImportedStatus = c.status
 
 	// Run in go routine
 	go func() {
