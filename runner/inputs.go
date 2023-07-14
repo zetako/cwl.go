@@ -341,9 +341,16 @@ func getLoadContents(clb *cwl.CommandLineBinding) bool {
 	return *clb.LoadContents
 }
 
-func (process *Process) MigrateInputs() (err error) {
-	files := []cwl.File{}
-	dirs := []cwl.Directory{}
+type MigrateRecord struct {
+	Source, Destination string
+	IsSymLink           bool
+}
+
+func (process *Process) MigrateInputs() (records []MigrateRecord, err error) {
+	var (
+		files []cwl.File
+		dirs  []cwl.Directory
+	)
 	flatted := flatBinding(process.bindings, false)
 	for _, in := range flatted {
 		if f, ok := in.Value.(cwl.File); ok {
@@ -356,16 +363,16 @@ func (process *Process) MigrateInputs() (err error) {
 	fs := process.fs
 
 	if err = fs.EnsureDir(process.runtime.RootHost, 0750); err != nil {
-		return err
+		return nil, err
 	}
 	if err = fs.EnsureDir(process.runtime.InputsHost, 0750); err != nil {
-		return err
+		return nil, err
 	}
 	for _, filei := range files {
 		for _, sfj := range filei.SecondaryFiles {
 			filej, dirj, err := sfj.Value()
 			if err != nil {
-				return process.errorf("migrate SecondaryFiles FileEntry resolve Error %s", err)
+				return nil, process.errorf("migrate SecondaryFiles FileEntry resolve Error %s", err)
 			}
 			if dirj != nil {
 				if dirj.Path == "" {
@@ -389,6 +396,7 @@ func (process *Process) MigrateInputs() (err error) {
 		}
 	}
 	var migrateFile = func(filei cwl.File) (err error) {
+		rec := MigrateRecord{}
 		if !path.IsAbs(filei.Path) {
 			filei.Path = path.Join(process.runtime.InputsHost, filei.Path)
 		}
@@ -398,15 +406,21 @@ func (process *Process) MigrateInputs() (err error) {
 		if filei.Contents != "" && filei.Location == "" && filei.Path != "" {
 			if _, err = fs.Create(filei.Path, filei.Contents); err != nil {
 				return err
+			} else {
+				rec.Destination = filei.Path
 			}
-		} else if err = fs.Migrate(filei.Location, filei.Path); err != nil {
+		} else if rec.IsSymLink, err = fs.Migrate(filei.Location, filei.Path); err != nil {
 			return err
+		} else {
+			rec.Source = filei.Location
+			rec.Destination = filei.Path
 		}
+		records = append(records, rec)
 		return nil
 	}
 	for _, filei := range files {
 		if err = migrateFile(filei); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	var migrateDir func(cwl.Directory) error
@@ -479,17 +493,22 @@ func (process *Process) MigrateInputs() (err error) {
 			return nil
 		}
 
+		rec := MigrateRecord{}
 		if err = fs.EnsureDir(path.Dir(diri.Path), 0750); err != nil {
 			return err
 		}
-		if err = fs.Migrate(diri.Location, diri.Path); err != nil {
+		if rec.IsSymLink, err = fs.Migrate(diri.Location, diri.Path); err != nil {
 			return err
+		} else {
+			rec.Source = diri.Location
+			rec.Destination = diri.Path
+			records = append(records, rec)
 		}
 		return nil
 	}
 	for _, diri := range dirs {
 		if err = migrateDir(diri); err != nil {
-			return err
+			return nil, err
 		}
 		// 没有 listing 的文件夹 直接迁移；有 listing 的文件夹 按 listing 创建
 		// https://common-workflow-lab.github.io/CWLDotNet/reference/CWLDotNet.Directory.html
@@ -497,10 +516,10 @@ func (process *Process) MigrateInputs() (err error) {
 
 	if riwd := process.tool.RequiresInitialWorkDir(); riwd != nil {
 		if err = process.initWorkDir(riwd.Listing); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return records, nil
 }
 
 func FlattenFiles(f cwl.File) []cwl.File {
