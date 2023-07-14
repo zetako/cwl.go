@@ -219,13 +219,20 @@ func Test_SFS_Migrate(t *testing.T) {
 		t.Fatalf("Upload Failed: %v", err)
 	}
 	// 1. Migrate within FS
-	err = globalSFS.Migrate(srcFile, path.Join(testBaseDir, "copy_test.file.duplicate"))
+	var link bool
+	link, err = globalSFS.Migrate(srcFile, path.Join(testBaseDir, "copy_test.file.duplicate"))
 	if err != nil {
 		t.Fatalf("Copy Failed: %v", err)
 	}
+	if !link {
+		t.Fatalf("Should use Symlink within FS")
+	}
 	// 2. Migrate across FS
-	err = globalSFS.Migrate(srcFile, path.Join(testOtherFSDir, "copy_test.file.duplicate"))
+	link, err = globalSFS.Migrate(srcFile, path.Join(testOtherFSDir, "copy_test.file.duplicate"))
 	if err != nil {
 		t.Fatalf("Copy Failed: %v", err)
+	}
+	if link {
+		t.Fatalf("Should NOT use Symlink across FS")
 	}
 }

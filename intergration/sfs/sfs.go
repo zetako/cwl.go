@@ -119,13 +119,13 @@ func (s StarlightFileSystem) EnsureDir(dir string, mode os.FileMode) error {
 	return nil
 }
 
-func (s StarlightFileSystem) Migrate(source, dest string) error {
+func (s StarlightFileSystem) Migrate(source, dest string) (bool, error) {
 	source = s.getAbsPath(source)
 	dest = s.getAbsPath(dest)
 	// Copy or Ln
 	if s.canLink(source, dest) {
-		return s.storageClient.Ln(source, dest, true)
+		return true, s.storageClient.Ln(source, dest, true)
 	} else {
-		return s.storageClient.Copy(source, dest, true, true)
+		return false, s.storageClient.Copy(source, dest, true, true)
 	}
 }
