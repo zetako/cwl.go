@@ -281,6 +281,14 @@ func (process *Process) RefreshVMInputs() error {
 	return process.jsvm.setInputs(*process.inputs)
 }
 
-func (process *Process) GetRedirection() (stdin, stdout, stderr string) {
-	return process.stdin, process.stdout, process.stderr
+func (p *Process) GetRedirection() (stdin, stdout, stderr string) {
+	return p.stdin, p.stdout, p.stderr
+}
+
+func (p *Process) GetInputs() *cwl.Values {
+	ret := cwl.Values{}
+	for k, v := range *p.inputs {
+		ret[k] = v
+	}
+	return &ret
 }

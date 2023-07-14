@@ -166,8 +166,10 @@ func (e *Engine) SetDefaultExecutor(exec Executor) {
 
 func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 	if _, isCLT := p.root.Process.(*cwl.CommandLineTool); isCLT {
-		limits, err := p.ResourcesLimites()
-		runtime := e.executor.QueryRuntime(*limits)
+		runtime, err := e.executor.QueryRuntime(p)
+		if err != nil {
+			return nil, err
+		}
 		p.SetRuntime(runtime)
 		err = e.ResolveProcess(p)
 		if err != nil {

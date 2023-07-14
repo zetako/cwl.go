@@ -18,7 +18,7 @@ type Filesystem interface {
 	Contents(loc string) (string, error)
 	Glob(pattern string) ([]cwl.File, error)
 	EnsureDir(dir string, mode os.FileMode) error
-	Migrate(source, dest string) error
+	Migrate(source, dest string) (bool, error)
 }
 
 func (process *Process) resolveFile(f cwl.File, loadContents bool) (cwl.File, error) {

@@ -232,8 +232,8 @@ func (l *Local) EnsureDir(dir string, mode os.FileMode) error {
 	return err
 }
 
-func (l *Local) Migrate(source, dest string) error {
-	return os.Symlink(source, dest)
+func (l *Local) Migrate(source, dest string) (bool, error) {
+	return true, os.Symlink(source, dest)
 }
 
 func (l *Local) Copy(source, dest string) error {
@@ -262,4 +262,8 @@ func (l *Local) Copy(source, dest string) error {
 	defer dfile.Close()
 	_, err = io.Copy(dfile, sfile)
 	return err
+}
+
+func (l *Local) GetWorkDir() string {
+	return l.workdir
 }
