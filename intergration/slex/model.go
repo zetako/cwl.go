@@ -1,7 +1,7 @@
 package slex
 
 import (
-	"github.com/lijiang2014/cwl.go/runner/message"
+	"github.com/lijiang2014/cwl.go/message"
 	"starlight/common/model"
 )
 

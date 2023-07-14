@@ -19,6 +19,7 @@ require (
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jinzhu/gorm v1.9.16 // indirect
 	github.com/olivere/elastic/v7 v7.0.32 // indirect

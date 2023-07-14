@@ -3,7 +3,7 @@ package sfs
 import (
 	"context"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -54,7 +54,7 @@ func init() {
 		panic(err)
 	}
 	// 2. get sfs
-	globalSFS, err = NewStarlightFileSystem(context.TODO(), token)
+	globalSFS, err = NewStarlightFileSystem(context.TODO(), testBaseDir, token)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +78,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	fileContent, err = io.ReadAll(f)
+	fileContent, err = ioutil.ReadAll(f)
 	if err != nil {
 		panic(err)
 	}

@@ -14,11 +14,13 @@ import (
 type StarlightFileSystem struct {
 	ctx           context.Context
 	token         string
+	workDir       string
 	baseClient    *httpclient.BihuClient // we still need this for Glob
 	storageClient *httpclient.StorageClient
 }
 
 func (s StarlightFileSystem) Create(path, contents string) (cwl.File, error) {
+	path = s.getAbsPath(path)
 	// UploadSimple + State
 	_, err := s.storageClient.UploadSimple(path, []byte(contents), false)
 	if err != nil {
@@ -29,11 +31,13 @@ func (s StarlightFileSystem) Create(path, contents string) (cwl.File, error) {
 }
 
 func (s StarlightFileSystem) Info(loc string) (cwl.File, error) {
+	loc = s.getAbsPath(loc)
 	info, err := s.storageClient.State(loc)
 	return FileInfo2CwlFile(info), err
 }
 
 func (s StarlightFileSystem) DirInfo(loc string, deepLen int) (cwl.Directory, error) {
+	loc = s.getAbsPath(loc)
 	// 重复StateDirFiles
 
 	// 本体
@@ -67,11 +71,14 @@ func (s StarlightFileSystem) DirInfo(loc string, deepLen int) (cwl.Directory, er
 }
 
 func (s StarlightFileSystem) Copy(source, dest string) error {
+	source = s.getAbsPath(source)
+	dest = s.getAbsPath(dest)
 	// Copy
 	return s.storageClient.Copy(source, dest, false, true)
 }
 
 func (s StarlightFileSystem) Contents(loc string) (string, error) {
+	loc = s.getAbsPath(loc)
 	// DownloadSimple
 	data, err := s.storageClient.DownloadSimple(loc)
 	return string(data), err
@@ -87,7 +94,7 @@ func (s StarlightFileSystem) Glob(pattern string) ([]cwl.File, error) {
 	)
 	checksumParam = "checksum=true&"
 	pattern = url.QueryEscape(pattern)
-	query = fmt.Sprintf("/storage/glob?%spattern=%s", checksumParam, pattern)
+	query = fmt.Sprintf("/storage/glob?%sdir=%s&pattern=%s", checksumParam, s.workDir, pattern)
 	_, err := s.baseClient.GetSpec(query, &infos)
 	if err != nil {
 		return nil, err
@@ -99,6 +106,7 @@ func (s StarlightFileSystem) Glob(pattern string) ([]cwl.File, error) {
 }
 
 func (s StarlightFileSystem) EnsureDir(dir string, mode os.FileMode) error {
+	dir = s.getAbsPath(dir)
 	// State + MkdirOpt
 	_, err := s.storageClient.State(dir)
 	if err != nil {
@@ -112,6 +120,8 @@ func (s StarlightFileSystem) EnsureDir(dir string, mode os.FileMode) error {
 }
 
 func (s StarlightFileSystem) Migrate(source, dest string) error {
+	source = s.getAbsPath(source)
+	dest = s.getAbsPath(dest)
 	// Copy or Ln
 	if s.canLink(source, dest) {
 		return s.storageClient.Ln(source, dest, true)

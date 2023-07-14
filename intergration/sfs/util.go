@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func NewStarlightFileSystem(ctx context.Context, token string) (*StarlightFileSystem, error) {
+func NewStarlightFileSystem(ctx context.Context, token string, workDir string) (*StarlightFileSystem, error) {
 	b, err := httpclient.NewBihuClient(ctx, token)
 	if err != nil {
 		return nil, err
@@ -20,6 +20,7 @@ func NewStarlightFileSystem(ctx context.Context, token string) (*StarlightFileSy
 	return &StarlightFileSystem{
 		ctx:           ctx,
 		token:         token,
+		workDir:       workDir,
 		baseClient:    b,
 		storageClient: b.Storage(),
 	}, nil
@@ -86,4 +87,11 @@ func (s StarlightFileSystem) canLink(src, dst string) bool {
 		return true
 	}
 	return false
+}
+
+func (s StarlightFileSystem) getAbsPath(p string) string {
+	if path.IsAbs(p) {
+		return p
+	}
+	return path.Join(s.workDir, p)
 }
