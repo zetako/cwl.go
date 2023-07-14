@@ -20,17 +20,21 @@ type Executor interface {
 	// CWL 本身并无中断执行的机制，因此只需要Run 接口即可 <- 现在需要加上这样的功能
 
 	// QueryRuntime will return a runtime limit
-	QueryRuntime(limits ResourcesLimites) Runtime
+	QueryRuntime(process *Process) (Runtime, error)
 }
 
 // 本地运行环境
 type LocalExecutor struct {
 }
 
-func (exec LocalExecutor) QueryRuntime(limits ResourcesLimites) Runtime {
+func (exec LocalExecutor) QueryRuntime(process *Process) (Runtime, error) {
+	limits, err := process.ResourcesLimites()
+	if err != nil {
+		return Runtime{}, err
+	}
 	return Runtime{
 		Cores: int(limits.CoresMin),
-	}
+	}, nil
 }
 
 func (exe LocalExecutor) Run(process *Process) (runid string, retChan <-chan int, signalChan chan Signal, err error) {
