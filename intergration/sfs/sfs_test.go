@@ -54,7 +54,7 @@ func init() {
 		panic(err)
 	}
 	// 2. get sfs
-	globalSFS, err = NewStarlightFileSystem(context.TODO(), testBaseDir, token)
+	globalSFS, err = NewStarlightFileSystem(context.TODO(), token, testBaseDir)
 	if err != nil {
 		panic(err)
 	}
@@ -202,7 +202,14 @@ func Test_SFS_Glob(t *testing.T) {
 		}
 	}
 	// 1. Use pattern to get 3 of them
-	// TODO Glob has workdir problem
+	files, err := globalSFS.Glob("glob_test.file.123*")
+	if err != nil {
+		t.Fatalf("Glob Find Failed: %v", err)
+	}
+	if len(files) != 3 {
+		t.Fatalf("Got Wrong Result of: %d", len(files))
+	}
+	t.Log(files)
 }
 func Test_SFS_Migrate(t *testing.T) {
 	// 0. Generate file
