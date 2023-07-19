@@ -31,11 +31,12 @@ type JobSubmitModel struct {
 }
 
 type SingleJobAllocationModel struct {
-	Cluster   string `json:"cluster"`
-	Partition string `json:"partition"`
-	Cpu       *int   `json:"cpu,omitempty"`
-	Gpu       *int   `json:"gpu,omitempty"`
-	Memory    *int   `json:"memory,omitempty"`
+	Cluster   string       `json:"cluster"`
+	Partition string       `json:"partition"`
+	Cpu       *int         `json:"cpu,omitempty"`
+	Gpu       *int         `json:"gpu,omitempty"`
+	Memory    *int         `json:"memory,omitempty"`
+	WorkDir   model.Volume `json:"workDir,omitempty"`
 }
 
 func (s *SingleJobAllocationModel) Copy() SingleJobAllocationModel {
@@ -65,32 +66,33 @@ func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
 		s.Partition =
 			other.Partition
 	}
-	if other.Cpu != nil {
-		tmpC := *(other.Cpu)
-		s.Cpu = &tmpC
-	}
-	if other.Gpu != nil {
-		tmpG := *(other.Gpu)
-		s.Gpu = &tmpG
-	}
-	if other.Memory != nil {
-		tmpM := *(other.Memory)
-		s.Memory = &tmpM
-	}
+	other.Cpu = CopyIntPointer(s.Cpu)
+	other.Gpu = CopyIntPointer(s.Gpu)
+	other.Memory = CopyIntPointer(s.Memory)
 }
 
 type JobAllocationModel struct {
 	Default SingleJobAllocationModel
-	Diff    map[string]SingleJobAllocationModel
+	Diff    map[string]*SingleJobAllocationModel
 }
 
-func (j JobAllocationModel) Get(path message.PathID) SingleJobAllocationModel {
+func (j *JobAllocationModel) Get(path message.PathID) SingleJobAllocationModel {
 	ret := j.Default.Copy()
 	tmp, ok := j.Diff[path.Path()]
 	if ok {
-		ret.Merge(tmp)
+		ret.Merge(*tmp)
 	}
 	return ret
+}
+
+func (j *JobAllocationModel) Set(path message.PathID, changed SingleJobAllocationModel) {
+	_, ok := j.Diff[path.Path()]
+	if !ok {
+		tmp := changed.Copy()
+		j.Diff[path.Path()] = &tmp
+	} else {
+		j.Diff[path.Path()].Merge(changed)
+	}
 }
 
 func NewSubmitModelFrom(allocation SingleJobAllocationModel) JobSubmitModel {

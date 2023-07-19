@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func NewStarlightFileSystem(ctx context.Context, token string, workDir string) (*StarlightFileSystem, error) {
+func New(ctx context.Context, token string, workDir string) (*StarlightFileSystem, error) {
 	b, err := httpclient.NewBihuClient(ctx, token)
 	if err != nil {
 		return nil, err

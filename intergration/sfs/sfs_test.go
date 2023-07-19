@@ -54,7 +54,7 @@ func init() {
 		panic(err)
 	}
 	// 2. get sfs
-	globalSFS, err = NewStarlightFileSystem(context.TODO(), token, testBaseDir)
+	globalSFS, err = New(context.TODO(), token, testBaseDir)
 	if err != nil {
 		panic(err)
 	}
