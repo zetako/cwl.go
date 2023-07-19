@@ -16,7 +16,7 @@ func CopyIntPointer(src *int) (dst *int) {
 	return &tmp
 }
 
-func New(ctx context.Context, token string, alloc JobAllocationModel) (*StarlightExecutor, error) {
+func New(ctx context.Context, token string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err

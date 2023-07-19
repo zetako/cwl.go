@@ -20,7 +20,7 @@ const (
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
 
 type StarlightExecutor struct {
-	alloc  JobAllocationModel
+	alloc  *JobAllocationModel
 	ctx    context.Context
 	token  string
 	client *httpclient.BihuClient
