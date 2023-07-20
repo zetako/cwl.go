@@ -33,11 +33,30 @@ message Result {
 // Doc is url to cwl file
 message Doc {
   string name = 1;
+  string token = 2;
 }
 
-// Job is url to inputs
+// SingleAllocation describe a job's runtime
+message SingleAllocation {
+  string cluster = 1;
+  string partition = 2;
+  optional int32 cpu = 3;
+  optional int32 gpu = 4;
+  optional int64 memory = 5;
+  optional string workdir = 6;
+}
+
+// Allocation is a collection of SingleAllocation
+message Allocation {
+  SingleAllocation default = 1;
+  map<string, SingleAllocation> Diff = 2;
+}
+
+// Job is inputs and job allocation
 message Job {
-  string name = 1;
+  string values = 1;
+  string token = 2;
+  Allocation allocations = 3;
 }
 
 // Status is status of whole cwl engine

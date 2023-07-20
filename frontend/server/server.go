@@ -8,6 +8,8 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/proto"
+	"github.com/lijiang2014/cwl.go/intergration/sfs"
+	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/message"
 	"github.com/lijiang2014/cwl.go/runner"
 	"github.com/zetako/scontrol"
@@ -31,9 +33,14 @@ type cwlServer struct {
 	fragID   string
 	finish   bool
 
-	engine *runner.Engine
+	token    string
+	importer runner.Importer
+	engine   *runner.Engine
 }
 
+// Load is grpc method Load. It will generate a new engine and load a doc using Importer.
+//
+// ⚠️Notice: the old engine and all running task will be immediately discard!
 func (c *cwlServer) Load(ctx context.Context, d *proto.Doc) (result *proto.Result, err error) {
 	defer func() {
 		// if there's error, this function help generate result
@@ -50,10 +57,21 @@ func (c *cwlServer) Load(ctx context.Context, d *proto.Doc) (result *proto.Resul
 		return nil, fmt.Errorf("no cwl file specified")
 	}
 
+	// New Importer
+	c.token = d.Token
+	c.importer, err = sfs.New(context.TODO(), d.Token, "")
+	if err != nil {
+		return nil, err
+	}
+
 	// Read cwl file
 	var docName string
 	docName, c.fragID = splitPackedFile(d.Name)
-	c.doc, err = openFileAsJSON(docName)
+	doc, err := c.importer.Load(docName)
+	if err != nil {
+		return nil, err
+	}
+	c.doc, err = cwl.Y2J(doc)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +94,7 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 	}
 
 	// Read input file
-	c.job, err = openFileAsJSON(j.Name)
+	c.job, err = cwl.Y2J([]byte(j.Values))
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +113,16 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		RootHost:     pwd,
 		InputsDir:    path.Join(pwd, "inputs"),
 		WorkDir:      path.Join(pwd, "run"),
+		Importer:     c.importer,
 	})
 	if err != nil {
 		return nil, err
 	}
-	c.engine.SetDefaultExecutor(&runner.LocalExecutor{})
+	exec, err := slex.New(context.TODO(), c.token, FromGrpcAllocation(j.Allocations))
+	if err != nil {
+		return nil, err
+	}
+	c.engine.SetDefaultExecutor(exec)
 	c.engine.MessageReceiver = serverMsgReceiver{}
 	c.engine.Flags = GlobalFlags
 
@@ -195,12 +218,12 @@ func (c *cwlServer) Import(ctx context.Context, s *proto.Status) (result *proto.
 		}
 	}()
 	// Prevent nil
-	if s.Job == nil || s.Job.Name == "" {
-		return nil, fmt.Errorf("no input file specified")
+	if s.Job == nil || s.Job.Values == "" {
+		return nil, fmt.Errorf("no input specified")
 	}
 
 	// Read input file
-	c.job, err = openFileAsJSON(s.Job.Name)
+	c.job, err = cwl.Y2J([]byte(s.Job.Values))
 	if err != nil {
 		return nil, err
 	}

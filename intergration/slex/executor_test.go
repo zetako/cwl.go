@@ -18,7 +18,7 @@ const (
 var (
 	globalExecutor *StarlightExecutor
 	testAllocModel *JobAllocationModel = &JobAllocationModel{
-		Default: SingleJobAllocationModel{
+		Default: &SingleJobAllocationModel{
 			Cluster:   "k8s_uat",
 			Partition: "ln15",
 			Cpu:       getIntPointer(1),

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/proto"
+	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/message"
+	"starlight/common/model"
 )
 
 // FromGrpcStatus generate an array from a grpc struct proto.Status
@@ -61,4 +63,46 @@ func ToGrpcStatus(status *message.StepStatusArray) *proto.Status {
 		Result: &proto.Result{Success: true},
 		Steps:  tmp,
 	}
+}
+
+func FromGrpcAllocation(g *proto.Allocation) *slex.JobAllocationModel {
+	ret := slex.JobAllocationModel{
+		Default: FromGrpcSingleAllocation(g.Default),
+		Diff:    map[string]*slex.SingleJobAllocationModel{},
+	}
+	for k, v := range g.Diff {
+		ret.Diff[k] = FromGrpcSingleAllocation(v)
+	}
+	return &ret
+}
+
+func FromGrpcSingleAllocation(g *proto.SingleAllocation) *slex.SingleJobAllocationModel {
+	ret := slex.SingleJobAllocationModel{
+		Cluster:   g.Cluster,
+		Partition: g.Partition,
+		Cpu:       CopyInt32Pointer(g.Cpu),
+		Gpu:       CopyInt32Pointer(g.Gpu),
+		Memory:    CopyInt64Pointer(g.Memory),
+		WorkDir:   model.Volume{},
+	}
+	if g.Workdir != nil {
+		ret.WorkDir = model.Volume{HostPath: *g.Workdir}
+	}
+	return &ret
+}
+
+func CopyInt32Pointer(i32 *int32) *int {
+	if i32 == nil {
+		return nil
+	}
+	var tmp int = int(*i32)
+	return &tmp
+}
+
+func CopyInt64Pointer(i64 *int64) *int {
+	if i64 == nil {
+		return nil
+	}
+	var tmp int = int(*i64)
+	return &tmp
 }

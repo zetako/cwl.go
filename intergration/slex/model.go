@@ -72,7 +72,7 @@ func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
 }
 
 type JobAllocationModel struct {
-	Default SingleJobAllocationModel
+	Default *SingleJobAllocationModel
 	Diff    map[string]*SingleJobAllocationModel
 }
 
