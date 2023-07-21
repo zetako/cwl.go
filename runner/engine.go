@@ -23,7 +23,7 @@ type Engine struct {
 	// 配置接口
 	importer Importer
 	executor Executor
-	newFS    func(string) Filesystem
+	newFS    func(string) (Filesystem, error)
 	//
 	inputFS  Filesystem
 	outputFS Filesystem
@@ -49,7 +49,7 @@ type EngineConfig struct {
 	RunID      string
 	UserName   string
 	Importer
-	NewFSMethod     func(string) Filesystem
+	NewFSMethod     func(string) (Filesystem, error)
 	InputFS         Filesystem
 	OutputFS        Filesystem
 	Process         []byte
@@ -62,7 +62,8 @@ type EngineConfig struct {
 	messageReceiver message.MessageReceiver
 }
 
-func initConfig(c *EngineConfig) {
+func initConfig(c *EngineConfig) error {
+	var err error
 	if c.RunID == "" {
 		c.RunID = "testcwl"
 	}
@@ -85,7 +86,10 @@ func initConfig(c *EngineConfig) {
 		c.NewFSMethod = defaultNewFSMethod
 	}
 	if c.InputFS == nil {
-		c.InputFS = c.NewFSMethod(c.DocImportDir)
+		c.InputFS, err = c.NewFSMethod(c.DocImportDir)
+		if err != nil {
+			return err
+		}
 	}
 	if c.RootHost == "" || c.RootHost == "/" {
 		c.RootHost = "/tmp/" + c.RunID
@@ -97,18 +101,23 @@ func initConfig(c *EngineConfig) {
 		c.InputsDir = path.Join(c.RootHost, c.InputsDir)
 	}
 	if c.OutputFS == nil {
-		c.OutputFS = c.NewFSMethod(c.WorkDir)
+		c.OutputFS, err = c.NewFSMethod(c.WorkDir)
+		if err != nil {
+			return err
+		}
 	}
 	if c.messageReceiver == nil {
 		c.messageReceiver = message.DefaultMsgReceiver{}
 	}
-
+	return nil
 }
 
 // Engine runs an instance of the mariner engine job
 func NewEngine(c EngineConfig) (*Engine, error) {
-	var err error
-	initConfig(&c)
+	err := initConfig(&c)
+	if err != nil {
+		return nil, err
+	}
 	e := &Engine{
 		params:     cwl.NewValues(),
 		RunID:      c.RunID,
@@ -413,9 +422,15 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	// 其他处理（来自MainProcess）
 	process.SetRuntime(defaultRuntime)
 	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
-	process.outputFS = e.newFS(process.runtime.RootHost)
+	process.outputFS, err = e.newFS(process.runtime.RootHost)
+	if err != nil {
+		return nil, err
+	}
 	process.runtime.InputsHost = path.Join(e.InputsHost, step.ID)
-	process.inputFS = e.newFS(process.runtime.InputsHost)
+	process.inputFS, err = e.newFS(process.runtime.InputsHost)
+	if err != nil {
+		return nil, err
+	}
 	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
 		process.tool = tool
 	}
@@ -434,6 +449,6 @@ func (e *Engine) SetImporter(i Importer) {
 	e.importer = i
 }
 
-func defaultNewFSMethod(workdir string) Filesystem {
-	return NewLocal(workdir)
+func defaultNewFSMethod(workdir string) (Filesystem, error) {
+	return NewLocal(workdir), nil
 }

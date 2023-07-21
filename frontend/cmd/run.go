@@ -1,24 +1,19 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/lijiang2014/cwl.go"
-	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/runner"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path"
-	"starlight/common/model"
 	"strings"
 )
 
 var (
 	overallFeatureSwitch bool
-	useRemote            bool
-	remoteTokenFile      string
 	flags                runner.EngineFlags
 )
 
@@ -51,8 +46,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	runCmd.Flags().BoolVar(&useRemote, "remote", false, "Use remote Executor")
-	runCmd.Flags().StringVar(&remoteTokenFile, "token", "starlight.token", "Remote Token File")
 }
 
 func splitPackedFile(raw string) (fileName, fragID string) {
@@ -111,39 +104,7 @@ func run(doc, job string, engineFlags runner.EngineFlags) error {
 	if err != nil {
 		return err
 	}
-	if useRemote {
-		tokenFile, err := os.Open(remoteTokenFile)
-		if err != nil {
-			return err
-		}
-		tokenRaw, err := ioutil.ReadAll(tokenFile)
-		if err != nil {
-			return err
-		}
-		token := string(tokenRaw)
-		var (
-			tmp1 int = 1
-			tmp2 int = 0
-			tmp3 int = 4096
-		)
-		exec, err := slex.New(context.TODO(), token, &slex.JobAllocationModel{
-			Default: &slex.SingleJobAllocationModel{
-				Cluster:   "k8s_uat",
-				Cpu:       &tmp1,
-				Gpu:       &tmp2,
-				Memory:    &tmp3,
-				Partition: "ln15",
-				WorkDir:   model.Volume{HostPath: "/HOME/nscc-gz_yfb_2/cwl"},
-			},
-			Diff: map[string]*slex.SingleJobAllocationModel{},
-		})
-		if err != nil {
-			return err
-		}
-		e.SetDefaultExecutor(exec)
-	} else {
-		e.SetDefaultExecutor(&runner.LocalExecutor{})
-	}
+	e.SetDefaultExecutor(&runner.LocalExecutor{})
 	e.Flags = engineFlags
 
 	// run

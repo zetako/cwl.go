@@ -31,12 +31,12 @@ type JobSubmitModel struct {
 }
 
 type SingleJobAllocationModel struct {
-	Cluster   string       `json:"cluster"`
-	Partition string       `json:"partition"`
-	Cpu       *int         `json:"cpu,omitempty"`
-	Gpu       *int         `json:"gpu,omitempty"`
-	Memory    *int         `json:"memory,omitempty"`
-	WorkDir   model.Volume `json:"workDir,omitempty"`
+	Cluster   string       `json:"cluster" yaml:"cluster"`
+	Partition string       `json:"partition" yaml:"partition"`
+	Cpu       *int         `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+	Gpu       *int         `json:"gpu,omitempty" yaml:"gpu,omitempty"`
+	Memory    *int         `json:"memory,omitempty" yaml:"memory,omitempty"`
+	WorkDir   model.Volume `json:"workDir,omitempty" yaml:"workDir,omitempty"`
 }
 
 func (s *SingleJobAllocationModel) Copy() SingleJobAllocationModel {
@@ -72,8 +72,8 @@ func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
 }
 
 type JobAllocationModel struct {
-	Default *SingleJobAllocationModel            `json:"default"`
-	Diff    map[string]*SingleJobAllocationModel `json:"diff"`
+	Default *SingleJobAllocationModel            `json:"default" yaml:"default"`
+	Diff    map[string]*SingleJobAllocationModel `json:"diff" yaml:"diff"`
 }
 
 func (j *JobAllocationModel) Get(path message.PathID) SingleJobAllocationModel {
