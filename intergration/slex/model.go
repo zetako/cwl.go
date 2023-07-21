@@ -72,8 +72,8 @@ func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
 }
 
 type JobAllocationModel struct {
-	Default *SingleJobAllocationModel
-	Diff    map[string]*SingleJobAllocationModel
+	Default *SingleJobAllocationModel            `json:"default"`
+	Diff    map[string]*SingleJobAllocationModel `json:"diff"`
 }
 
 func (j *JobAllocationModel) Get(path message.PathID) SingleJobAllocationModel {

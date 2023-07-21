@@ -86,6 +86,7 @@ func (r serverMsgReceiver) unknownMsg(msg message.Message) {
 }
 
 func init() {
+	globalCwlServer.status = &message.StepStatusArray{}
 	globalCwlServer.status.Append(&message.StepStatus{
 		ID:     message.PathID{"root"},
 		Status: message.StatusStart,

@@ -23,16 +23,17 @@ type Engine struct {
 	// 配置接口
 	importer Importer
 	executor Executor
+	newFS    func(string) Filesystem
 	//
 	inputFS  Filesystem
 	outputFS Filesystem
 	root     *cwl.Root // root Documents.
 	params   *cwl.Values
 	// Workflow Related
-	message.MessageReceiver                         // inline struct for sending message
+	message.MessageReceiver                          // inline struct for sending message
 	ImportedStatus          *message.StepStatusArray // status used to recovered
-	Flags                   EngineFlags             // Flags control workflow processing
-	controller              *scontrol.Controller    // controller controls all go routines in engine
+	Flags                   EngineFlags              // Flags control workflow processing
+	controller              *scontrol.Controller     // controller controls all go routines in engine
 	// Runtime
 	process    *Process // root process
 	UserID     string   // the userID for the user who requested the workflow run
@@ -48,15 +49,17 @@ type EngineConfig struct {
 	RunID      string
 	UserName   string
 	Importer
-	InputFS       Filesystem
-	OutputFS      Filesystem
-	Process       []byte
-	Params        []byte
-	ExtendConfigs map[string]interface{}
-	DocImportDir  string
-	RootHost      string
-	InputsDir     string
-	WorkDir       string
+	NewFSMethod     func(string) Filesystem
+	InputFS         Filesystem
+	OutputFS        Filesystem
+	Process         []byte
+	Params          []byte
+	ExtendConfigs   map[string]interface{}
+	DocImportDir    string
+	RootHost        string
+	InputsDir       string
+	WorkDir         string
+	messageReceiver message.MessageReceiver
 }
 
 func initConfig(c *EngineConfig) {
@@ -78,8 +81,11 @@ func initConfig(c *EngineConfig) {
 	if c.Importer == nil {
 		c.Importer = &DefaultImporter{BaseDir: c.DocImportDir}
 	}
+	if c.NewFSMethod == nil {
+		c.NewFSMethod = defaultNewFSMethod
+	}
 	if c.InputFS == nil {
-		c.InputFS = NewLocal(c.DocImportDir)
+		c.InputFS = c.NewFSMethod(c.DocImportDir)
 	}
 	if c.RootHost == "" || c.RootHost == "/" {
 		c.RootHost = "/tmp/" + c.RunID
@@ -91,8 +97,10 @@ func initConfig(c *EngineConfig) {
 		c.InputsDir = path.Join(c.RootHost, c.InputsDir)
 	}
 	if c.OutputFS == nil {
-		c.OutputFS = NewLocal(c.WorkDir)
-		c.OutputFS.(*Local).CalcChecksum = true
+		c.OutputFS = c.NewFSMethod(c.WorkDir)
+	}
+	if c.messageReceiver == nil {
+		c.messageReceiver = message.DefaultMsgReceiver{}
 	}
 
 }
@@ -114,17 +122,16 @@ func NewEngine(c EngineConfig) (*Engine, error) {
 			},
 			Log: logger(),
 		},
-		inputFS:    c.InputFS,
-		outputFS:   c.OutputFS,
-		importer:   c.Importer,
-		controller: scontrol.New(),
+		newFS:           c.NewFSMethod,
+		inputFS:         c.InputFS,
+		outputFS:        c.OutputFS,
+		importer:        c.Importer,
+		controller:      scontrol.New(),
+		MessageReceiver: c.messageReceiver,
 	}
 	if err := json.Unmarshal(c.Params, &e.params); err != nil {
 		return nil, err
 	}
-	// set other defaults, can be changed later
-	e.MessageReceiver = message.DefaultMsgReceiver{}
-	//e.SignalChannel = make(chan Signal)
 	// import Doc
 	if c.Process, err = e.EnsureImportedDoc(c.Process); err != nil {
 		return nil, err
@@ -406,15 +413,9 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	// 其他处理（来自MainProcess）
 	process.SetRuntime(defaultRuntime)
 	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
-	process.outputFS = &Local{
-		workdir:      process.runtime.RootHost,
-		CalcChecksum: true,
-	}
+	process.outputFS = e.newFS(process.runtime.RootHost)
 	process.runtime.InputsHost = path.Join(e.InputsHost, step.ID)
-	process.inputFS = &Local{
-		workdir:      process.runtime.InputsHost,
-		CalcChecksum: true,
-	}
+	process.inputFS = e.newFS(process.runtime.InputsHost)
 	if tool, ok := process.root.Process.(*cwl.CommandLineTool); ok {
 		process.tool = tool
 	}
@@ -427,4 +428,12 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	}
 	process.loadRuntime()
 	return
+}
+
+func (e *Engine) SetImporter(i Importer) {
+	e.importer = i
+}
+
+func defaultNewFSMethod(workdir string) Filesystem {
+	return NewLocal(workdir)
 }

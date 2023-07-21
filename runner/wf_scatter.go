@@ -84,10 +84,7 @@ func (r *RegularRunner) RunScatter(condition chan<- Condition) (err error) {
 		// 2. 设置输出 & 绑定输入
 		// 2.1 一般输入
 		process.runtime.RootHost = path.Join(process.runtime.RootHost, fmt.Sprintf("scatter%d", i))
-		process.outputFS = &Local{
-			workdir:      process.runtime.RootHost,
-			CalcChecksum: true,
-		}
+		process.outputFS = r.engine.newFS(process.runtime.RootHost)
 		process.loadRuntime()
 		process.inputs = &allInputs[i]
 		// 2.2 ValueFrom输入
