@@ -58,7 +58,7 @@ func init() {
 		panic(err)
 	}
 	// 2. get slex
-	globalExecutor, err = New(context.TODO(), token, testAllocModel)
+	globalExecutor, err = New(context.TODO(), token, testUsername, testAllocModel)
 	if err != nil {
 		panic(err)
 	}

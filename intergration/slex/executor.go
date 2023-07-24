@@ -9,6 +9,7 @@ import (
 	"path"
 	"starlight/common/httpclient"
 	"starlight/common/model"
+	"strings"
 	"time"
 )
 
@@ -20,11 +21,12 @@ const (
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
 
 type StarlightExecutor struct {
-	alloc  *JobAllocationModel
-	ctx    context.Context
-	token  string
-	client *httpclient.BihuClient
-	uuid   uuid.UUID
+	alloc    *JobAllocationModel
+	ctx      context.Context
+	token    string
+	username string // username is needed since we need to determine workdir
+	client   *httpclient.BihuClient
+	uuid     uuid.UUID
 }
 
 func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <-chan int, err error) {
@@ -129,9 +131,14 @@ func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, erro
 }
 
 func (s StarlightExecutor) getPartitionBaseDir(alloc SingleJobAllocationModel) (string, error) {
+	// get
 	baseDir, ok := globalConfig.BaseDir[alloc.Cluster]
 	if !ok {
-		return "", fmt.Errorf("no matched cluster base dir")
+		return "", fmt.Errorf("no matched base dir for cluster %s", alloc.Cluster)
+	}
+	// replace with username
+	if strings.Contains(baseDir, "${USER}") {
+		baseDir = strings.ReplaceAll(baseDir, "${USER}", s.username)
 	}
 	return baseDir, nil
 }

@@ -16,7 +16,7 @@ func CopyIntPointer(src *int) (dst *int) {
 	return &tmp
 }
 
-func New(ctx context.Context, token string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
+func New(ctx context.Context, token string, username string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -26,11 +26,12 @@ func New(ctx context.Context, token string, alloc *JobAllocationModel) (*Starlig
 		return nil, err
 	}
 	ret := StarlightExecutor{
-		alloc:  alloc,
-		ctx:    ctx,
-		token:  token,
-		uuid:   id,
-		client: c,
+		alloc:    alloc,
+		ctx:      ctx,
+		token:    token,
+		username: username,
+		uuid:     id,
+		client:   c,
 	}
 
 	return &ret, nil

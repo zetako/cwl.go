@@ -51,11 +51,11 @@ type RemoteConfig struct {
 	Doc        string                   `json:"doc" yaml:"doc"`
 	Job        string                   `json:"job" yaml:"job"`
 	Allocation *slex.JobAllocationModel `json:"allocation" yaml:"allocation"`
-	Token      string                   `json:"token" yaml:"token"`
-	// 👇 if token is not provided, we use username / password to get one
-	Username string `json:"username,omitempty" yaml:"username,omitempty"`
-	Password string `json:"password,omitempty" yaml:"password,omitempty"`
-	LoginAPI string `json:"login_api,omitempty" yaml:"login_api,omitempty"`
+	Username   string                   `json:"username,omitempty" yaml:"username,omitempty"`
+	Password   string                   `json:"password,omitempty" yaml:"password,omitempty"`
+	LoginAPI   string                   `json:"login_api,omitempty" yaml:"login_api,omitempty"`
+	// 👇 Token is not a part of config file, but generated
+	Token string
 }
 
 func readConfig(file string) (*RemoteConfig, error) {
@@ -72,8 +72,9 @@ func remote(config *RemoteConfig) error {
 	// New Token if needed
 	if config.Token == "" {
 		if config.Username == "" || config.Password == "" || config.LoginAPI == "" {
-			return fmt.Errorf("invalid token or username/password")
+			return fmt.Errorf("invalid username/password/API")
 		}
+		fmt.Printf("Try login as %s\n", config.Username)
 		encodedPasswd := base64.StdEncoding.EncodeToString([]byte(config.Password))
 		jsonBody := fmt.Sprintf("{\"username\":\"%s\",\"password\":\"%s\"}", config.Username, encodedPasswd)
 		resp, err := http.Post(config.LoginAPI, "application/json;charset=UTF-8", strings.NewReader(jsonBody))
@@ -105,7 +106,7 @@ func remote(config *RemoteConfig) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Using remote importer to read Job: %s\n", config.Doc)
+	fmt.Printf("Using remote importer to read Job: %s\n", config.Job)
 	rawJob, err := importer.Load(config.Job)
 	if err != nil {
 		return err
@@ -135,7 +136,7 @@ func remote(config *RemoteConfig) error {
 	}
 
 	// New Executor
-	exec, err := slex.New(context.TODO(), config.Token, config.Allocation)
+	exec, err := slex.New(context.TODO(), config.Token, config.Username, config.Allocation)
 	if err != nil {
 		return err
 	}

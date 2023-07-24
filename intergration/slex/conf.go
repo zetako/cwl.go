@@ -3,7 +3,7 @@ package slex
 import "starlight/common/conf"
 
 type StarlightExecutorConfig struct {
-	BaseDir map[string]string `json:"base_dir"`
+	BaseDir map[string]string `json:"base_dir" yaml:"base_dir"`
 }
 
 var globalConfig *StarlightExecutorConfig

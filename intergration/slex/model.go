@@ -86,6 +86,9 @@ func (j *JobAllocationModel) Get(path message.PathID) SingleJobAllocationModel {
 }
 
 func (j *JobAllocationModel) Set(path message.PathID, changed SingleJobAllocationModel) {
+	if j.Diff == nil {
+		j.Diff = map[string]*SingleJobAllocationModel{}
+	}
 	_, ok := j.Diff[path.Path()]
 	if !ok {
 		tmp := changed.Copy()
