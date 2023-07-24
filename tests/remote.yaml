@@ -1,0 +1,13 @@
+doc: "/HOME/nscc-gz_yfb_2/cwl/count-lines2-wf.cwl"
+job: "/HOME/nscc-gz_yfb_2/cwl/job.json"
+allocation:
+  default:
+    cluster: k8s_uat
+    partition: ln15
+    cpu: 1
+    gpu: 0
+    memory: 4096
+    workdir: /HOME/nscc-gz_yfb_2/cwl
+username: nscc-gz_yfb_2
+password: Pw2022RD
+login_api: http://uat.starlight-dev.nscc-gz.cn/api/keystone/short_term_token/name

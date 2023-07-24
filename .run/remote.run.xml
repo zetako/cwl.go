@@ -2,7 +2,7 @@
   <configuration default="false" name="remote" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="cwl.go">
     <module name="cwl.go-lijiang2014" />
     <working_directory value="$PROJECT_DIR$/tests" />
-    <parameters value="remote $FileName$" />
+    <parameters value="remote $FilePrompt$" />
     <kind value="PACKAGE" />
     <package value="github.com/lijiang2014/cwl.go/frontend" />
     <directory value="$PROJECT_DIR$/" />
