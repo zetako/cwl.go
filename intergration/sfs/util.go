@@ -90,6 +90,7 @@ func (s StarlightFileSystem) canLink(src, dst string) bool {
 }
 
 func (s StarlightFileSystem) getAbsPath(p string) string {
+	p = strings.TrimPrefix(p, "file://")
 	if path.IsAbs(p) {
 		return p
 	}
