@@ -80,7 +80,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 
 	// send req
 	var job model.Job
-	_, err = s.client.PostSpec("job/submit", submit, &job)
+	_, err = s.client.PostSpec("/job/submit", submit, &job)
 	if err != nil {
 		return "", nil, err
 	}
