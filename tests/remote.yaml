@@ -6,7 +6,7 @@ allocation:
     partition: ln15
     cpu: 1
     gpu: 0
-    memory: 4096
+    memory: 4
     workdir: /HOME/nscc-gz_yfb_2/cwl
 username: nscc-gz_yfb_2
 password: Pw2022RD
