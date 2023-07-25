@@ -32,6 +32,7 @@ type StarlightExecutor struct {
 func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <-chan int, err error) {
 	// basic setting
 	submit := NewSubmitModelFrom(s.alloc.Get(process.PathID))
+	submit.RuntimeParams.JobName = process.Path()
 
 	// start migrate
 	migrateRecord, err := process.MigrateInputs()
@@ -67,14 +68,26 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	if dockerReq != nil {
 		// setup image
 		submit.RuntimeParams.Image = dockerReq.DockerPull
-		// setup mount
-		for _, rec := range migrateRecord {
-			if rec.IsSymLink {
-				submit.RuntimeParams.Volume = append(submit.RuntimeParams.Volume, model.Volume{
-					HostPath:  rec.Source,
-					MountPath: rec.Source,
-				})
-			}
+	}
+
+	// setup mount
+	// workdir itself is needed
+	rt, err := s.QueryRuntime(process)
+	if err != nil {
+		return "", nil, err
+	}
+	submit.RuntimeParams.Volume = append(submit.RuntimeParams.Volume, model.Volume{
+		HostPath:  strings.TrimPrefix(rt.RootHost, "file://"),
+		MountPath: strings.TrimPrefix(rt.RootHost, "file://"),
+	})
+	// migrated source is needed
+	for _, rec := range migrateRecord {
+		if rec.IsSymLink {
+			submit.RuntimeParams.Volume = append(submit.RuntimeParams.Volume, model.Volume{
+				HostPath:  strings.TrimPrefix(rec.Source, "file://"),
+				MountPath: strings.TrimPrefix(rec.Source, "file://"),
+				ReadOnly:  true,
+			})
 		}
 	}
 
@@ -111,6 +124,8 @@ func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, erro
 				HostPath: workdir,
 			},
 		})
+	} else {
+		workdir = allocation.WorkDir.HostPath
 	}
 	// 3. generate runtime
 	rt := runner.Runtime{

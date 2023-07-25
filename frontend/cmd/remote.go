@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
+	"path"
 	"starlight/common/httpclient"
 	"strings"
 )
@@ -116,6 +117,14 @@ func remote(config *RemoteConfig) error {
 		return err
 	}
 
+	// DocDir
+	var docDir string
+	if sfs.IsFileSystemFile(config.Doc) {
+		docDir = path.Dir(config.Doc)
+	} else {
+		docDir = config.Allocation.Default.WorkDir.HostPath
+	}
+
 	// New engine
 	engineConf := runner.EngineConfig{
 		DocumentID: "",
@@ -124,11 +133,12 @@ func remote(config *RemoteConfig) error {
 		NewFSMethod: func(workdir string) (runner.Filesystem, error) {
 			return sfs.New(context.TODO(), config.Token, workdir)
 		},
-		Process:   doc,
-		Params:    job,
-		RootHost:  config.Allocation.Default.WorkDir.HostPath,
-		InputsDir: "inputs",
-		WorkDir:   "run",
+		Process:      doc,
+		Params:       job,
+		DocImportDir: docDir,
+		RootHost:     config.Allocation.Default.WorkDir.HostPath,
+		InputsDir:    "inputs",
+		WorkDir:      "run",
 	}
 	engine, err := runner.NewEngine(engineConf)
 	if err != nil {

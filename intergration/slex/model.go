@@ -43,6 +43,7 @@ func (s *SingleJobAllocationModel) Copy() SingleJobAllocationModel {
 	ret := SingleJobAllocationModel{
 		Cluster:   s.Cluster,
 		Partition: s.Partition,
+		WorkDir:   s.WorkDir,
 	}
 	if s.Cpu != nil {
 		tmpC := *(s.Cpu)
@@ -63,8 +64,10 @@ func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
 		s.Cluster = other.Cluster
 	}
 	if other.Partition != "" {
-		s.Partition =
-			other.Partition
+		s.Partition = other.Partition
+	}
+	if other.WorkDir.HostPath != "" {
+		s.WorkDir = other.WorkDir
 	}
 	other.Cpu = CopyIntPointer(s.Cpu)
 	other.Gpu = CopyIntPointer(s.Gpu)
@@ -102,6 +105,7 @@ func NewSubmitModelFrom(allocation SingleJobAllocationModel) JobSubmitModel {
 	ret := JobSubmitModel{}
 	ret.RuntimeParams.Cluster = allocation.Cluster
 	ret.RuntimeParams.Partition = allocation.Partition
+	ret.RuntimeParams.WorkDir = allocation.WorkDir
 
 	if allocation.Cpu != nil {
 		ret.RuntimeParams.Cpu = *(allocation.Cpu)

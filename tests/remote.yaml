@@ -7,7 +7,8 @@ allocation:
     cpu: 1
     gpu: 0
     memory: 4
-    workdir: /HOME/nscc-gz_yfb_2/cwl
+    workDir:
+      host_path: /HOME/nscc-gz_yfb_2/cwl
 username: nscc-gz_yfb_2
 password: Pw2022RD
 login_api: http://uat.starlight-dev.nscc-gz.cn/api/keystone/short_term_token/name

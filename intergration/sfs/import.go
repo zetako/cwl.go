@@ -31,7 +31,7 @@ func (s StarlightFileSystem) loadFromNet(doc string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if isStarlightUrl(doc) {
+	if IsStarlightUrl(doc) {
 		req.Header.Add("Bihu-Token", s.token)
 	}
 	resp, err := client.Do(req)
@@ -41,7 +41,7 @@ func (s StarlightFileSystem) loadFromNet(doc string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func isStarlightUrl(doc string) bool {
+func IsStarlightUrl(doc string) bool {
 	docURL, err := url.Parse(doc)
 	if err != nil {
 		return false
@@ -53,4 +53,11 @@ func isStarlightUrl(doc string) bool {
 		return false
 	}
 	return matched
+}
+
+func IsFileSystemFile(doc string) bool {
+	if strings.HasPrefix(doc, "https://") || strings.HasPrefix(doc, "http://") {
+		return false
+	}
+	return true
 }
