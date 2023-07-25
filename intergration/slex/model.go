@@ -8,7 +8,7 @@ import (
 type JobSubmitModel struct {
 	RuntimeParams struct {
 		// Basic Params
-		JobName   string            `json:"jobName"`
+		JobName   string            `json:"jobname"`
 		Cluster   string            `json:"cluster"`
 		Partition string            `json:"partition"`
 		Env       map[string]string `json:"env,omitempty"`
