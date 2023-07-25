@@ -79,7 +79,7 @@ func TestCWLR2_workon(t *testing.T) {
 	}
 	ex := runner.LocalExecutor{}
 	// Expect(t, err).ToBe(nil)
-	pid, ret, _, err := ex.Run(p)
+	pid, ret, err := ex.Run(p)
 	Expect(t, err).ToBe(nil)
 	t.Log(pid)
 	retCode, _ := <-ret

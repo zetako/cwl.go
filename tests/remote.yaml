@@ -1,4 +1,4 @@
-doc: "/HOME/nscc-gz_yfb_2/cwl/count-lines2-wf.cwl"
+doc: "/HOME/nscc-gz_yfb_2/cwl/wf-wc.cwl"
 job: "/HOME/nscc-gz_yfb_2/cwl/job.json"
 allocation:
   default:
