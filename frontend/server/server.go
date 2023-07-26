@@ -114,6 +114,9 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		InputsDir:    path.Join(pwd, "inputs"),
 		WorkDir:      path.Join(pwd, "run"),
 		Importer:     c.importer,
+		NewFSMethod: func(workdir string) (runner.Filesystem, error) {
+			return sfs.New(context.TODO(), c.token, workdir)
+		},
 	})
 	if err != nil {
 		return nil, err

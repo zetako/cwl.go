@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/message"
 	"log"
@@ -10,6 +11,7 @@ type serverMsgReceiver struct {
 }
 
 func (r serverMsgReceiver) SendMsg(msg message.Message) {
+	fmt.Println(msg.ToLog())
 	// 0. workflow is special
 	if msg.Class == message.WorkflowMsg {
 		if msg.Status == message.StatusInit {
@@ -82,7 +84,7 @@ func (r serverMsgReceiver) SendMsg(msg message.Message) {
 }
 
 func (r serverMsgReceiver) unknownMsg(msg message.Message) {
-	log.Println(msg.ToLog())
+	//log.Println(msg.ToLog()) // 所有信息均打印，不再单独打印
 }
 
 func init() {
