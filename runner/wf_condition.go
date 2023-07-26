@@ -106,6 +106,7 @@ func (s StepDoneCondition) Meet(condition []Condition) bool {
 func (s StepDoneCondition) AddStepInfoFor(raw cwl.Value) cwl.Value {
 	// 文件
 	if file, ok := raw.(cwl.File); ok {
+		file.Location = strings.TrimPrefix(file.Location, "file://")
 		if !path.IsAbs(file.Location) {
 			file.Location = path.Join(s.runtime.RootHost, file.Location)
 		}

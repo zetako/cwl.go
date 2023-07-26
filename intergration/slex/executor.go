@@ -32,7 +32,6 @@ type StarlightExecutor struct {
 func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <-chan int, err error) {
 	// basic setting
 	submit := NewSubmitModelFrom(s.alloc.Get(process.PathID))
-	submit.RuntimeParams.JobName = process.Path()
 
 	// start migrate
 	migrateRecord, err := process.MigrateInputs()
@@ -42,6 +41,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 
 	// others
 	submit.RuntimeParams.JobName = process.ShortPath(StarlightJobNameLimit)
+	submit.RuntimeParams.JobName = process.ID() // 临时更换为简单ID，解决job服务不支持'/'的问题；job服务修复后可以删掉
 	submit.RuntimeParams.Env = process.Env()
 	submit.RuntimeParams.Stdin, submit.RuntimeParams.Stdout, submit.RuntimeParams.Stderr = process.GetRedirection()
 
@@ -76,14 +76,17 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	if err != nil {
 		return "", nil, err
 	}
-	submit.RuntimeParams.Volume = append(submit.RuntimeParams.Volume, model.Volume{
-		HostPath:  strings.TrimPrefix(rt.RootHost, "file://"),
-		MountPath: strings.TrimPrefix(rt.RootHost, "file://"),
-	})
+	submit.RuntimeParams.WorkDir.HostPath = rt.RootHost
+	// 不需要主动设置workdir挂载，星光会挂
+	//submit.RuntimeParams.Volumes = append(submit.RuntimeParams.Volumes, model.Volume{
+	//	HostPath:  strings.TrimPrefix(rt.RootHost, "file://"),
+	//	MountPath: strings.TrimPrefix(rt.RootHost, "file://"),
+	//})
 	// migrated source is needed
 	for _, rec := range migrateRecord {
 		if rec.IsSymLink {
-			submit.RuntimeParams.Volume = append(submit.RuntimeParams.Volume, model.Volume{
+			submit.RuntimeParams.Volumes = append(submit.RuntimeParams.Volumes, model.Volume{
+				Name:      path.Base(path.Dir(rec.Destination)),
 				HostPath:  strings.TrimPrefix(rec.Source, "file://"),
 				MountPath: strings.TrimPrefix(rec.Source, "file://"),
 				ReadOnly:  true,
@@ -127,6 +130,7 @@ func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, erro
 	} else {
 		workdir = allocation.WorkDir.HostPath
 	}
+	workdir = path.Join(workdir, p.Path())
 	// 3. generate runtime
 	rt := runner.Runtime{
 		RootHost:   workdir,
@@ -163,7 +167,7 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 		intervalIdx   int    = 0
 		intervalCount int    = 0
 		errorCount    int    = 0
-		query         string = fmt.Sprintf("job/%s/%s?history=true", cluster, jobIdx)
+		query         string = fmt.Sprintf("/job/running/%s/%s?history=true", cluster, jobIdx)
 	)
 
 	for {
@@ -171,6 +175,7 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 		var job model.Job
 		_, err := s.client.GetSpec(query, &job)
 		if err != nil {
+			fmt.Println(err)
 			errorCount++
 			if errorCount > MaxAllowErrorCount {
 				// reached timeout, quit as failed
@@ -179,16 +184,12 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 			}
 		}
 		// 2. end if success or failed
-		if job.Status == 2 {
-			if job.ExitCode == 0 {
-				retChan <- -2
+		if job.Status > model.JobStatusRunning {
+			if job.Status == model.JobStatusSuccess {
+				retChan <- 0
 			} else {
 				retChan <- job.ExitCode
 			}
-			break
-		} else if job.Status == 3 {
-			retChan <- 0
-			break
 		}
 		// 3. set interval
 		interval := JobQueryInterval[intervalIdx]

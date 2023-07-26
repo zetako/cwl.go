@@ -20,8 +20,8 @@ type JobSubmitModel struct {
 		WorkDir model.Volume `json:"workDir,omitempty"`
 		Cmd     []string     `json:"cmd"`
 		// Container Task specified
-		Image  string         `json:"image,omitempty"`
-		Volume []model.Volume `json:"volume,omitempty"`
+		Image   string         `json:"image,omitempty"`
+		Volumes []model.Volume `json:"volumes,omitempty"`
 		//Kind   string         `json:"kind,omitempty"` // Kind not needed, for workflow, always job
 		// Runtime Requirements
 		Cpu    int `json:"cpu,omitempty"`

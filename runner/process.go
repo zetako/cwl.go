@@ -32,6 +32,8 @@ type Process struct {
 	*Log
 	*jsvm
 	message.PathID
+
+	newFS func(string) (Filesystem, error)
 }
 
 func (p *Process) Root() *cwl.Root {

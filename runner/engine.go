@@ -186,7 +186,10 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		if err != nil {
 			return nil, err
 		}
-		p.SetRuntime(runtime)
+		err = p.SetRuntime(runtime)
+		if err != nil {
+			return nil, err
+		}
 		err = e.ResolveProcess(p)
 		if err != nil {
 			return nil, err
@@ -205,7 +208,10 @@ func (e *Engine) RunProcess(p *Process) (outs cwl.Values, err error) {
 		e.SendMsg(tmpMsg)
 		// wait for return
 		retCode, _ := <-ret
-		p.SetRuntime(Runtime{ExitCode: &retCode})
+		if retCode != 0 {
+			return nil, fmt.Errorf("return code not 0 but %d", retCode)
+		}
+		_ = p.SetRuntime(Runtime{ExitCode: &retCode})
 		if p.outputFS == nil {
 			p.outputFS = e.outputFS
 		}
@@ -379,11 +385,15 @@ func (e *Engine) MainProcess() (*Process, error) {
 		root:   e.root,
 		inputs: e.params,
 		//runtime: e.runtime,
-		fs:  e.inputFS,
-		env: map[string]string{},
-		Log: e.Log.Log,
+		fs:    e.inputFS,
+		env:   map[string]string{},
+		Log:   e.Log.Log,
+		newFS: e.newFS,
 	}
-	process.SetRuntime(defaultRuntime)
+	err := process.SetRuntime(defaultRuntime)
+	if err != nil {
+		return nil, err
+	}
 	//switch expr {
 	//
 	//}
@@ -407,9 +417,10 @@ func (e *Engine) MainProcess() (*Process, error) {
 func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, err error) {
 	// 初始化
 	process = &Process{
-		fs:  e.inputFS,
-		env: map[string]string{},
-		Log: e.Log.Log,
+		fs:    e.inputFS,
+		env:   map[string]string{},
+		Log:   e.Log.Log,
+		newFS: e.newFS,
 	}
 
 	if step.Run.Process != nil {
@@ -420,7 +431,10 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 	}
 
 	// 其他处理（来自MainProcess）
-	process.SetRuntime(defaultRuntime)
+	err = process.SetRuntime(defaultRuntime)
+	if err != nil {
+		return nil, err
+	}
 	process.runtime.RootHost = path.Join(e.RootHost, step.ID)
 	process.outputFS, err = e.newFS(process.runtime.RootHost)
 	if err != nil {

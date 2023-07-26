@@ -61,7 +61,7 @@ func TestCWLR2_workon(t *testing.T) {
 	limits, err := p.ResourcesLimites()
 	Expect(t, err).ToBe(nil)
 	runtime := L2R(*limits)
-	p.SetRuntime(runtime)
+	_ = p.SetRuntime(runtime)
 	err = e.ResolveProcess(p)
 	Expect(t, err).ToBe(nil)
 	cmds, err := p.Command()

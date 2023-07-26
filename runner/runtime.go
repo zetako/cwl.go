@@ -24,7 +24,8 @@ func GetDefaultResourcesLimits() ResourcesLimites {
 }
 
 // TODO this is provided to expressions early on in process processing,
-//  but it won't have real values from a scheduler until much later.
+//
+//	but it won't have real values from a scheduler until much later.
 type Runtime struct {
 	RootHost   string `json:"rootHost"`
 	InputsHost string `json:"inputsHost"`
@@ -53,13 +54,22 @@ var defaultRuntime = Runtime{
 	OutdirSize: 1024,
 }
 
-func (p *Process) SetRuntime(config Runtime) {
+func (p *Process) SetRuntime(config Runtime) error {
+	var err error
 
 	if config.RootHost != "" {
 		p.runtime.RootHost = config.RootHost
+		p.outputFS, err = p.newFS(config.RootHost)
+		if err != nil {
+			return err
+		}
 	}
 	if config.InputsHost != "" {
 		p.runtime.InputsHost = config.InputsHost
+		p.inputFS, err = p.newFS(config.InputsHost)
+		if err != nil {
+			return err
+		}
 	}
 	if config.Outdir != "" {
 		p.runtime.Outdir = config.Outdir
@@ -82,4 +92,5 @@ func (p *Process) SetRuntime(config Runtime) {
 	if config.ExitCode != nil {
 		p.runtime.ExitCode = config.ExitCode
 	}
+	return nil
 }
