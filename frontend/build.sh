@@ -2,7 +2,7 @@
 
 AUTHOR=starlight
 IMAGE=cwl-runner
-VERSION=0.7.1
+VERSION=0.7.3
 
 set -e && set -x
 

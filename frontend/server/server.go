@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -317,6 +318,7 @@ func StartServe(port int, pem string, key string) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("grpc server listen at port %d", port)
 	err = server.Serve(listener)
 	if err != nil {
 		return err
