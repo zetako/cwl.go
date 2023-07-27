@@ -27,6 +27,7 @@ type JobSubmitModel struct {
 		Cpu    int `json:"cpu,omitempty"`
 		Gpu    int `json:"gpu,omitempty"`
 		Memory int `json:"memory,omitempty"`
+		Node   int `json:"node,omitempty"`
 	} `json:"runtime_params"`
 }
 
@@ -36,6 +37,7 @@ type SingleJobAllocationModel struct {
 	Cpu       *int         `json:"cpu,omitempty" yaml:"cpu,omitempty"`
 	Gpu       *int         `json:"gpu,omitempty" yaml:"gpu,omitempty"`
 	Memory    *int         `json:"memory,omitempty" yaml:"memory,omitempty"`
+	Node      *int         `json:"node,omitempty" yaml:"node,omitempty"`
 	WorkDir   model.Volume `json:"workDir,omitempty" yaml:"workDir,omitempty"`
 }
 
@@ -57,6 +59,10 @@ func (s *SingleJobAllocationModel) Copy() SingleJobAllocationModel {
 		tmpM := *(s.Memory)
 		ret.Memory = &tmpM
 	}
+	if s.Node != nil {
+		tmpN := *(s.Node)
+		ret.Node = &tmpN
+	}
 	return ret
 }
 func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
@@ -72,6 +78,7 @@ func (s *SingleJobAllocationModel) Merge(other SingleJobAllocationModel) {
 	other.Cpu = CopyIntPointer(s.Cpu)
 	other.Gpu = CopyIntPointer(s.Gpu)
 	other.Memory = CopyIntPointer(s.Memory)
+	other.Node = CopyIntPointer(s.Node)
 }
 
 type JobAllocationModel struct {
@@ -115,6 +122,9 @@ func NewSubmitModelFrom(allocation SingleJobAllocationModel) JobSubmitModel {
 	}
 	if allocation.Memory != nil {
 		ret.RuntimeParams.Memory = *(allocation.Memory)
+	}
+	if allocation.Node != nil {
+		ret.RuntimeParams.Node = *(allocation.Node)
 	}
 	return ret
 }

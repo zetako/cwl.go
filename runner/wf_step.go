@@ -115,9 +115,10 @@ func (r *RegularRunner) Run(conditions chan<- Condition) (err error) {
 				Content:   outs,
 			})
 			for _, output := range r.step.Out {
+				tmp := output
 				conditions <- &OutputParamCondition{
 					step:   r.step,
-					output: &output,
+					output: &tmp,
 				}
 			}
 			conditions <- &StepDoneCondition{

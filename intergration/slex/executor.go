@@ -7,6 +7,7 @@ import (
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/runner"
 	"path"
+	"regexp"
 	"starlight/common/httpclient"
 	"starlight/common/model"
 	"strings"
@@ -16,6 +17,7 @@ import (
 const (
 	StarlightJobNameLimit = 32
 	MaxAllowErrorCount    = 5
+	StarlightJobNameMin   = 5
 )
 
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
@@ -53,6 +55,11 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	)
 	reqs := process.Root().Process.Base().Requirements
 	hints := process.Root().Process.Base().Hints
+	for _, r := range hints {
+		if r.ClassName() == "DockerRequirement" {
+			dockerReq = r.(*cwl.DockerRequirement)
+		}
+	}
 	for _, r := range reqs {
 		if r.ClassName() == "DockerRequirement" {
 			dockerReq = r.(*cwl.DockerRequirement)
@@ -96,6 +103,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 
 	// send req
 	var job model.Job
+	s.verifySubmit(&submit)
 	_, err = s.client.PostSpec("/job/submit", submit, &job)
 	if err != nil {
 		return "", nil, err
@@ -204,4 +212,39 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 		}
 		time.Sleep(interval)
 	}
+}
+
+func (s StarlightExecutor) verifySubmit(submit *JobSubmitModel) {
+	// 1.检查JobName
+	// 1.1.去掉非法字符
+	newJobName := regexp.MustCompile(`[^-A-Za-z0-9_.]`).ReplaceAllString(submit.RuntimeParams.JobName, "_")
+	// 1.2.最大长度
+	if len(newJobName) > StarlightJobNameLimit {
+		newJobName = newJobName[:32]
+	}
+	// 1.3.首尾不能是特殊字符
+	for {
+		if newJobName == "" {
+			break
+		}
+		if newJobName[0] == '-' || newJobName[0] == '_' || newJobName[0] == '.' {
+			newJobName = newJobName[1:]
+			continue
+		}
+		tmpLen := len(newJobName) - 1
+		if newJobName[tmpLen] == '-' || newJobName[tmpLen] == '_' || newJobName[tmpLen] == '.' {
+			newJobName = newJobName[:tmpLen]
+			continue
+		}
+		break
+	}
+	// 1.3.最小长度
+	if len(newJobName) < StarlightJobNameMin {
+		if newJobName == "" {
+			newJobName = "wf-job"
+		}
+		newJobName = newJobName + "-" + fmt.Sprintf("%x", time.Now().Unix())
+	}
+	// 1.4.替换回去
+	submit.RuntimeParams.JobName = newJobName
 }

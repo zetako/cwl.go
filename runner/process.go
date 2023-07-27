@@ -249,6 +249,7 @@ func (process *Process) loadReqs() error {
 			}
 		}
 	}
+	process.setInputs(*process.inputs)
 	if req := tool.RequiresEnvVar(); req != nil {
 		// TODO env
 		if err := process.bindEnvVar(req); err != nil {

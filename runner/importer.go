@@ -208,8 +208,10 @@ func (e *Engine) tryImportRun(wfDoc *cwl.Workflow, graphs cwl.Graphs, count int)
 			// c. [file]#[frag]: read file as graph, then process as b
 			var tmpRoot cwl.Root
 			if fileName != "" {
-				if !strings.HasSuffix(fileName, ".cwl") {
-					return fmt.Errorf("Run.ID not a cwl file")
+				if !strings.HasSuffix(fileName, ".cwl") &&
+					!strings.HasPrefix(fileName, "http://") &&
+					!strings.HasPrefix(fileName, "https://") {
+					return fmt.Errorf("Run.ID not a cwl file or url")
 				}
 				cwlFileReader, err := e.importer.Load(fileName)
 				if err != nil {

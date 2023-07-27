@@ -1,0 +1,21 @@
+doc: "/WORK/nscc-gz_guixingguo/cwl/bio.cwl"
+job: "/WORK/nscc-gz_guixingguo/cwl/empty.json"
+allocation:
+  default:
+    cluster: k8s_venus
+    partition: venus-cpu
+    cpu: 6
+    gpu: 0
+    memory: 30
+    workDir:
+      host_path: /GPUFS/nscc-gz_guixingguo/cwl
+  diff:
+    root/ad:
+      cluster: tianhe2c
+      partition: docker_128
+      node: 1
+      workDir:
+        host_path: /WORK/nscc-gz_guixingguo/cwl
+username: nscc-gz_guixingguo
+password: Qq13025272670
+login_api: http://starlight-pre.nscc-gz.cn/api/keystone/short_term_token/name
