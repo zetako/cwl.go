@@ -1,0 +1,33 @@
+FROM golang:alpine as builder
+
+RUN mkdir /src
+
+WORKDIR /src
+
+RUN echo -e "\n@testing https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
+    sed -i 's/dl-cdn.alpinelinux.org/mirrors.bfsu.edu.cn/g' /etc/apk/repositories && \
+    cat /etc/apk/repositories && \
+    apk --no-cache add git protoc protoc-gen-go@testing && \
+    echo -e "\n10.127.48.100 gitlab.starlight-dev.nscc-gz.cn" >> /etc/hosts && \
+    git clone http://gitlab.starlight-dev.nscc-gz.cn/zetako/cwl.go.git && \
+    git clone http://zetako:Zeta%40wynn5666@gitlab.starlight-dev.nscc-gz.cn/starlight/starlight.git && \
+    cd cwl.go && git checkout intergration && git submodule update --init
+
+WORKDIR /src/cwl.go
+
+RUN export GOPROXY=https://mirrors.aliyun.com/goproxy/ &&  \
+    cd ../starlight && go mod init starlight && go mod tidy && \
+    cd ../cwl.go && go mod tidy && cd frontend/proto && bash generate.sh && cd go build -o cwl.go
+
+
+FROM alpine:latest as production
+
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+COPY --from=builder /src/cwl.go/frontend/cwl.go .
+
+COPY ../tests/deployment .
+
+CMD ["/root/cwl.go", "serve"]

@@ -52,6 +52,11 @@ func (c *cwlServer) Load(ctx context.Context, d *proto.Doc) (result *proto.Resul
 		}
 	}()
 
+	// Clear all previous infos
+	c.status = &message.StepStatusArray{}
+	c.values = nil
+	c.finish = false
+
 	// Prevent nil
 	if d == nil {
 		return nil, fmt.Errorf("no cwl file specified")
@@ -131,6 +136,10 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 
 	// Run in go routine
 	go func() {
+		c.status.Append(&message.StepStatus{
+			ID:     message.PathID{"root"},
+			Status: message.StatusStart,
+		})
 		c.values, _ = c.engine.Run()
 		c.finish = true
 	}()

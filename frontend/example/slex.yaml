@@ -1,0 +1,3 @@
+base_dir:
+  k8s_uat: "/GPUFS/${USER}/.bihu"
+  power: "/GPUFS/${USER}/.bihu"
