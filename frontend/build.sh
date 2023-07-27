@@ -1,15 +1,15 @@
 #!/bin/bash
 
 AUTHOR=starlight
-IMAGE=cwl.go
-VERSION=0.7.0
+IMAGE=cwl-runner
+VERSION=0.7.1
 
 set -e && set -x
 
 cd proto && bash ./generate.sh && cd ..
 
 go mod tidy
-go build -o cwl.go
+CGO_ENABLED=0 go build -o cwl.go
 goupx cwl.go
 
 docker build -t ${AUTHOR}/${IMAGE}:${VERSION} .
