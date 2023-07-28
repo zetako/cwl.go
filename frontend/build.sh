@@ -1,8 +1,8 @@
 #!/bin/bash
 
-AUTHOR=starlight
+AUTHOR=nscc-gz.cn/starlight-v4
 IMAGE=cwl-runner
-VERSION=0.7.3
+VERSION=0.8.0
 
 set -e && set -x
 
