@@ -143,6 +143,10 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		})
 		c.values, _ = c.engine.Run()
 		c.finish = true
+		c.status.Append(&message.StepStatus{
+			ID:     message.PathID{"root"},
+			Status: message.StatusFinish,
+		})
 	}()
 
 	return &proto.Result{Success: true}, nil
@@ -217,7 +221,9 @@ func (c *cwlServer) Abort(ctx context.Context, needed *proto.NotNeeded) (*proto.
 }
 
 func (c *cwlServer) Export(ctx context.Context, needed *proto.NotNeeded) (*proto.Status, error) {
-	return ToGrpcStatus(c.status), nil
+	ret := ToGrpcStatus(c.status)
+	ret.Finish = c.finish
+	return ret, nil
 }
 
 func (c *cwlServer) Import(ctx context.Context, s *proto.Status) (result *proto.Result, err error) {
@@ -276,6 +282,10 @@ func (c *cwlServer) Import(ctx context.Context, s *proto.Status) (result *proto.
 	}()
 
 	return &proto.Result{Success: true}, nil
+}
+
+func (c *cwlServer) Watch(server proto.Cwl_WatchServer) error {
+	return fmt.Errorf("not implemented")
 }
 
 // StartServe will start a grpc server at target port

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const (
@@ -96,6 +97,18 @@ func (c StarlightClient) PostSpec(api string, dataBean interface{}, specBean int
 }
 
 func (c StarlightClient) GetSpec(api string, specBean interface{}) (*ResponseWrap, error) {
+
+}
+
+// Request 发送请求
+func (c StarlightClient) Request(url, method string, data []byte) (*http.Response, error) {
+	// 检查上下文
+	ddl, ok := c.ctx.Deadline()
+	if ok {
+		if ddl.Before(time.Now()) {
+			return nil, fmt.Errorf("context deadline excced")
+		}
+	}
 
 }
 

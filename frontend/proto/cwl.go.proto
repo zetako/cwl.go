@@ -19,6 +19,9 @@ service cwl {
   rpc Export(NotNeeded) returns (Status) {}
   // Import will import status to engine, thus running in a middle state
   rpc Import(Status) returns (Result) {}
+
+  // Watch will hold a long connection to exchange important message with job.ms
+  rpc Watch(stream Event) returns (stream Event) {}
 }
 
 // NotNeeded is an empty message used in functions that don't need args
@@ -40,16 +43,18 @@ message Doc {
 message SingleAllocation {
   string cluster = 1;
   string partition = 2;
-  optional int32 cpu = 3;
-  optional int32 gpu = 4;
+  optional int64 cpu = 3;
+  optional int64 gpu = 4;
   optional int64 memory = 5;
-  optional string workdir = 6;
+  optional int64 node = 6;
+  optional string workdir = 7;
+  map<string, string> extend = 8;
 }
 
 // Allocation is a collection of SingleAllocation
 message Allocation {
   SingleAllocation default = 1;
-  map<string, SingleAllocation> Diff = 2;
+  map<string, SingleAllocation> diff = 2;
 }
 
 // Job is inputs and job allocation
@@ -62,9 +67,10 @@ message Job {
 
 // Status is status of whole cwl engine
 message Status {
-  Result result = 1;
-  repeated StepStatus steps = 2;
-  optional Job job = 3;
+  bool finish = 1;
+  Result result = 2;
+  repeated StepStatus steps = 3;
+  optional Job job = 4;
 }
 
 // StepStatus contain all infos needed to describe a step's running
@@ -80,4 +86,10 @@ message StepStatus {
 message Output {
   Result result = 1;
   string values = 2;
+}
+
+// Event describe a task's status
+message Event {
+  string id = 1;
+  string message = 2;
 }

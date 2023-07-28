@@ -80,11 +80,13 @@ func FromGrpcSingleAllocation(g *proto.SingleAllocation) *slex.SingleJobAllocati
 	ret := slex.SingleJobAllocationModel{
 		Cluster:   g.Cluster,
 		Partition: g.Partition,
-		Cpu:       CopyInt32Pointer(g.Cpu),
-		Gpu:       CopyInt32Pointer(g.Gpu),
+		Cpu:       CopyInt64Pointer(g.Cpu),
+		Gpu:       CopyInt64Pointer(g.Gpu),
 		Memory:    CopyInt64Pointer(g.Memory),
+		Node:      CopyInt64Pointer(g.Node),
 		WorkDir:   model.Volume{},
 	}
+	// extend is ignored now
 	if g.Workdir != nil {
 		ret.WorkDir = model.Volume{HostPath: *g.Workdir}
 	}
