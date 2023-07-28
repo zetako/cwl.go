@@ -3,6 +3,7 @@ package slex
 import (
 	"context"
 	"github.com/google/uuid"
+	"path"
 	"starlight/common/httpclient"
 )
 
@@ -25,6 +26,7 @@ func New(ctx context.Context, token string, username string, alloc *JobAllocatio
 	if err != nil {
 		return nil, err
 	}
+	AddWorkdirSuffix(alloc, id)
 	ret := StarlightExecutor{
 		alloc:    alloc,
 		ctx:      ctx,
@@ -35,4 +37,16 @@ func New(ctx context.Context, token string, username string, alloc *JobAllocatio
 	}
 
 	return &ret, nil
+}
+
+func AddWorkdirSuffix(alloc *JobAllocationModel, id uuid.UUID) {
+	str := id.String()
+	if alloc.Default.WorkDir.HostPath != "" {
+		alloc.Default.WorkDir.HostPath = path.Join(alloc.Default.WorkDir.HostPath, str)
+	}
+	for k, v := range alloc.Diff {
+		if v.WorkDir.HostPath != "" {
+			alloc.Diff[k].WorkDir.HostPath = path.Join(v.WorkDir.HostPath, str)
+		}
+	}
 }

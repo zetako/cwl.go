@@ -92,8 +92,12 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	// migrated source is needed
 	for _, rec := range migrateRecord {
 		if rec.IsSymLink {
+			tmpID, err := uuid.NewRandom()
+			if err != nil {
+				return "", nil, err
+			}
 			submit.RuntimeParams.Volumes = append(submit.RuntimeParams.Volumes, model.Volume{
-				Name:      path.Base(path.Dir(rec.Destination)),
+				Name:      tmpID.String(),
 				HostPath:  strings.TrimPrefix(rec.Source, "file://"),
 				MountPath: strings.TrimPrefix(rec.Source, "file://"),
 				ReadOnly:  true,
