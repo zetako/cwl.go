@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="serve-pre" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="cwl.go">
+    <module name="cwl.go-lijiang2014" />
+    <working_directory value="$PROJECT_DIR$/tests" />
+    <parameters value="serve" />
+    <envs>
+      <env name="RUN_ENV" value="pre" />
+    </envs>
+    <kind value="PACKAGE" />
+    <package value="github.com/lijiang2014/cwl.go/frontend" />
+    <directory value="$PROJECT_DIR$/" />
+    <filePath value="$PROJECT_DIR$/frontend/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
