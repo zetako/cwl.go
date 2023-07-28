@@ -1,0 +1,10 @@
+base_dir:
+  k8s_venus: "/GPUFS/app/bihu/spooler"
+  tianhe2k: "/GPUFS/app/bihu/spooler"
+  tianhe2d: "/VIP/app/bihu/spooler"
+  tianhe2c: "/WORK/app/bihu/spooler"
+  tianhe2e: "/WORK/app/bihu/spooler"
+  tianhe2g: "/BIGDATA1/app/bihu/spooler"
+  tianhe2h: "/BIGDATA1/app/bihu/spooler"
+  k8s_jove: "/UNICOMFS/${USER}/.bihu"
+  tianhe2u: "/UNICOMFS/${USER}/.bihu"

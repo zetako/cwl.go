@@ -1,0 +1,7 @@
+# 测试环境http客户端的配置
+
+# http客户端的配置
+client_config:
+  base_url: "http://starlight-pre.nscc-gz.cn/api"
+  timeout: 10
+  dial_timeout: 3
