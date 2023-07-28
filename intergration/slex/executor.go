@@ -115,7 +115,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 
 	bidChan := make(chan int)
 	go s.waitingJob(job.ClusterName, job.ClusterJobID, bidChan)
-	return fmt.Sprint(job.ClusterJobID), bidChan, nil
+	return fmt.Sprint(job.ClusterName + "/" + job.ClusterJobID), bidChan, nil
 }
 
 func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, error) {
