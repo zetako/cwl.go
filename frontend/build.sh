@@ -2,7 +2,7 @@
 
 AUTHOR=nscc-gz.cn/starlight-v4
 IMAGE=cwl-runner
-VERSION=0.9.0
+VERSION=0.9.1
 
 set -e && set -x
 
