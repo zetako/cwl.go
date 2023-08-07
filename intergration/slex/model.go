@@ -16,6 +16,10 @@ type JobSubmitModel struct {
 		Stdin     string            `json:"stdin,omitempty"`
 		Stdout    string            `json:"stdout,omitempty"`
 		Stderr    string            `json:"stderr,omitempty"`
+		// Executor infos
+		AppName      string `json:"app_name,omitempty"`
+		WorkflowUUID string `json:"workflow_uuid,omitempty"`
+
 		// Direct Task specified
 		WorkDir model.Volume `json:"workDir,omitempty"`
 		Cmd     []string     `json:"cmd"`
@@ -23,6 +27,7 @@ type JobSubmitModel struct {
 		Image   string         `json:"image,omitempty"`
 		Volumes []model.Volume `json:"volumes,omitempty"`
 		//Kind   string         `json:"kind,omitempty"` // Kind not needed, for workflow, always job
+
 		// Runtime Requirements
 		Cpu    int `json:"cpu,omitempty"`
 		Gpu    int `json:"gpu,omitempty"`

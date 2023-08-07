@@ -17,11 +17,7 @@ func CopyIntPointer(src *int) (dst *int) {
 	return &tmp
 }
 
-func New(ctx context.Context, token string, username string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
+func New(ctx context.Context, id uuid.UUID, token string, username string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
 	c, err := httpclient.NewBihuClient(ctx, token)
 	if err != nil {
 		return nil, err

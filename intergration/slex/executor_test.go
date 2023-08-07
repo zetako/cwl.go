@@ -3,6 +3,7 @@ package slex
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"starlight/common/httpclient"
 	"starlight/common/model"
@@ -58,7 +59,11 @@ func init() {
 		panic(err)
 	}
 	// 2. get slex
-	globalExecutor, err = New(context.TODO(), token, testUsername, testAllocModel)
+	id, err := uuid.NewRandom()
+	if err != nil {
+		panic(err)
+	}
+	globalExecutor, err = New(context.TODO(), id, token, testUsername, testAllocModel)
 	if err != nil {
 		panic(err)
 	}

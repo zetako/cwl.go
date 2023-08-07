@@ -34,6 +34,8 @@ type Process struct {
 	message.PathID
 
 	newFS func(string) (Filesystem, error)
+
+	RunID string
 }
 
 func (p *Process) Root() *cwl.Root {

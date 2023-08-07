@@ -421,6 +421,7 @@ func (e *Engine) GenerateSubProcess(step *cwl.WorkflowStep) (process *Process, e
 		env:   map[string]string{},
 		Log:   e.Log.Log,
 		newFS: e.newFS,
+		RunID: step.Run.ID,
 	}
 
 	if step.Run.Process != nil {

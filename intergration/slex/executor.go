@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	StarlightJobNameLimit = 32
-	MaxAllowErrorCount    = 5
-	StarlightJobNameMin   = 5
+	StarlightJobNameLimit  = 32
+	MaxAllowErrorCount     = 5
+	StarlightJobNameMin    = 5
+	StarlightAppDocPattern = `^http.*starlight.*\.nscc-gz\.cn/api/app/app/cwl/[^/]+$`
 )
 
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
@@ -103,6 +104,13 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 				ReadOnly:  true,
 			})
 		}
+	}
+
+	// append infos
+	submit.RuntimeParams.WorkflowUUID = s.uuid.String()
+	if regexp.MustCompile(StarlightAppDocPattern).MatchString(process.RunID) {
+		arr := strings.Split(process.RunID, "/")
+		submit.RuntimeParams.AppName = arr[len(arr)-1]
 	}
 
 	// send req

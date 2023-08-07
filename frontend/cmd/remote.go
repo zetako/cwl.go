@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/intergration/sfs"
 	"github.com/lijiang2014/cwl.go/intergration/slex"
@@ -146,7 +147,11 @@ func remote(config *RemoteConfig) error {
 	}
 
 	// New Executor
-	exec, err := slex.New(context.TODO(), config.Token, config.Username, config.Allocation)
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	exec, err := slex.New(context.TODO(), id, config.Token, config.Username, config.Allocation)
 	if err != nil {
 		return err
 	}

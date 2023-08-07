@@ -59,10 +59,11 @@ message Allocation {
 
 // Job is inputs and job allocation
 message Job {
-  string values = 1;
-  string username = 2;
-  string token = 3;
-  Allocation allocations = 4;
+  string uuid = 1;
+  string values = 2;
+  string username = 3;
+  string token = 4;
+  Allocation allocations = 5;
 }
 
 // Status is status of whole cwl engine
