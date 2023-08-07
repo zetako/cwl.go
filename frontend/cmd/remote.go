@@ -151,7 +151,7 @@ func remote(config *RemoteConfig) error {
 	if err != nil {
 		return err
 	}
-	exec, err := slex.New(context.TODO(), id, config.Token, config.Username, config.Allocation)
+	exec, err := slex.New(context.TODO(), id.String(), config.Token, config.Username, config.Allocation)
 	if err != nil {
 		return err
 	}

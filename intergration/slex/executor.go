@@ -24,12 +24,12 @@ const (
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
 
 type StarlightExecutor struct {
-	alloc    *JobAllocationModel
-	ctx      context.Context
-	token    string
-	username string // username is needed since we need to determine workdir
-	client   *httpclient.BihuClient
-	uuid     uuid.UUID
+	alloc      *JobAllocationModel
+	ctx        context.Context
+	token      string
+	username   string // username is needed since we need to determine workdir
+	client     *httpclient.BihuClient
+	workflowID string
 }
 
 func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <-chan int, err error) {
@@ -107,7 +107,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	}
 
 	// append infos
-	submit.RuntimeParams.WorkflowUUID = s.uuid.String()
+	submit.RuntimeParams.WorkflowUUID = s.workflowID
 	if regexp.MustCompile(StarlightAppDocPattern).MatchString(process.RunID) {
 		arr := strings.Split(process.RunID, "/")
 		submit.RuntimeParams.AppName = arr[len(arr)-1]
@@ -140,7 +140,7 @@ func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, erro
 			return runner.Runtime{}, err
 		}
 		// 2.2 generate dir path
-		workdir = path.Join(base, s.uuid.String(), p.Path())
+		workdir = path.Join(base, s.workflowID, p.Path())
 		// 2.3 save the new generated work dir
 		s.alloc.Set(p.PathID, SingleJobAllocationModel{
 			WorkDir: model.Volume{

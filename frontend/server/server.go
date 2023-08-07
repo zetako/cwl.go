@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/lijiang2014/cwl.go"
@@ -29,12 +28,12 @@ var (
 )
 
 type cwlServer struct {
-	status   *message.StepStatusArray
-	values   cwl.Values
-	doc, job []byte
-	fragID   string
-	finish   bool
-	uuid     uuid.UUID
+	status     *message.StepStatusArray
+	values     cwl.Values
+	doc, job   []byte
+	fragID     string
+	finish     bool
+	workflowID string
 
 	token    string
 	importer runner.Importer
@@ -129,13 +128,8 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 	if err != nil {
 		return nil, err
 	}
-	// convert uuid
-	c.uuid, err = uuid.Parse(j.Uuid)
-	if err != nil {
-		return nil, err
-	}
 	// generate executor
-	exec, err := slex.New(context.TODO(), c.uuid, c.token, j.Username, FromGrpcAllocation(j.Allocations))
+	exec, err := slex.New(context.TODO(), j.Id, c.token, j.Username, FromGrpcAllocation(j.Allocations))
 	if err != nil {
 		return nil, err
 	}

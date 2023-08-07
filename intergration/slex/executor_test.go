@@ -63,7 +63,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	globalExecutor, err = New(context.TODO(), id, token, testUsername, testAllocModel)
+	globalExecutor, err = New(context.TODO(), id.String(), token, testUsername, testAllocModel)
 	if err != nil {
 		panic(err)
 	}

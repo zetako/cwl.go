@@ -59,7 +59,7 @@ message Allocation {
 
 // Job is inputs and job allocation
 message Job {
-  string uuid = 1;
+  string id = 1;
   string values = 2;
   string username = 3;
   string token = 4;
