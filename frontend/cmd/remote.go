@@ -93,11 +93,14 @@ func remote(config *RemoteConfig) error {
 		}
 	}
 	// New Remote Importer
-	var (
-		importer runner.Importer
-		err      error
-	)
-	importer, err = sfs.New(context.TODO(), config.Token, "")
+	tmpClient, err := generateStarlightClient()
+	if err != nil {
+		return err
+	}
+	importer, err := sfs.New(context.TODO(), config.Token, tmpClient, "", false)
+	if err != nil {
+		return err
+	}
 
 	// Import Doc and Job
 	fmt.Printf("Using remote importer to read Doc: %s\n", config.Doc)
@@ -133,7 +136,15 @@ func remote(config *RemoteConfig) error {
 		RunID:      "cwl.go",
 		Importer:   importer,
 		NewFSMethod: func(workdir string) (runner.Filesystem, error) {
-			return sfs.New(context.TODO(), config.Token, workdir)
+			tmpClient, err := generateStarlightClient()
+			if err != nil {
+				return nil, err
+			}
+			fs, err := sfs.New(context.TODO(), config.Token, tmpClient, "", true)
+			if err != nil {
+				return nil, err
+			}
+			return fs, nil
 		},
 		Process:      doc,
 		Params:       job,
@@ -148,7 +159,7 @@ func remote(config *RemoteConfig) error {
 	}
 
 	// New Executor
-	tmpClient, err := generateStarlightClient()
+	tmpClient, err = generateStarlightClient()
 	if err != nil {
 		return err
 	}

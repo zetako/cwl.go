@@ -25,6 +25,10 @@ type FileInfo struct {
 	Target   string   `json:"target,omitempty"`   // 链接指向，只有符号链接文件才会有
 }
 
+func (info FileInfo) IsDir() bool {
+	return info.Type == FileTypeDir
+}
+
 type FileType int
 
 const (

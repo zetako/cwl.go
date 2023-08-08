@@ -3,6 +3,7 @@ package sfs
 import (
 	"context"
 	"fmt"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -47,14 +48,23 @@ func getToken() (string, error) {
 	//return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjE2NzIsImlwIjoiMTcyLjE2LjE3MS4zNyIsIm9yaV91c2VyX25hbWUiOiIiLCJ1c2VyX25hbWUiOiJuc2NjLWd6X3lmYl8yIiwidWlkIjoxMDAxMSwiZ3JvdXBfbmFtZSI6Im5zY2MtZ3pfeWZiIiwiZ3JvdXBfaWQiOjk4NjUsInN0YXR1cyI6MTEsImV4cCI6MTY4NzkyOTEzNX0.n2K_zsG0G5GL67WhwtfnyxzyZ9uk0i70FmgsCL2GvFZn37DZtQICPRpGIjT_AxQG7u9l71vlQvsqYzlCp4zz4Q", nil
 }
 
+func generateStarlightClient() (*client.StarlightClient, error) {
+	// TODO
+	return nil, fmt.Errorf("TODO")
+}
+
 func init() {
 	// 1. get token
 	token, err := getToken()
 	if err != nil {
 		panic(err)
 	}
+	tmpClient, err := generateStarlightClient()
+	if err != nil {
+		panic(err)
+	}
 	// 2. get sfs
-	globalSFS, err = New(context.TODO(), token, testBaseDir)
+	globalSFS, err = New(context.TODO(), token, tmpClient, testBaseDir, true)
 	if err != nil {
 		panic(err)
 	}

@@ -3,30 +3,25 @@ package sfs
 import (
 	"context"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"os"
 	"path"
 	"starlight/common/code"
 	"starlight/common/errors"
-	"starlight/common/httpclient"
-	"starlight/common/model"
 	"strings"
 )
 
-func New(ctx context.Context, token string, workDir string) (*StarlightFileSystem, error) {
-	b, err := httpclient.NewBihuClient(ctx, token)
-	if err != nil {
-		return nil, err
-	}
+func New(ctx context.Context, token string, c *client.StarlightClient, workDir string, checksum bool) (*StarlightFileSystem, error) {
 	return &StarlightFileSystem{
-		ctx:           ctx,
-		token:         token,
-		workDir:       workDir,
-		baseClient:    b,
-		storageClient: b.Storage(),
+		ctx:      ctx,
+		checksum: checksum,
+		token:    token,
+		workDir:  workDir,
+		client:   c.StorageClient(),
 	}, nil
 }
 
-func FileInfo2CwlFile(info *model.FileInfo) cwl.File {
+func FileInfo2CwlFile(info *client.FileInfo) cwl.File {
 	file := cwl.File{
 		Location: "file://" + info.Path,
 		Path:     info.Path,
@@ -44,7 +39,7 @@ func FileInfo2CwlFile(info *model.FileInfo) cwl.File {
 	return file
 }
 
-func FileInfo2CwlDir(info *model.FileInfo) cwl.Directory {
+func FileInfo2CwlDir(info *client.FileInfo) cwl.Directory {
 	return cwl.Directory{
 		Location: "file://" + info.Path,
 		Path:     info.Path,

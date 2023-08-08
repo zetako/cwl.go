@@ -66,7 +66,11 @@ func (c *cwlServer) Load(ctx context.Context, d *proto.Doc) (result *proto.Resul
 
 	// New Importer
 	c.token = d.Token
-	c.importer, err = sfs.New(context.TODO(), d.Token, "")
+	tmpClient, err := generateStarlightClient()
+	if err != nil {
+		return nil, err
+	}
+	c.importer, err = sfs.New(context.TODO(), d.Token, tmpClient, "", false)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +126,15 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		WorkDir:      path.Join(pwd, "run"),
 		Importer:     c.importer,
 		NewFSMethod: func(workdir string) (runner.Filesystem, error) {
-			return sfs.New(context.TODO(), c.token, workdir)
+			tmpClient, err := generateStarlightClient()
+			if err != nil {
+				return nil, err
+			}
+			fs, err := sfs.New(context.TODO(), c.token, tmpClient, "", true)
+			if err != nil {
+				return nil, err
+			}
+			return fs, nil
 		},
 	})
 	if err != nil {
