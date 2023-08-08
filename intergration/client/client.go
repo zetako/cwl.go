@@ -39,6 +39,23 @@ type StarlightClient struct {
 	retry       int             // 最大重试次数，暂时没有被使用
 }
 
+func New(ctx context.Context, conf StarlightClientConfig) (*StarlightClient, error) {
+	err := conf.SetDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	return &StarlightClient{
+		ctx:         ctx,
+		token:       conf.Token,
+		baseURL:     conf.BaseURL,
+		contentType: conf.ContentType,
+		timeout:     conf.Timeout,
+		dialTimeout: conf.DialTimeout,
+		retry:       conf.Retry,
+	}, nil
+}
+
 // StarlightClientConfig 星光http客户端的配置
 type StarlightClientConfig struct {
 	Token string `yaml:"token" json:"token"` // Bihu-Token
