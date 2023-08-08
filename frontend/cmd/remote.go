@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"github.com/lijiang2014/cwl.go/intergration/sfs"
 	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/runner"
@@ -147,11 +148,15 @@ func remote(config *RemoteConfig) error {
 	}
 
 	// New Executor
+	tmpClient, err := generateStarlightClient()
+	if err != nil {
+		return err
+	}
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
-	exec, err := slex.New(context.TODO(), id.String(), config.Token, config.Username, config.Allocation)
+	exec, err := slex.New(context.TODO(), id.String(), tmpClient, config.Username, config.Allocation)
 	if err != nil {
 		return err
 	}
@@ -170,4 +175,9 @@ func remote(config *RemoteConfig) error {
 	}
 
 	return nil
+}
+
+func generateStarlightClient() (*client.StarlightClient, error) {
+	// TODO
+	return nil, fmt.Errorf("TODO")
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"net/http"
 	"starlight/common/httpclient"
 	"starlight/common/model"
@@ -53,8 +54,13 @@ func getToken() (string, error) {
 }
 
 func init() {
-	// 1. get token
-	token, err := getToken()
+	// 1. get client
+	ctx := context.TODO()
+	c, err := client.New(ctx, client.StarlightClientConfig{
+		Username: testUsername,
+		Password: testPassword,
+		BaseURL:  "http://uat.starlight-dev.nscc-gz.cn",
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +69,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	globalExecutor, err = New(context.TODO(), id.String(), token, testUsername, testAllocModel)
+	globalExecutor, err = New(ctx, id.String(), c, testUsername, testAllocModel)
 	if err != nil {
 		panic(err)
 	}

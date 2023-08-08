@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -34,4 +36,9 @@ func openFileAsJSON(pathlike string) ([]byte, error) {
 func getStringPointer(str string) *string {
 	tmp := str
 	return &tmp
+}
+
+func generateStarlightClient() (*client.StarlightClient, error) {
+	// TODO
+	return nil, fmt.Errorf("TODO")
 }

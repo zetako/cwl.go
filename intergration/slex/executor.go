@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/lijiang2014/cwl.go"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"github.com/lijiang2014/cwl.go/runner"
 	"path"
 	"regexp"
-	"starlight/common/httpclient"
 	"starlight/common/model"
 	"strings"
 	"time"
@@ -26,9 +26,8 @@ var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minu
 type StarlightExecutor struct {
 	alloc      *JobAllocationModel
 	ctx        context.Context
-	token      string
 	username   string // username is needed since we need to determine workdir
-	client     *httpclient.BihuClient
+	client     *client.StarlightClient
 	workflowID string
 }
 

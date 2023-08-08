@@ -129,7 +129,11 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		return nil, err
 	}
 	// generate executor
-	exec, err := slex.New(context.TODO(), j.Id, c.token, j.Username, FromGrpcAllocation(j.Allocations))
+	tmpClient, err := generateStarlightClient()
+	if err != nil {
+		return nil, err
+	}
+	exec, err := slex.New(context.TODO(), j.Id, tmpClient, j.Username, FromGrpcAllocation(j.Allocations))
 	if err != nil {
 		return nil, err
 	}

@@ -2,8 +2,8 @@ package slex
 
 import (
 	"context"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"path"
-	"starlight/common/httpclient"
 )
 
 // CopyIntPointer 复制一个int指针的内容，并作为另一个int指针返回
@@ -18,16 +18,11 @@ func CopyIntPointer(src *int) (dst *int) {
 }
 
 // New 创建一个新的slex实例
-func New(ctx context.Context, id string, token string, username string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
-	c, err := httpclient.NewBihuClient(ctx, token)
-	if err != nil {
-		return nil, err
-	}
+func New(ctx context.Context, id string, c *client.StarlightClient, username string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
 	AddWorkdirSuffix(alloc, id)
 	ret := StarlightExecutor{
 		alloc:      alloc,
 		ctx:        ctx,
-		token:      token,
 		username:   username,
 		workflowID: id,
 		client:     c,
