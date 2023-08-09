@@ -42,13 +42,13 @@ func (conf *StarlightClientConfig) SetDefault() error {
 	}
 
 	// 2. 登录信息
-	if conf.Token != "" {
+	if conf.Token == "" {
 		if conf.Username == "" || conf.Password == "" {
 			return ErrorNoToken
 		}
 		encodedPasswd := base64.StdEncoding.EncodeToString([]byte(conf.Password))
 		jsonBody := fmt.Sprintf("{\"username\":\"%s\",\"password\":\"%s\"}", conf.Username, encodedPasswd)
-		resp, err := http.Post(LoginAPI, "application/json;charset=UTF-8", strings.NewReader(jsonBody))
+		resp, err := http.Post(conf.BaseURL+LoginAPI, "application/json;charset=UTF-8", strings.NewReader(jsonBody))
 		if err != nil {
 			return err
 		}

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -111,11 +112,9 @@ func (c *StarlightClient) Request(url, method string, data []byte) (*http.Respon
 	if len(url) <= 0 {
 		return nil, fmt.Errorf("no request url")
 	}
-	if url[0] == '/' {
-		url = c.baseURL + url
-	} else {
-		url = c.baseURL + "/" + url
-	}
+	url = strings.TrimPrefix(url, "/")
+	url = strings.TrimPrefix(url, "api/")
+	url = c.baseURL + "/api/" + url
 	// 创建请求
 	req, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
@@ -166,7 +165,7 @@ func GetSpecFromResponse(reader io.Reader, specBean interface{}) (*ResponseWrap,
 		return nil, err
 	}
 	if wrap.Code != 200 {
-		return nil, fmt.Errorf("got error code %d", wrap.Code)
+		return nil, NewError(wrap.Code, wrap.Info)
 	}
 	if wrap.Spec != nil && specBean != nil {
 		err = json.Unmarshal(wrap.Spec, specBean)

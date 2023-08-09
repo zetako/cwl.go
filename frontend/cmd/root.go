@@ -1,9 +1,20 @@
 package cmd
 
 import (
+	"github.com/lijiang2014/cwl.go/intergration/client"
+	"github.com/lijiang2014/cwl.go/runner"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	overallFeatureSwitch bool                         // overallFeatureSwitch is the switch to control all custom cwl feature
+	flags                runner.EngineFlags           // flags to tweak engine
+	clientConfig         client.StarlightClientConfig // clientConfig of starlight http client
+	clientConfFile       string                       // clientConfFile will read a file as clientConfig
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -43,7 +54,30 @@ func init() {
 	rootCmd.PersistentFlags().DurationVar(&flags.TotalTimeLimit, "timeout", 0, "Timeout for entire run")
 	rootCmd.PersistentFlags().DurationVar(&flags.StepTimeLimit, "step-timeout", 0, "timeout for single step")
 
+	rootCmd.PersistentFlags().StringVar(&clientConfig.BaseURL, "starlight.url", "", "remote base url for starlight")
+	rootCmd.PersistentFlags().StringVar(&clientConfFile, "starlight.conf", "", "remote config file for starlight")
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func tryReadConfigFile() (err error) {
+	if clientConfFile == "" {
+		return nil
+	}
+
+	confFile, err := os.Open(clientConfFile)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = confFile.Close()
+	}()
+
+	raw, err := ioutil.ReadAll(confFile)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(raw, &clientConfig)
 }

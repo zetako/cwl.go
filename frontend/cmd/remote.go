@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/lijiang2014/cwl.go"
@@ -12,12 +12,11 @@ import (
 	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/runner"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"net/http"
+	"os"
 	"path"
-	"starlight/common/httpclient"
-	"strings"
 )
 
 // remoteCmd represents the remote command
@@ -54,11 +53,6 @@ type RemoteConfig struct {
 	Doc        string                   `json:"doc" yaml:"doc"`
 	Job        string                   `json:"job" yaml:"job"`
 	Allocation *slex.JobAllocationModel `json:"allocation" yaml:"allocation"`
-	Username   string                   `json:"username,omitempty" yaml:"username,omitempty"`
-	Password   string                   `json:"password,omitempty" yaml:"password,omitempty"`
-	LoginAPI   string                   `json:"login_api,omitempty" yaml:"login_api,omitempty"`
-	// 👇 Token is not a part of config file, but generated
-	Token string
 }
 
 func readConfig(file string) (*RemoteConfig, error) {
@@ -72,32 +66,41 @@ func readConfig(file string) (*RemoteConfig, error) {
 }
 
 func remote(config *RemoteConfig) error {
-	// New Token if needed
-	if config.Token == "" {
-		if config.Username == "" || config.Password == "" || config.LoginAPI == "" {
-			return fmt.Errorf("invalid username/password/API")
+	err := clientConfig.SetDefault()
+	if errors.Is(err, client.ErrorNoToken) {
+		fmt.Printf("Need to login to starlight( %s )\n", clientConfig.BaseURL)
+		if clientConfig.Username != "" {
+			fmt.Printf("Try login as: %s\n", clientConfig.Username)
+		} else {
+			// Username
+			fmt.Printf("(username) Login as: ")
+			_, err = fmt.Scan(&clientConfig.Username)
+			if err != nil {
+				return err
+			}
+			// Password
+			fmt.Printf("(password) Input password: ")
+			raw, err := term.ReadPassword(int(os.Stdin.Fd()))
+			if err != nil {
+				return err
+			}
+			clientConfig.Password = string(raw)
+			fmt.Println("Login...")
+			err = clientConfig.SetDefault()
+			if err != nil {
+				return err
+			}
+			fmt.Println("Login Success")
 		}
-		fmt.Printf("Try login as %s\n", config.Username)
-		encodedPasswd := base64.StdEncoding.EncodeToString([]byte(config.Password))
-		jsonBody := fmt.Sprintf("{\"username\":\"%s\",\"password\":\"%s\"}", config.Username, encodedPasswd)
-		resp, err := http.Post(config.LoginAPI, "application/json;charset=UTF-8", strings.NewReader(jsonBody))
-		if err != nil {
-			return err
-		}
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("login request failed")
-		}
-		_, err = httpclient.GetSpecResponse(resp.Body, &config.Token)
-		if err != nil {
-			return fmt.Errorf("login request resolve failed")
-		}
+	} else {
+		return err
 	}
 	// New Remote Importer
 	tmpClient, err := generateStarlightClient()
 	if err != nil {
 		return err
 	}
-	importer, err := sfs.New(context.TODO(), config.Token, tmpClient, "", false)
+	importer, err := sfs.New(context.TODO(), clientConfig.Token, tmpClient, "", false)
 	if err != nil {
 		return err
 	}
@@ -140,7 +143,7 @@ func remote(config *RemoteConfig) error {
 			if err != nil {
 				return nil, err
 			}
-			fs, err := sfs.New(context.TODO(), config.Token, tmpClient, "", true)
+			fs, err := sfs.New(context.TODO(), clientConfig.Token, tmpClient, "", true)
 			if err != nil {
 				return nil, err
 			}
@@ -167,7 +170,7 @@ func remote(config *RemoteConfig) error {
 	if err != nil {
 		return err
 	}
-	exec, err := slex.New(context.TODO(), id.String(), tmpClient, config.Username, config.Allocation)
+	exec, err := slex.New(context.TODO(), id.String(), tmpClient, clientConfig.Token, config.Allocation)
 	if err != nil {
 		return err
 	}

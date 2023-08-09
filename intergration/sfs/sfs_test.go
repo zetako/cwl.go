@@ -25,6 +25,7 @@ const (
 
 var (
 	globalSFS    *StarlightFileSystem
+	token        string
 	fileContent  []byte
 	fileCheckSum string
 )
@@ -38,7 +39,6 @@ func getToken() (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("http code not 200, but %d", resp.StatusCode)
 	}
-	var token string
 	_, err = httpclient.GetSpecResponse(resp.Body, &token)
 	if err != nil {
 		return "", err
@@ -49,13 +49,15 @@ func getToken() (string, error) {
 }
 
 func generateStarlightClient() (*client.StarlightClient, error) {
-	// TODO
-	return nil, fmt.Errorf("TODO")
+	return client.New(context.TODO(), client.StarlightClientConfig{
+		Token:   token,
+		BaseURL: "http://uat.starlight-dev.nscc-gz.cn",
+	})
 }
 
 func init() {
 	// 1. get token
-	token, err := getToken()
+	_, err := getToken()
 	if err != nil {
 		panic(err)
 	}
@@ -223,14 +225,14 @@ func Test_SFS_Glob(t *testing.T) {
 }
 func Test_SFS_Migrate(t *testing.T) {
 	// 0. Generate file
-	srcFile := path.Join(testBaseDir, "copy_test.file")
+	srcFile := path.Join(testBaseDir, "migrate_test.file")
 	_, err := globalSFS.Create(srcFile, string(fileContent))
 	if err != nil {
 		t.Fatalf("Upload Failed: %v", err)
 	}
 	// 1. Migrate within FS
 	var link bool
-	link, err = globalSFS.Migrate(srcFile, path.Join(testBaseDir, "copy_test.file.duplicate"))
+	link, err = globalSFS.Migrate(srcFile, path.Join(testBaseDir, "migrate_test.file.duplicate"))
 	if err != nil {
 		t.Fatalf("Copy Failed: %v", err)
 	}
@@ -238,7 +240,7 @@ func Test_SFS_Migrate(t *testing.T) {
 		t.Fatalf("Should use Symlink within FS")
 	}
 	// 2. Migrate across FS
-	link, err = globalSFS.Migrate(srcFile, path.Join(testOtherFSDir, "copy_test.file.duplicate"))
+	link, err = globalSFS.Migrate(srcFile, path.Join(testOtherFSDir, "migrate_test.file.duplicate"))
 	if err != nil {
 		t.Fatalf("Copy Failed: %v", err)
 	}

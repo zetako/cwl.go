@@ -12,11 +12,6 @@ import (
 	"strings"
 )
 
-var (
-	overallFeatureSwitch bool
-	flags                runner.EngineFlags
-)
-
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run [doc] [job]",

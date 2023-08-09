@@ -6,8 +6,6 @@ import (
 	"github.com/lijiang2014/cwl.go/intergration/client"
 	"os"
 	"path"
-	"starlight/common/code"
-	"starlight/common/errors"
 	"strings"
 )
 
@@ -52,7 +50,7 @@ func ErrorIsNotExist(err error) bool {
 	if os.IsNotExist(err) {
 		return true
 	}
-	if errors.MustCode(err) == code.FILE_NOT_EXIST {
+	if client.MustCode(err) == client.CodeFileNotExist {
 		return true
 	}
 	return false
