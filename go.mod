@@ -24,6 +24,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.32 // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/zetako/scontrol v1.0.0
+	golang.org/x/term v0.6.0
 )
 
 replace github.com/lijiang2014/cwl.go => ./

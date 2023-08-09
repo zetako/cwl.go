@@ -16,7 +16,7 @@ import (
 const (
 	LoginAPI = "/api/keystone/short_term_token/name"
 
-	DefaultBaseURL     = "starlight.nscc-gz.cn"
+	DefaultBaseURL     = "https://starlight.nscc-gz.cn"
 	DefaultTimeout     = 10
 	DefaultDialTimeout = 5
 	DefaultRetry       = 3

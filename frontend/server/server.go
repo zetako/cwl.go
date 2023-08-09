@@ -130,7 +130,7 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 			if err != nil {
 				return nil, err
 			}
-			fs, err := sfs.New(context.TODO(), c.token, tmpClient, "", true)
+			fs, err := sfs.New(context.TODO(), c.token, tmpClient, workdir, true)
 			if err != nil {
 				return nil, err
 			}

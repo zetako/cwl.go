@@ -66,34 +66,41 @@ func readConfig(file string) (*RemoteConfig, error) {
 }
 
 func remote(config *RemoteConfig) error {
-	err := clientConfig.SetDefault()
-	if errors.Is(err, client.ErrorNoToken) {
-		fmt.Printf("Need to login to starlight( %s )\n", clientConfig.BaseURL)
-		if clientConfig.Username != "" {
-			fmt.Printf("Try login as: %s\n", clientConfig.Username)
-		} else {
-			// Username
-			fmt.Printf("(username) Login as: ")
-			_, err = fmt.Scan(&clientConfig.Username)
-			if err != nil {
-				return err
-			}
-			// Password
-			fmt.Printf("(password) Input password: ")
-			raw, err := term.ReadPassword(int(os.Stdin.Fd()))
-			if err != nil {
-				return err
-			}
-			clientConfig.Password = string(raw)
-			fmt.Println("Login...")
-			err = clientConfig.SetDefault()
-			if err != nil {
-				return err
-			}
-			fmt.Println("Login Success")
-		}
-	} else {
+	err := tryReadConfigFile()
+	if err != nil {
 		return err
+	}
+	err = clientConfig.SetDefault()
+	if err != nil {
+
+		if errors.Is(err, client.ErrorNoToken) {
+			fmt.Printf("Need to login to starlight( %s )\n", clientConfig.BaseURL)
+			if clientConfig.Username != "" {
+				fmt.Printf("Try login as: %s\n", clientConfig.Username)
+			} else {
+				// Username
+				fmt.Printf("(username) Login as: ")
+				_, err = fmt.Scan(&clientConfig.Username)
+				if err != nil {
+					return err
+				}
+				// Password
+				fmt.Printf("(password) Input password: ")
+				raw, err := term.ReadPassword(int(os.Stdin.Fd()))
+				if err != nil {
+					return err
+				}
+				clientConfig.Password = string(raw)
+				fmt.Println("Login...")
+				err = clientConfig.SetDefault()
+				if err != nil {
+					return err
+				}
+				fmt.Println("Login Success")
+			}
+		} else {
+			return err
+		}
 	}
 	// New Remote Importer
 	tmpClient, err := generateStarlightClient()
@@ -143,7 +150,7 @@ func remote(config *RemoteConfig) error {
 			if err != nil {
 				return nil, err
 			}
-			fs, err := sfs.New(context.TODO(), clientConfig.Token, tmpClient, "", true)
+			fs, err := sfs.New(context.TODO(), clientConfig.Token, tmpClient, workdir, true)
 			if err != nil {
 				return nil, err
 			}
@@ -192,6 +199,5 @@ func remote(config *RemoteConfig) error {
 }
 
 func generateStarlightClient() (*client.StarlightClient, error) {
-	// TODO
-	return nil, fmt.Errorf("TODO")
+	return client.New(context.TODO(), clientConfig)
 }
