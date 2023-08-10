@@ -55,7 +55,7 @@ func getToken() (string, error) {
 func init() {
 	// 1. get client
 	ctx := context.TODO()
-	c, err := client.New(ctx, client.StarlightClientConfig{
+	c, err := client.New(ctx, client.Config{
 		Username: testUsername,
 		Password: testPassword,
 		BaseURL:  "http://uat.starlight-dev.nscc-gz.cn",

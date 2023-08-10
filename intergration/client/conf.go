@@ -7,8 +7,14 @@ import (
 	"strings"
 )
 
-// StarlightClientConfig 星光http客户端的配置
-type StarlightClientConfig struct {
+// BaseDir 定义执行器的basedir
+type BaseDir struct {
+	Default string            `yaml:"default" json:"default"` // 默认的basedir
+	Diff    map[string]string `yaml:"diff" json:"diff"`       // 特殊集群的basedir
+}
+
+// Config 星光http客户端的配置
+type Config struct {
 	Token string `yaml:"token" json:"token"` // Bihu-Token
 	// 👇 如果不设置Token,需要这两个
 	Username string `yaml:"username" json:"username"` // 用户名
@@ -20,10 +26,12 @@ type StarlightClientConfig struct {
 	Retry       int    `yaml:"retry" json:"retry"`               // 最大重试次数
 
 	ContentType string `yaml:"content_type" json:"content_type"` // 数据类型
+
+	BaseDir BaseDir `yaml:"base_dir" json:"base_dir"` // 基础目录
 }
 
 // SetDefault 填充默认配置
-func (conf *StarlightClientConfig) SetDefault() error {
+func (conf *Config) SetDefault() error {
 	// 1. 基础信息
 	if conf.BaseURL == "" {
 		conf.BaseURL = DefaultBaseURL

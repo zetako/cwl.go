@@ -38,7 +38,7 @@ type StarlightClient struct {
 	retry       int             // 最大重试次数，暂时没有被使用
 }
 
-func New(ctx context.Context, conf StarlightClientConfig) (*StarlightClient, error) {
+func New(ctx context.Context, conf Config) (*StarlightClient, error) {
 	err := conf.SetDefault()
 	if err != nil {
 		return nil, err

@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	overallFeatureSwitch bool                         // overallFeatureSwitch is the switch to control all custom cwl feature
-	flags                runner.EngineFlags           // flags to tweak engine
-	clientConfig         client.StarlightClientConfig // clientConfig of starlight http client
-	clientConfFile       string                       // clientConfFile will read a file as clientConfig
+	overallFeatureSwitch bool               // overallFeatureSwitch is the switch to control all custom cwl feature
+	flags                runner.EngineFlags // flags to tweak engine
+	clientConfig         client.Config      // clientConfig of starlight http client
+	clientConfFile       string             // clientConfFile will read a file as clientConfig
 )
 
 // rootCmd represents the base command when called without any subcommands

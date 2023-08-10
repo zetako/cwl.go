@@ -37,7 +37,7 @@ type cwlServer struct {
 	workflowID string
 
 	token        string
-	clientConfig client.StarlightClientConfig
+	clientConfig client.Config
 	importer     runner.Importer
 	engine       *runner.Engine
 }
@@ -311,7 +311,7 @@ func (c *cwlServer) Watch(server proto.Cwl_WatchServer) error {
 // StartServe will start a grpc server at target port
 // Notice: it will block until service stop
 // TODO: when will service stop?
-func StartServe(port int, pem string, key string, conf client.StarlightClientConfig) error {
+func StartServe(port int, pem string, key string, conf client.Config) error {
 	// set client config
 	globalCwlServer.clientConfig = conf
 

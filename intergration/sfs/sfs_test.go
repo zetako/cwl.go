@@ -49,7 +49,7 @@ func getToken() (string, error) {
 }
 
 func generateStarlightClient() (*client.StarlightClient, error) {
-	return client.New(context.TODO(), client.StarlightClientConfig{
+	return client.New(context.TODO(), client.Config{
 		Token:   token,
 		BaseURL: "http://uat.starlight-dev.nscc-gz.cn",
 	})
