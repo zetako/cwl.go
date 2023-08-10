@@ -1,8 +1,8 @@
 package slex
 
 import (
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"github.com/lijiang2014/cwl.go/message"
-	"starlight/common/model"
 )
 
 type JobSubmitModel struct {
@@ -12,7 +12,7 @@ type JobSubmitModel struct {
 		Cluster   string            `json:"cluster"`
 		Partition string            `json:"partition"`
 		Env       map[string]string `json:"env,omitempty"`
-		Endpoints []model.Proxy     `json:"endpoints,omitempty"`
+		Endpoints []client.Proxy    `json:"endpoints,omitempty"`
 		Stdin     string            `json:"stdin,omitempty"`
 		Stdout    string            `json:"stdout,omitempty"`
 		Stderr    string            `json:"stderr,omitempty"`
@@ -21,11 +21,11 @@ type JobSubmitModel struct {
 		WorkflowUUID string `json:"workflow_uuid,omitempty"`
 
 		// Direct Task specified
-		WorkDir model.Volume `json:"workDir,omitempty"`
-		Cmd     []string     `json:"cmd"`
+		WorkDir client.Volume `json:"workDir,omitempty"`
+		Cmd     []string      `json:"cmd"`
 		// Container Task specified
-		Image   string         `json:"image,omitempty"`
-		Volumes []model.Volume `json:"volumes,omitempty"`
+		Image   string          `json:"image,omitempty"`
+		Volumes []client.Volume `json:"volumes,omitempty"`
 		//Kind   string         `json:"kind,omitempty"` // Kind not needed, for workflow, always job
 
 		// Runtime Requirements
@@ -37,13 +37,13 @@ type JobSubmitModel struct {
 }
 
 type SingleJobAllocationModel struct {
-	Cluster   string       `json:"cluster" yaml:"cluster"`
-	Partition string       `json:"partition" yaml:"partition"`
-	Cpu       *int         `json:"cpu,omitempty" yaml:"cpu,omitempty"`
-	Gpu       *int         `json:"gpu,omitempty" yaml:"gpu,omitempty"`
-	Memory    *int         `json:"memory,omitempty" yaml:"memory,omitempty"`
-	Node      *int         `json:"node,omitempty" yaml:"node,omitempty"`
-	WorkDir   model.Volume `json:"workDir,omitempty" yaml:"workDir,omitempty"`
+	Cluster   string        `json:"cluster" yaml:"cluster"`
+	Partition string        `json:"partition" yaml:"partition"`
+	Cpu       *int          `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+	Gpu       *int          `json:"gpu,omitempty" yaml:"gpu,omitempty"`
+	Memory    *int          `json:"memory,omitempty" yaml:"memory,omitempty"`
+	Node      *int          `json:"node,omitempty" yaml:"node,omitempty"`
+	WorkDir   client.Volume `json:"workDir,omitempty" yaml:"workDir,omitempty"`
 }
 
 func (s *SingleJobAllocationModel) Copy() SingleJobAllocationModel {

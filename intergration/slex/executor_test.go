@@ -7,7 +7,6 @@ import (
 	"github.com/lijiang2014/cwl.go/intergration/client"
 	"net/http"
 	"starlight/common/httpclient"
-	"starlight/common/model"
 	"strings"
 )
 
@@ -26,7 +25,7 @@ var (
 			Cpu:       getIntPointer(1),
 			Gpu:       getIntPointer(0),
 			Memory:    getIntPointer(4 * 1024),
-			WorkDir:   model.Volume{},
+			WorkDir:   client.Volume{},
 		},
 		Diff: map[string]*SingleJobAllocationModel{},
 	}

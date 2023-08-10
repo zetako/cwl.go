@@ -9,7 +9,6 @@ import (
 	"github.com/lijiang2014/cwl.go/runner"
 	"path"
 	"regexp"
-	"starlight/common/model"
 	"strings"
 	"time"
 )
@@ -84,19 +83,14 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 		return "", nil, err
 	}
 	submit.RuntimeParams.WorkDir.HostPath = rt.RootHost
-	// 不需要主动设置workdir挂载，星光会挂
-	//submit.RuntimeParams.Volumes = append(submit.RuntimeParams.Volumes, model.Volume{
-	//	HostPath:  strings.TrimPrefix(rt.RootHost, "file://"),
-	//	MountPath: strings.TrimPrefix(rt.RootHost, "file://"),
-	//})
-	// migrated source is needed
+	// 不需要主动设置workdir挂载，星光默认挂载
 	for _, rec := range migrateRecord {
 		if rec.IsSymLink {
 			tmpID, err := uuid.NewRandom()
 			if err != nil {
 				return "", nil, err
 			}
-			submit.RuntimeParams.Volumes = append(submit.RuntimeParams.Volumes, model.Volume{
+			submit.RuntimeParams.Volumes = append(submit.RuntimeParams.Volumes, client.Volume{
 				Name:      tmpID.String(),
 				HostPath:  strings.TrimPrefix(rec.Source, "file://"),
 				MountPath: strings.TrimPrefix(rec.Source, "file://"),
@@ -113,7 +107,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	}
 
 	// send req
-	var job model.Job
+	var job client.Job
 	s.verifySubmit(&submit)
 	_, err = s.client.PostSpec("/job/submit", submit, &job)
 	if err != nil {
@@ -142,7 +136,7 @@ func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, erro
 		workdir = path.Join(base, s.workflowID, p.Path())
 		// 2.3 save the new generated work dir
 		s.alloc.Set(p.PathID, SingleJobAllocationModel{
-			WorkDir: model.Volume{
+			WorkDir: client.Volume{
 				HostPath: workdir,
 			},
 		})
@@ -191,7 +185,7 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 
 	for {
 		// 1. query
-		var job model.Job
+		var job client.Job
 		_, err := s.client.GetSpec(query, &job)
 		if err != nil {
 			fmt.Println(err)
@@ -204,8 +198,8 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 		}
 		fmt.Printf("Get status of '%s/%s': Status=%d\n", cluster, jobIdx, job.Status)
 		// 2. end if success or failed
-		if job.Status > model.JobStatusRunning {
-			if job.Status == model.JobStatusSuccess {
+		if job.Status > client.JobStatusRunning {
+			if job.Status == client.JobStatusSuccess {
 				retChan <- 0
 			} else {
 				retChan <- job.ExitCode

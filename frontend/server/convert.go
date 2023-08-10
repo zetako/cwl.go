@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/proto"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/message"
-	"starlight/common/model"
 )
 
 // FromGrpcStatus generate an array from a grpc struct proto.Status
@@ -84,11 +84,11 @@ func FromGrpcSingleAllocation(g *proto.SingleAllocation) *slex.SingleJobAllocati
 		Gpu:       CopyInt64Pointer(g.Gpu),
 		Memory:    CopyInt64Pointer(g.Memory),
 		Node:      CopyInt64Pointer(g.Node),
-		WorkDir:   model.Volume{},
+		WorkDir:   client.Volume{},
 	}
 	// extend is ignored now
 	if g.Workdir != nil {
-		ret.WorkDir = model.Volume{HostPath: *g.Workdir}
+		ret.WorkDir = client.Volume{HostPath: *g.Workdir}
 	}
 	return &ret
 }
