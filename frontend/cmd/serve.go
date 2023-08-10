@@ -17,6 +17,16 @@ var serveCmd = &cobra.Command{
 	Short: "Run cwl.go as a server",
 	Long:  `cwl.go can run as a grpc server. Use any grpc client to connect and control it.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		err := tryReadConfigFile()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		err = clientConfig.SetDefault()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		// TODO Use PersistentPreRun to do that
 		if !overallFeatureSwitch {
 			flags.DisableLoopFeature = true
@@ -24,7 +34,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		server.GlobalFlags = flags
-		err := server.StartServe(serverPort, serverPem, serverKey)
+		err = server.StartServe(serverPort, serverPem, serverKey, clientConfig)
 		if err != nil {
 			fmt.Println(err)
 			return

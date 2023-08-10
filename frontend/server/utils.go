@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"context"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/intergration/client"
 	"io/ioutil"
@@ -38,7 +38,6 @@ func getStringPointer(str string) *string {
 	return &tmp
 }
 
-func generateStarlightClient() (*client.StarlightClient, error) {
-	// TODO
-	return nil, fmt.Errorf("TODO")
+func (c *cwlServer) generateStarlightClient() (*client.StarlightClient, error) {
+	return client.New(context.TODO(), c.clientConfig)
 }

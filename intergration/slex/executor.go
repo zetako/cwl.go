@@ -202,6 +202,7 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 				break
 			}
 		}
+		fmt.Printf("Get status of '%s/%s': Status=%d\n", cluster, jobIdx, job.Status)
 		// 2. end if success or failed
 		if job.Status > model.JobStatusRunning {
 			if job.Status == model.JobStatusSuccess {
@@ -220,7 +221,9 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 				retChan <- -1
 				break
 			}
+			intervalCount = 0
 		}
+		fmt.Printf("Next Query after %s\n", interval)
 		time.Sleep(interval)
 	}
 }

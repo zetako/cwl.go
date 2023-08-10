@@ -8,6 +8,7 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/lijiang2014/cwl.go"
 	"github.com/lijiang2014/cwl.go/frontend/proto"
+	"github.com/lijiang2014/cwl.go/intergration/client"
 	"github.com/lijiang2014/cwl.go/intergration/sfs"
 	"github.com/lijiang2014/cwl.go/intergration/slex"
 	"github.com/lijiang2014/cwl.go/message"
@@ -35,9 +36,10 @@ type cwlServer struct {
 	finish     bool
 	workflowID string
 
-	token    string
-	importer runner.Importer
-	engine   *runner.Engine
+	token        string
+	clientConfig client.StarlightClientConfig
+	importer     runner.Importer
+	engine       *runner.Engine
 }
 
 // Load is grpc method Load. It will generate a new engine and load a doc using Importer.
@@ -66,7 +68,7 @@ func (c *cwlServer) Load(ctx context.Context, d *proto.Doc) (result *proto.Resul
 
 	// New Importer
 	c.token = d.Token
-	tmpClient, err := generateStarlightClient()
+	tmpClient, err := c.generateStarlightClient()
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +128,7 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		WorkDir:      path.Join(pwd, "run"),
 		Importer:     c.importer,
 		NewFSMethod: func(workdir string) (runner.Filesystem, error) {
-			tmpClient, err := generateStarlightClient()
+			tmpClient, err := c.generateStarlightClient()
 			if err != nil {
 				return nil, err
 			}
@@ -141,7 +143,7 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 		return nil, err
 	}
 	// generate executor
-	tmpClient, err := generateStarlightClient()
+	tmpClient, err := c.generateStarlightClient()
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +311,10 @@ func (c *cwlServer) Watch(server proto.Cwl_WatchServer) error {
 // StartServe will start a grpc server at target port
 // Notice: it will block until service stop
 // TODO: when will service stop?
-func StartServe(port int, pem string, key string) error {
+func StartServe(port int, pem string, key string, conf client.StarlightClientConfig) error {
+	// set client config
+	globalCwlServer.clientConfig = conf
+
 	// Options
 	var opts []grpc.ServerOption
 
