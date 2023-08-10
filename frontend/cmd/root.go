@@ -56,7 +56,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&clientConfig.BaseURL, "starlight.url", "", "remote base url for starlight")
 	rootCmd.PersistentFlags().StringVar(&clientConfFile, "starlight.conf", "", "remote config file for starlight")
-
+	rootCmd.PersistentFlags().StringVar(&clientConfig.BaseDir.Default, "starlight.basedir", "", "remote base dir if workdir is not specified")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

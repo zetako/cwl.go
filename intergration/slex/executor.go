@@ -23,6 +23,7 @@ const (
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
 
 type Executor struct {
+	basedir    client.BaseDir
 	alloc      *JobAllocationModel
 	ctx        context.Context
 	username   string // username is needed since we need to determine workdir
@@ -164,9 +165,10 @@ func (s Executor) QueryRuntime(p *runner.Process) (runner.Runtime, error) {
 
 func (s Executor) getPartitionBaseDir(alloc SingleJobAllocationModel) (string, error) {
 	// get
-	baseDir, ok := globalConfig.BaseDir[alloc.Cluster]
-	if !ok {
-		return "", fmt.Errorf("no matched base dir for cluster %s", alloc.Cluster)
+	baseDir := s.basedir.Get(alloc.Cluster)
+	// prevent empty
+	if baseDir == "" {
+		return "", fmt.Errorf("no matched basedir for %s", alloc.Cluster)
 	}
 	// replace with username
 	if strings.Contains(baseDir, "${USER}") {

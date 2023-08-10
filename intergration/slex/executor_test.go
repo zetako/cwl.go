@@ -14,6 +14,7 @@ const (
 	testLoginAPI string = "http://uat.starlight-dev.nscc-gz.cn/api/keystone/short_term_token/name"
 	testUsername string = "nscc-gz_yfb_2"
 	testPassword string = "UHcyMDIyUkQ="
+	testBaseDir  string = "/GPUFS/nscc-gz_yfb_2/"
 )
 
 var (
@@ -68,7 +69,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	globalExecutor, err = New(ctx, id.String(), c, testUsername, testAllocModel)
+	globalExecutor, err = New(ctx, id.String(), c, testUsername, testAllocModel, client.BaseDir{Default: testBaseDir})
 	if err != nil {
 		panic(err)
 	}

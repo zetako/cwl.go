@@ -3,6 +3,7 @@ package slex
 import (
 	"context"
 	"github.com/lijiang2014/cwl.go/intergration/client"
+	"os"
 	"path"
 )
 
@@ -18,7 +19,7 @@ func CopyIntPointer(src *int) (dst *int) {
 }
 
 // New 创建一个新的slex实例
-func New(ctx context.Context, id string, c *client.StarlightClient, username string, alloc *JobAllocationModel) (*Executor, error) {
+func New(ctx context.Context, id string, c *client.StarlightClient, username string, alloc *JobAllocationModel, basedir client.BaseDir) (*Executor, error) {
 	AddWorkdirSuffix(alloc, id)
 	ret := Executor{
 		alloc:      alloc,
@@ -26,6 +27,16 @@ func New(ctx context.Context, id string, c *client.StarlightClient, username str
 		username:   username,
 		workflowID: id,
 		client:     c,
+		basedir:    basedir,
+	}
+
+	// prevent empty basedir
+	if basedir.Default == "" {
+		tmp, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		basedir.Default = tmp
 	}
 
 	return &ret, nil

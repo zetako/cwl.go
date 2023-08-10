@@ -13,6 +13,14 @@ type BaseDir struct {
 	Diff    map[string]string `yaml:"diff" json:"diff"`       // 特殊集群的basedir
 }
 
+func (b BaseDir) Get(partition string) string {
+	if tmp, ok := b.Diff[partition]; ok {
+		return tmp
+	} else {
+		return b.Default
+	}
+}
+
 // Config 星光http客户端的配置
 type Config struct {
 	Token string `yaml:"token" json:"token"` // Bihu-Token

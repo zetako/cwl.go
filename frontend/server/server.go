@@ -147,7 +147,7 @@ func (c *cwlServer) Start(ctx context.Context, j *proto.Job) (result *proto.Resu
 	if err != nil {
 		return nil, err
 	}
-	exec, err := slex.New(context.TODO(), j.Id, tmpClient, j.Username, FromGrpcAllocation(j.Allocations))
+	exec, err := slex.New(context.TODO(), j.Id, tmpClient, j.Username, FromGrpcAllocation(j.Allocations), c.clientConfig.BaseDir)
 	if err != nil {
 		return nil, err
 	}
