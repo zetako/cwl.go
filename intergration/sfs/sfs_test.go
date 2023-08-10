@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"github.com/lijiang2014/cwl.go/intergration/client"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
-	"starlight/common/httpclient"
 	"strconv"
-	"strings"
 	"testing"
 )
 
 const (
-	testLoginAPI   string = "http://uat.starlight-dev.nscc-gz.cn/api/keystone/short_term_token/name"
+	testBaseURL    string = "http://uat.starlight-dev.nscc-gz.cn"
 	testUsername   string = "nscc-gz_yfb_2"
-	testPassword   string = "UHcyMDIyUkQ="
+	testPassword   string = "Pw2022RD"
 	testBaseDir    string = "/HOME/nscc-gz_yfb_2/testDir1"
 	testOtherFSDir string = "/GPUFS/nscc-gz_yfb_2/testDir1"
 	testFile       string = "/home/zetako/git/cwl.go/intergration/sfs/sfs.go"
@@ -25,39 +22,26 @@ const (
 
 var (
 	globalSFS    *StarlightFileSystem
-	token        string
+	clientConfig client.Config
 	fileContent  []byte
 	fileCheckSum string
 )
 
-func getToken() (string, error) {
-	jsonBody := fmt.Sprintf("{\"username\":\"%v\",\"password\":\"%v\"}", testUsername, testPassword)
-	resp, err := http.Post(testLoginAPI, "application/json;charset=UTF-8", strings.NewReader(jsonBody))
-	if err != nil {
-		return "", err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("http code not 200, but %d", resp.StatusCode)
-	}
-	_, err = httpclient.GetSpecResponse(resp.Body, &token)
-	if err != nil {
-		return "", err
-	}
-	//log.Println(token)
-	return token, nil
-	//return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjE2NzIsImlwIjoiMTcyLjE2LjE3MS4zNyIsIm9yaV91c2VyX25hbWUiOiIiLCJ1c2VyX25hbWUiOiJuc2NjLWd6X3lmYl8yIiwidWlkIjoxMDAxMSwiZ3JvdXBfbmFtZSI6Im5zY2MtZ3pfeWZiIiwiZ3JvdXBfaWQiOjk4NjUsInN0YXR1cyI6MTEsImV4cCI6MTY4NzkyOTEzNX0.n2K_zsG0G5GL67WhwtfnyxzyZ9uk0i70FmgsCL2GvFZn37DZtQICPRpGIjT_AxQG7u9l71vlQvsqYzlCp4zz4Q", nil
-}
-
 func generateStarlightClient() (*client.StarlightClient, error) {
-	return client.New(context.TODO(), client.Config{
-		Token:   token,
-		BaseURL: "http://uat.starlight-dev.nscc-gz.cn",
-	})
+	return client.New(context.TODO(), clientConfig)
 }
 
 func init() {
-	// 1. get token
-	_, err := getToken()
+	// 1. get client
+	clientConfig = client.Config{
+		Username: testUsername,
+		Password: testPassword,
+		BaseURL:  testBaseURL,
+		BaseDir: client.BaseDir{
+			Default: testBaseDir,
+		},
+	}
+	err := clientConfig.SetDefault()
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +50,7 @@ func init() {
 		panic(err)
 	}
 	// 2. get sfs
-	globalSFS, err = New(context.TODO(), token, tmpClient, testBaseDir, true)
+	globalSFS, err = New(context.TODO(), clientConfig.Token, tmpClient, testBaseDir, true)
 	if err != nil {
 		panic(err)
 	}
