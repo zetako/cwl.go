@@ -14,19 +14,11 @@ require (
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	starlight v0.0.0-00010101000000-000000000000
 )
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/jinzhu/gorm v1.9.16 // indirect
-	github.com/olivere/elastic/v7 v7.0.32 // indirect
-	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/zetako/scontrol v1.0.0
 	golang.org/x/term v0.6.0
 )
 
 replace github.com/lijiang2014/cwl.go => ./
-
-replace starlight => ../starlight
