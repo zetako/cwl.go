@@ -2,7 +2,7 @@
 
 AUTHOR=nscc-gz.cn/starlight-v4
 IMAGE=cwl-runner
-VERSION=0.9.1
+VERSION=$(git describe || git rev-parse --short HEAD)
 
 set -e && set -x
 
