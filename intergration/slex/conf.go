@@ -2,15 +2,17 @@ package slex
 
 import "starlight/common/conf"
 
-type StarlightExecutorConfig struct {
+type BaseDirMapping struct {
 	BaseDir map[string]string `json:"base_dir" yaml:"base_dir"`
 }
 
-var globalConfig *StarlightExecutorConfig
+var (
+	globalConfig *BaseDirMapping
+)
 
 func initConfig() error {
 	if globalConfig == nil {
-		globalConfig = &StarlightExecutorConfig{}
+		globalConfig = &BaseDirMapping{}
 		err := conf.Unmarshal("slex", &globalConfig)
 		if err != nil {
 			return err

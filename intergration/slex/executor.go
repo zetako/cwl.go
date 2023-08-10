@@ -22,7 +22,7 @@ const (
 
 var JobQueryInterval = [6]time.Duration{time.Second, time.Second * 10, time.Minute, time.Minute * 10, time.Minute * 30, time.Hour}
 
-type StarlightExecutor struct {
+type Executor struct {
 	alloc      *JobAllocationModel
 	ctx        context.Context
 	username   string // username is needed since we need to determine workdir
@@ -30,7 +30,7 @@ type StarlightExecutor struct {
 	workflowID string
 }
 
-func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <-chan int, err error) {
+func (s Executor) Run(process *runner.Process) (runID string, retChan <-chan int, err error) {
 	// basic setting
 	submit := NewSubmitModelFrom(s.alloc.Get(process.PathID))
 
@@ -119,7 +119,7 @@ func (s StarlightExecutor) Run(process *runner.Process) (runID string, retChan <
 	return fmt.Sprint(job.ClusterName + "/" + job.ClusterJobID), bidChan, nil
 }
 
-func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, error) {
+func (s Executor) QueryRuntime(p *runner.Process) (runner.Runtime, error) {
 	var (
 		workdir string
 	)
@@ -162,7 +162,7 @@ func (s StarlightExecutor) QueryRuntime(p *runner.Process) (runner.Runtime, erro
 	return rt, nil
 }
 
-func (s StarlightExecutor) getPartitionBaseDir(alloc SingleJobAllocationModel) (string, error) {
+func (s Executor) getPartitionBaseDir(alloc SingleJobAllocationModel) (string, error) {
 	// get
 	baseDir, ok := globalConfig.BaseDir[alloc.Cluster]
 	if !ok {
@@ -175,7 +175,7 @@ func (s StarlightExecutor) getPartitionBaseDir(alloc SingleJobAllocationModel) (
 	return baseDir, nil
 }
 
-func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int) {
+func (s Executor) waitingJob(cluster, jobIdx string, retChan chan<- int) {
 	var (
 		intervalIdx   int    = 0
 		intervalCount int    = 0
@@ -222,7 +222,7 @@ func (s StarlightExecutor) waitingJob(cluster, jobIdx string, retChan chan<- int
 	}
 }
 
-func (s StarlightExecutor) verifySubmit(submit *JobSubmitModel) {
+func (s Executor) verifySubmit(submit *JobSubmitModel) {
 	// 1.检查JobName
 	// 1.1.去掉非法字符
 	newJobName := regexp.MustCompile(`[^-A-Za-z0-9_.]`).ReplaceAllString(submit.RuntimeParams.JobName, "_")

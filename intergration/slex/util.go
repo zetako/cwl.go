@@ -18,9 +18,9 @@ func CopyIntPointer(src *int) (dst *int) {
 }
 
 // New 创建一个新的slex实例
-func New(ctx context.Context, id string, c *client.StarlightClient, username string, alloc *JobAllocationModel) (*StarlightExecutor, error) {
+func New(ctx context.Context, id string, c *client.StarlightClient, username string, alloc *JobAllocationModel) (*Executor, error) {
 	AddWorkdirSuffix(alloc, id)
-	ret := StarlightExecutor{
+	ret := Executor{
 		alloc:      alloc,
 		ctx:        ctx,
 		username:   username,

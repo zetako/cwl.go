@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	globalExecutor *StarlightExecutor
+	globalExecutor *Executor
 	testAllocModel *JobAllocationModel = &JobAllocationModel{
 		Default: &SingleJobAllocationModel{
 			Cluster:   "k8s_uat",
